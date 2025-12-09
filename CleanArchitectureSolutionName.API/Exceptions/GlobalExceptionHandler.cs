@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CleanArchitectureSolutionName.API.Exceptions;
+namespace LiveAuction.API.Exceptions;
 public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> _logger) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(

@@ -1,8 +1,8 @@
-﻿using CleanArchitectureSolutionName.Domain.Repositories;
-using CleanArchitectureSolutionName.Infrastructure.Presistence;
+﻿using LiveAuction.Domain.Repositories;
+using LiveAuction.Infrastructure.Presistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace CleanArchitectureSolutionName.Infrastructure.Repositories;
+namespace LiveAuction.Infrastructure.Repositories;
 internal class GenericRepository<T>(ApplicationDbContext context) : IGenericRepository<T> where T: class
 {
     private readonly ApplicationDbContext _context = context;

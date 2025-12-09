@@ -13,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CleanArchitectureSolutionName.Application\CleanArchitectureSolutionName.Application.csproj" />
-    <ProjectReference Include="..\CleanArchitectureSolutionName.Infrastructure\CleanArchitectureSolutionName.Infrastructure.csproj" />
+    <ProjectReference Include="..\LiveAuction.Application\LiveAuction.Application.csproj" />
+    <ProjectReference Include="..\LiveAuction.Infrastructure\LiveAuction.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

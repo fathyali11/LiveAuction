@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace CleanArchitectureSolutionName.API.Controllers
+namespace LiveAuction.API.Controllers
 {
     [ApiController]
     [Route("[controller]")]

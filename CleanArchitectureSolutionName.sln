@@ -1,15 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36429.23
+# Visual Studio Version 18
+VisualStudioVersion = 18.1.11304.174 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleanArchitectureSolutionName.API", "CleanArchitectureSolutionName.API\CleanArchitectureSolutionName.API.csproj", "{65B42B82-F5E0-4968-A090-1E1E4DF83B70}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveAuction.API", "CleanArchitectureSolutionName.API\LiveAuction.API.csproj", "{65B42B82-F5E0-4968-A090-1E1E4DF83B70}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleanArchitectureSolutionName.Application", "CleanArchitectureSolutionName.Application\CleanArchitectureSolutionName.Application.csproj", "{B8A2CACE-4D27-4D13-AAEE-4939293E7EA3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveAuction.Application", "CleanArchitectureSolutionName.Application\LiveAuction.Application.csproj", "{B8A2CACE-4D27-4D13-AAEE-4939293E7EA3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleanArchitectureSolutionName.Infrastructure", "CleanArchitectureSolutionName.Infrastructure\CleanArchitectureSolutionName.Infrastructure.csproj", "{DEEE2D3C-D8E5-4B4D-98B2-7364D746840B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveAuction.Infrastructure", "CleanArchitectureSolutionName.Infrastructure\LiveAuction.Infrastructure.csproj", "{DEEE2D3C-D8E5-4B4D-98B2-7364D746840B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleanArchitectureSolutionName.Domain", "CleanArchitectureSolutionName.Domain\CleanArchitectureSolutionName.Domain.csproj", "{CB4B3871-E9C7-4E8A-AC2E-399B410DF476}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LiveAuction.Domain", "CleanArchitectureSolutionName.Domain\LiveAuction.Domain.csproj", "{CB4B3871-E9C7-4E8A-AC2E-399B410DF476}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

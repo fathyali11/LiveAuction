@@ -1,6 +1,6 @@
-using CleanArchitectureSolutionName.API.Extensions;
-using CleanArchitectureSolutionName.Application.Extensions;
-using CleanArchitectureSolutionName.Infrastructure.Extensions;
+using LiveAuction.API.Extensions;
+using LiveAuction.Application.Extensions;
+using LiveAuction.Infrastructure.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 

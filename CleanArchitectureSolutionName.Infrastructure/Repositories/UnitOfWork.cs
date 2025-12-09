@@ -1,7 +1,7 @@
-﻿using CleanArchitectureSolutionName.Domain.Repositories;
-using CleanArchitectureSolutionName.Infrastructure.Presistence;
+﻿using LiveAuction.Domain.Repositories;
+using LiveAuction.Infrastructure.Presistence;
 
-namespace CleanArchitectureSolutionName.Infrastructure.Repositories;
+namespace LiveAuction.Infrastructure.Repositories;
 internal class UnitOfWork(ApplicationDbContext _context): IUnitOfWork
 {
     private readonly ApplicationDbContext _context = _context;

@@ -1,4 +1,4 @@
-namespace CleanArchitectureSolutionName.API
+namespace LiveAuction.API
 {
     public class WeatherForecast
     {

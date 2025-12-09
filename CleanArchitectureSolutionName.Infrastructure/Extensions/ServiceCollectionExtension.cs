@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace CleanArchitectureSolutionName.Infrastructure.Extensions;
+namespace LiveAuction.Infrastructure.Extensions;
 public static class ServiceCollectionExtension
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)

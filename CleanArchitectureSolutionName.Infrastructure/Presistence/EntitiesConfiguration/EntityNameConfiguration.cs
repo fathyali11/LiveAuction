@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace CleanArchitectureSolutionName.Infrastructure.Presistence.EntitiesConfiguration;
+namespace LiveAuction.Infrastructure.Presistence.EntitiesConfiguration;
 //internal class EntityNameConfiguration:IEntityTypeConfiguration<EntityName>
 //{
 //    public void Configure(EntityTypeBuilder<EntityName> builder)

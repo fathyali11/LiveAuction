@@ -1,4 +1,4 @@
-﻿namespace CleanArchitectureSolutionName.Domain.Repositories;
+﻿namespace LiveAuction.Domain.Repositories;
 public interface IUnitOfWork
 {
     //public IRepositoryName RepositoryName { get; }

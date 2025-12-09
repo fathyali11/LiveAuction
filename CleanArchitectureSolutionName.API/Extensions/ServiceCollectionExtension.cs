@@ -1,7 +1,7 @@
-﻿using CleanArchitectureSolutionName.API.Exceptions;
+﻿using LiveAuction.API.Exceptions;
 using Serilog;
 
-namespace CleanArchitectureSolutionName.API.Extensions;
+namespace LiveAuction.API.Extensions;
 
 public static class ServiceCollectionExtension
 {
