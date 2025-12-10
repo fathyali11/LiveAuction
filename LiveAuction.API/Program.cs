@@ -1,13 +1,12 @@
 using LiveAuction.API.Extensions;
 using LiveAuction.Application.Extensions;
 using LiveAuction.Infrastructure.Extensions;
-
 var builder = WebApplication.CreateBuilder(args);
 
 
 builder.AddApiServices();
+builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
-builder.Services.AddInfrastructureServices();
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
