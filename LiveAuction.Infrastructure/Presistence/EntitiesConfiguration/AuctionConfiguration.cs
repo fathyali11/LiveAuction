@@ -17,6 +17,8 @@ internal class EntityNameConfiguration : IEntityTypeConfiguration<Auction>
         builder.Property(a => a.Description)
             .HasMaxLength(1000);
 
+        
+
         builder.Property(a => a.StartTime)
             .IsRequired();
 
@@ -26,6 +28,13 @@ internal class EntityNameConfiguration : IEntityTypeConfiguration<Auction>
         builder.Property(a => a.StartingBid)
             .IsRequired()
             .HasColumnType("decimal(18,2)");
+
+        builder.Property(a => a.CurrentBid)
+            .IsRequired(false)
+            .HasColumnType("decimal(18,2)");
+
+        builder.Property(a => a.CreatedById)
+            .IsRequired();
 
         builder.HasMany(a => a.Bids)
             .WithOne(b => b.Auction)
