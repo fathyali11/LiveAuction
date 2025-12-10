@@ -12,9 +12,4 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\CleanArchitectureSolutionName.Application\LiveAuction.Application.csproj" />
-    <ProjectReference Include="..\CleanArchitectureSolutionName.Infrastructure\LiveAuction.Infrastructure.csproj" />
-  </ItemGroup>
-
 </Project>
