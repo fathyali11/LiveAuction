@@ -1,7 +1,27 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>المزادات الحالية</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudText Typo="Typo.h4" Class="mb-4">🔥 المزادات المشتعلة الآن</MudText>
 
-Welcome to your new app.
+<MudGrid>
+    @for (int i = 1; i <= 6; i++)
+    {
+        <MudItem xs="12" sm="6" md="4">
+            <MudCard Elevation="3" Class="rounded-lg hover-effect">
+                <MudCardMedia Image="https://images.unsplash.com/photo-1517336714731-489689fd1ca4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" Height="200" />
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">MacBook Pro M3</MudText>
+                    <MudText Typo="Typo.caption">ينتهي خلال: 00:45:12</MudText>
+                    <div class="d-flex justify-space-between mt-2">
+                        <MudText Color="Color.Success" Typo="Typo.h6">$1,500</MudText>
+                        <MudChip T="string" Color="Color.Error" Size="Size.Small">Live 🔴</MudChip>
+                    </div>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">زايد الآن</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
