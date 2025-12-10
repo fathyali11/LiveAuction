@@ -4,8 +4,8 @@ namespace LiveAuction.Domain.Repositories;
 
 public interface IAuctionRepository
 {
-    Task<Auction?> GetByIdAsync(int id);
-    Task<List<Auction>> GetAllActiveAsync();
-    Task AddAsync(Auction auction);
-    Task UpdateAsync(Auction auction);
+    Task<Auction?> GetByIdAsync(int id, CancellationToken cancellationToken);
+    Task<List<Auction>> GetAllActiveAsync(CancellationToken cancellationToken);
+    Task AddAsync(Auction auction, CancellationToken cancellationToken);
+    Task UpdateAsync(Auction auction, CancellationToken cancellationToken);
 }
