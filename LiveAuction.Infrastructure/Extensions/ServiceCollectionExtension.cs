@@ -13,7 +13,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IAuctionRepository,AuctionRepository>();
         services.AddScoped<IBidRepository,BidRepository>();
 
-        var connectionString = configuration.GetConnectionString("LiveAuctionDb");
+        var connectionString = configuration.GetConnectionString("LiveAuctionDbConnection");
         services.AddDbContext<ApplicationDbContext>(options =>
         {
             options.UseSqlServer(connectionString);
