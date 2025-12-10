@@ -17,10 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Repositories\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\LiveAuction.Domain\LiveAuction.Domain.csproj" />
   </ItemGroup>
 
