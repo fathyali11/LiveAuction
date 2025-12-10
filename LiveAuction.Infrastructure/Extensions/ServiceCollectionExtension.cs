@@ -1,6 +1,8 @@
-﻿using LiveAuction.Domain.Repositories;
+﻿using LiveAuction.Domain.Entities;
+using LiveAuction.Domain.Repositories;
 using LiveAuction.Infrastructure.Presistence;
 using LiveAuction.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +20,15 @@ public static class ServiceCollectionExtension
         {
             options.UseSqlServer(connectionString);
         });
+
+        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+        {
+            options.User.RequireUniqueEmail = true;
+        })
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
+
+
 
 
 
