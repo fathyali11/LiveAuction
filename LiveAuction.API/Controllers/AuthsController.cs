@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using LiveAuction.Application.ApplicationUsers.Commands.LoginUser;
 using LiveAuction.Application.ApplicationUsers.Commands.RegisterUser;
 using LiveAuction.Domain.Consts;
+using LiveAuction.Shared.DTOs;
 
 namespace LiveAuction.API.Controllers;
 
@@ -11,9 +12,9 @@ namespace LiveAuction.API.Controllers;
 public class AuthsController(IMediator _mediator):ControllerBase
 {
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterUserCommand request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(request, cancellationToken);
+        var result = await _mediator.Send(new RegisterUserCommand(request.Email,request.Password), cancellationToken);
 
         return result.Match<IActionResult>(
              error => error.Code switch
@@ -27,9 +28,9 @@ public class AuthsController(IMediator _mediator):ControllerBase
              authResponse => Ok(authResponse));
     }
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginUserCommand request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Login([FromBody] LoginRequest  request, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(request, cancellationToken);
+        var result = await _mediator.Send(new LoginUserCommand(request.Email, request.Password), cancellationToken);
         return result.Match<IActionResult>(
             error => error.Code switch
             {
