@@ -19,6 +19,7 @@ public static class ServiceCollectionExtension
     {
         services.AddScoped<IAuctionRepository,AuctionRepository>();
         services.AddScoped<IBidRepository,BidRepository>();
+        services.AddScoped<IBackgroundJobService,BackgroundJobService>();
 
         var connectionString = configuration.GetConnectionString("LiveAuctionDbConnection");
         services.AddDbContext<ApplicationDbContext>(options =>
@@ -26,8 +27,8 @@ public static class ServiceCollectionExtension
             options.UseSqlServer(connectionString);
         });
 
-        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-        {
+        services.AddHangfire(configuration => configuration
+            .UseSqlServerStorage(connectionString));
             options.User.RequireUniqueEmail = true;
         })
             .AddEntityFrameworkStores<ApplicationDbContext>()
