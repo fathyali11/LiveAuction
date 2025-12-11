@@ -1,15 +1,17 @@
-﻿using LiveAuction.Domain.Consts;
+﻿using Hangfire;
+using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
+using LiveAuction.Domain.Services;
 using LiveAuction.Infrastructure.Presistence;
 using LiveAuction.Infrastructure.Repositories;
+using LiveAuction.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 namespace LiveAuction.Infrastructure.Extensions;
@@ -19,6 +21,8 @@ public static class ServiceCollectionExtension
     {
         services.AddScoped<IAuctionRepository,AuctionRepository>();
         services.AddScoped<IBidRepository,BidRepository>();
+        services.AddScoped<IBackgroundJobService,BackgroundJobService>();
+        services.AddScoped<IAuthService,AuthService>();
 
         var connectionString = configuration.GetConnectionString("LiveAuctionDbConnection");
         services.AddDbContext<ApplicationDbContext>(options =>
@@ -26,10 +30,10 @@ public static class ServiceCollectionExtension
             options.UseSqlServer(connectionString);
         });
 
-        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
-        {
-            options.User.RequireUniqueEmail = true;
-        })
+        services.AddHangfire(configuration => configuration
+            .UseSqlServerStorage(connectionString));
+
+        services.AddIdentity<ApplicationUser, IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
