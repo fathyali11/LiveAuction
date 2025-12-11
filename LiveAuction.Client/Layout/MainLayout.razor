@@ -1,0 +1,35 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider IsDarkMode="true" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3">🔨 Live Auction</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+        <MudNavMenu>
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">الرئيسية</MudNavLink>
+            <MudNavLink Href="/my-bids" Icon="@Icons.Material.Filled.Gavel">مزايداتي</MudNavLink>
+            <MudNavGroup Title="Admin" Icon="@Icons.Material.Filled.Settings" Expanded="false">
+                <MudNavLink Href="/create-auction" Icon="@Icons.Material.Filled.Add">إضافة مزاد</MudNavLink>
+            </MudNavGroup>
+        </MudNavMenu>
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+    void DrawerToggle() => _drawerOpen = !_drawerOpen;
+}

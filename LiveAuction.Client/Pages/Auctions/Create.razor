@@ -1,0 +1,103 @@
+﻿@page "/create-auction"
+@using LiveAuction.Shared.DTOs
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager NavManager
+
+<PageTitle>إضافة مزاد جديد</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-6">🔨 بيعة جديدة</MudText>
+
+    <MudCard Elevation="4" Class="pa-4">
+        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+
+            <MudCardContent>
+                <MudGrid>
+
+                    <MudItem xs="12">
+                        <MudTextField Label="اسم المنتج"
+                                      @bind-Value="model.Title"
+                                      For="@(() => model.Title)"
+                                      Variant="Variant.Outlined"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.ShoppingBag" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudTextField Label="وصف المنتج"
+                                      @bind-Value="model.Description"
+                                      For="@(() => model.Description)"
+                                      Variant="Variant.Outlined"
+                                      Lines="3" />
+                    </MudItem>
+
+                    <MudItem xs="12">
+                        <MudTextField Label="رابط الصورة (URL)"
+                                      @bind-Value="model.ImageUrl"
+                                      For="@(() => model.ImageUrl)"
+                                      Variant="Variant.Outlined"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Image" />
+                    </MudItem>
+
+                    <MudItem xs="6">
+                        <MudNumericField Label="سعر البداية"
+                                         @bind-Value="model.StartingBid"
+                                         For="@(() => model.StartingBid)"
+                                         Variant="Variant.Outlined"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.AttachMoney" />
+                    </MudItem>
+
+                    <MudItem xs="6">
+                        <MudNumericField Label="المدة (دقائق)"
+                                         @bind-Value="model.DurationInMinutes"
+                                         For="@(() => model.DurationInMinutes)"
+                                         Variant="Variant.Outlined"
+                                         Adornment="Adornment.Start"
+                                         AdornmentIcon="@Icons.Material.Filled.Timer" />
+                    </MudItem>
+
+                </MudGrid>
+            </MudCardContent>
+
+            <MudCardActions Class="d-flex justify-end pa-4">
+                <MudButton ButtonType="ButtonType.Submit"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           StartIcon="@Icons.Material.Filled.Save"
+                           Disabled="@_processing">
+                    @(_processing ? "جاري الحفظ..." : "فتح المزاد")
+                </MudButton>
+            </MudCardActions>
+
+        </EditForm>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private CreateAuctionRequest model = new();
+    private bool _processing = false;
+
+    private async Task OnValidSubmit()
+    {
+        _processing = true;
+
+        var response = await Http.PostAsJsonAsync("api/auctions", model);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("تم فتح المزاد بنجاح! 🚀", Severity.Success);
+            NavManager.NavigateTo("/");
+        }
+        else
+        {
+            Snackbar.Add("حصلت مشكلة أثناء الحفظ", Severity.Error);
+        }
+
+        _processing = false;
+    }
+}
