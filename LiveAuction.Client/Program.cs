@@ -10,7 +10,14 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://localhost:7293") });
+builder.Services.AddScoped<HttpInterceptorService>();
+builder.Services.AddHttpClient("LiveAuctionAPI", client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7293");
+})
+    .AddHttpMessageHandler<HttpInterceptorService>();
+builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("LiveAuctionAPI"));
+
 builder.Services.AddMudServices();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddAuthorizationCore();
