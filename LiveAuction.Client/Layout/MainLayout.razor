@@ -1,4 +1,6 @@
-﻿@inherits LayoutComponentBase
+﻿@using LiveAuction.Client.Auth
+@using Microsoft.AspNetCore.Components.Authorization
+@inherits LayoutComponentBase
 
 <MudThemeProvider IsDarkMode="true" />
 <MudDialogProvider />
@@ -9,7 +11,16 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h5" Class="ml-3">🔨 Live Auction</MudText>
         <MudSpacer />
-        <MudButton Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
+        <AuthorizeView>
+            <Authorized>
+                <MudText Class="mr-4">👤 @context.User.Identity?.Name</MudText>
+                <MudButton Variant="Variant.Text" Color="Color.Inherit" OnClick="Logout">خروج</MudButton>
+            </Authorized>
+            <NotAuthorized>
+                <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/login">دخول</MudButton>
+                <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Class="ml-2" Href="/register">حساب جديد</MudButton>
+            </NotAuthorized>
+        </AuthorizeView>
     </MudAppBar>
 
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
@@ -30,6 +41,14 @@
 </MudLayout>
 
 @code {
+    [Inject] AuthenticationStateProvider authenticationStateProvider { get; set; }
+    [Inject] NavigationManager NavigationManager { get; set; }
     bool _drawerOpen = true;
     void DrawerToggle() => _drawerOpen = !_drawerOpen;
+
+    private async Task Logout()
+    {
+        await ((CustomAuthStateProvider)authenticationStateProvider).MarkUserAsLoggedOut();
+        NavigationManager.NavigateTo("/login");
+    }
 }

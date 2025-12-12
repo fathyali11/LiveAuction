@@ -2,11 +2,11 @@
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
-using LiveAuction.Application.ApplicationUsers.Dtos;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Services;
 using OneOf;
+using LiveAuction.Shared.DTOs;
 
 namespace LiveAuction.Application.ApplicationUsers.Commands.LoginUser;
 

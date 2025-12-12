@@ -1,7 +1,7 @@
 ﻿using MediatR;
-using LiveAuction.Application.ApplicationUsers.Dtos;
 using LiveAuction.Domain.Consts;
 using OneOf;
+using LiveAuction.Shared.DTOs;
 
 namespace LiveAuction.Application.ApplicationUsers.Commands.RegisterUser;
 
