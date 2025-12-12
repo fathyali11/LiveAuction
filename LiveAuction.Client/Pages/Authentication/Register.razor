@@ -1,0 +1,53 @@
+﻿@page "/register"
+@using LiveAuction.Client.Auth
+@using LiveAuction.Shared.DTOs
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
+
+<PageTitle>حساب جديد</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-16">
+    <MudCard Elevation="4" Class="pa-4">
+        <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4">🚀 انضم للمزاد</MudText>
+
+        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+            <MudTextField Label="الاسم الكامل" @bind-Value="model.FullName" For="@(() => model.FullName)" Variant="Variant.Outlined" Class="mb-3" />
+            <MudTextField Label="الإيميل" @bind-Value="model.Email" For="@(() => model.Email)" Variant="Variant.Outlined" Class="mb-3" />
+            <MudTextField Label="الباسورد" @bind-Value="model.Password" For="@(() => model.Password)" Variant="Variant.Outlined" InputType="InputType.Password" Class="mb-3" />
+
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="_processing">
+                @(_processing ? "جاري التسجيل..." : "تسجيل حساب")
+            </MudButton>
+        </EditForm>
+
+        <MudLink Href="/login" Class="d-flex justify-center mt-3">لديك حساب بالفعل؟</MudLink>
+    </MudCard>
+</MudContainer>
+
+@code {
+    private RegisterRequest model = new();
+    private bool _processing = false;
+
+    private async Task OnValidSubmit()
+    {
+        _processing = true;
+        var response = await Http.PostAsJsonAsync("api/auths/register", model);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("تم التسجيل! سجل دخول الآن", Severity.Success);
+            var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
+
+            await (AuthStateProvider as CustomAuthStateProvider)?.MarkUserAsAuthenticated(authResponse!.Token)!;
+            NavManager.NavigateTo("/");
+        }
+        else
+        {
+            Snackbar.Add("حدث خطأ، تأكد من البيانات", Severity.Error);
+        }
+        _processing = false;
+    }
+}

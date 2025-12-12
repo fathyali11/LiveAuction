@@ -1,4 +1,4 @@
-﻿namespace LiveAuction.Application.ApplicationUsers.Dtos;
+﻿namespace LiveAuction.Shared.DTOs;
 
 public class AuthResponse
 {

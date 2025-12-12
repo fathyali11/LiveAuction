@@ -14,7 +14,7 @@ public class AuthsController(IMediator _mediator):ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new RegisterUserCommand(request.Email,request.Password), cancellationToken);
+        var result = await _mediator.Send(new RegisterUserCommand(request.FullName,request.Email,request.Password), cancellationToken);
 
         return result.Match<IActionResult>(
              error => error.Code switch
