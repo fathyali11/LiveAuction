@@ -14,7 +14,7 @@
 
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator />
-
+            <MudTextField Label="الاسم الكامل" @bind-Value="model.FullName" For="@(() => model.FullName)" Variant="Variant.Outlined" Class="mb-3" />
             <MudTextField Label="الإيميل" @bind-Value="model.Email" For="@(() => model.Email)" Variant="Variant.Outlined" Class="mb-3" />
             <MudTextField Label="الباسورد" @bind-Value="model.Password" For="@(() => model.Password)" Variant="Variant.Outlined" InputType="InputType.Password" Class="mb-3" />
 

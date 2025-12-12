@@ -19,6 +19,7 @@ internal class AuthService(IOptions<JwtSettings> options) : IAuthService
         {
             new (JwtRegisteredClaimNames.Sub, user.Id),
             new (JwtRegisteredClaimNames.Email, user.Email!),
+            new (JwtRegisteredClaimNames.Name, user.FullName!),
             new (JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new ("roles", JsonSerializer.Serialize(roles))
         };
