@@ -49,6 +49,6 @@
     private async Task Logout()
     {
         await ((CustomAuthStateProvider)authenticationStateProvider).MarkUserAsLoggedOut();
-        NavigationManager.NavigateTo("/login");
+        NavigationManager.NavigateTo("/");
     }
 }
