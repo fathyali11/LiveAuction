@@ -16,16 +16,35 @@ internal class AuctionRepository(ApplicationDbContext _context) : IAuctionReposi
 
     public async Task<List<Auction>> GetAllActiveAsync(CancellationToken cancellationToken)
         => await _context.Auctions
+            .Include(a => a.CreatedBy)
             .Where(a => a.Status == AuctionStatus.Open)
+            .OrderByDescending(a => a.StartTime)
             .ToListAsync(cancellationToken);
 
-    public async Task<Auction?> GetByIdAsync(int id,CancellationToken cancellationToken)
+    public async Task<Auction?> GetByIdAsync(int id, CancellationToken cancellationToken)
         => await _context.Auctions
-            .FindAsync([id], cancellationToken);
+            .Include(a => a.CreatedBy)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
-    public async Task UpdateAsync(Auction auction,CancellationToken cancellationToken)
+    public async Task<Auction?> GetByIdWithBidsAsync(int id, CancellationToken cancellationToken)
+        => await _context.Auctions
+            .Include(a => a.CreatedBy)
+            .Include(a => a.Bids)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+
+    public async Task UpdateAsync(Auction auction, CancellationToken cancellationToken)
     {
         _context.Auctions.Update(auction);
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken)
+    {
+        var auction = await _context.Auctions.FindAsync([id], cancellationToken);
+        if (auction != null)
+        {
+            _context.Auctions.Remove(auction);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
     }
 }
