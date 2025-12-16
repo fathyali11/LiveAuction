@@ -35,7 +35,22 @@
                             </MudText>
 
                             <div class="d-flex justify-space-between mt-3 align-center">
-                                <MudText Color="Color.Success" Typo="Typo.h5"><b>$@auction.CurrentBid</b></MudText> <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.LocalFireDepartment">Live</MudChip>
+                                <MudText Color="Color.Success" Typo="Typo.h5">
+                                    <b>$@auction.CurrentBid</b>
+                                </MudText>
+                                @if(string.Equals(GetTimeRemaining(auction.EndTime), "انتهى"))
+                                {
+                                    <MudChip T="string" Color="Color.Default" Size="Size.Small" Icon="@Icons.Material.Filled.HourglassDisabled">
+                                        انتهى
+                                    </MudChip>
+                                }
+                                else
+                                {
+                                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.LocalFireDepartment">
+                                        Live
+                                    </MudChip>
+                                }
+                                
                             </div>
                         </MudCardContent>
 

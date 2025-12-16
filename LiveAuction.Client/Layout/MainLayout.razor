@@ -5,6 +5,7 @@
 <MudThemeProvider IsDarkMode="true" />
 <MudDialogProvider />
 <MudSnackbarProvider />
+<MudPopoverProvider />
 
 <MudLayout>
     <MudAppBar Elevation="1" Color="Color.Primary">
@@ -52,7 +53,6 @@
 
     private async Task Logout()
     {
-        // استخدام دالة الخروج من البروفايدر الخاص بينا
         await ((CustomAuthStateProvider)authenticationStateProvider).MarkUserAsLoggedOut();
         NavigationManager.NavigateTo("/");
     }

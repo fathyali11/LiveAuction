@@ -1,4 +1,5 @@
 using LiveAuction.API.Extensions;
+using LiveAuction.API.Hubs;
 using LiveAuction.Application.Extensions;
 using LiveAuction.Infrastructure.Extensions;
 var builder = WebApplication.CreateBuilder(args);
@@ -19,7 +20,7 @@ app.MapStaticAssets();
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorClient");
 app.UseAuthorization();
-
+app.MapHub<AuctionHub>("/hubs/auction");
 app.MapControllers();
 
 app.Run();

@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.SignalR.Client
 @attribute [Authorize]
 @inject HttpClient Http
 @inject ISnackbar Snackbar
@@ -51,11 +52,11 @@
                                                        Href="@($"/auctions/edit/{auction.Id}")" />
                                     </MudTooltip>
 
-                                    <MudTooltip Text="@(auction.Bids.Any() ? "لا يمكن حذف مزاد نشط" : "حذف المزاد")">
+                                    <MudTooltip Text="@(auction.Bids.Any() ? "لا يمكن حذف مزاد نشط أو يحتوي علي مزايدات" : "حذف المزاد")">
                                         <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                                        Color="Color.Error"
                                                        OnClick="ConfirmDelete"
-                                                       Disabled="@(auction.Bids.Any())" />
+                                                       Disabled="@(auction.Bids.Any() ||AuctionStatus.Open.ToString() == GetAuctionStatus())" />
                                     </MudTooltip>
                                 </div>
                             }
@@ -223,6 +224,7 @@
     private bool isBidding = false;
     private string currentUserName=string.Empty;
     private double bidAmount;
+    private HubConnection hubConnection=default!;
 
     private const string LocalImagePath = "https://localhost:7293/images/";
 
@@ -237,14 +239,48 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthStateTask;
-        var user = authState.User;
-        if(user.Identity is null || !user.Identity.IsAuthenticated)
-        {
-            NavManager.NavigateTo("/login");
-            return;
-        }
         await LoadData();
+        try
+        {
+            hubConnection = new HubConnectionBuilder()
+            .WithUrl("https://localhost:7293/hubs/auction")
+            .WithAutomaticReconnect()
+            .Build();
+
+            hubConnection.On<BidDto>("NewBidPlaced", async bid =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    auction!.CurrentBid = bid.Amount;
+                    auction.Bids.Add(bid);
+                    StateHasChanged();
+                    Snackbar.Add($"مزايدة جديدة من {bid.Bidder} بـ ${bid.Amount}", Severity.Info);
+                });
+            });
+            Console.WriteLine("Hub connection will be created.");
+            await hubConnection.StartAsync();
+            Console.WriteLine("Hub connection started.");
+
+            if (hubConnection.State == HubConnectionState.Connected)
+            {
+                await hubConnection.SendAsync("JoinToGroub", auction!.Id.ToString());
+            }
+
+            hubConnection.Reconnected += async (string? connectionId) =>
+            {
+                Console.WriteLine("Reconnected to hub.");
+                if (hubConnection.State == HubConnectionState.Connected)
+                {
+                    await hubConnection.SendAsync("JoinToGroub", auction!.Id.ToString());
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error connecting to hub: {ex.Message}");
+
+        }
+
     }
 
     private async Task LoadData()
@@ -286,12 +322,7 @@
         try
         {
             var response = await Http.PostAsJsonAsync("api/bids", new { AuctionId = Id, Amount = bidAmount });
-            if (response.IsSuccessStatusCode)
-            {
-                Snackbar.Add("تمت المزايدة بنجاح! 🎉", Severity.Success);
-                await LoadData(); 
-            }
-            else
+            if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
                 Snackbar.Add($"فشل: {error}", Severity.Error);
@@ -343,5 +374,18 @@
         if (span.TotalSeconds <= 0) return "00:00";
         // تنسيق الوقت: 2ي 5س 30د
         return $"{(span.Days > 0 ? $"{span.Days}ي " : "")}{span.Hours}س {span.Minutes}د";
+    }
+
+    public async Task DisposeAsync()
+    {
+        if (hubConnection != null)
+        {
+            if (hubConnection.State == HubConnectionState.Connected)
+            {
+                await hubConnection.InvokeAsync("LeaveFromGroub", auction!.Id.ToString());
+            }
+            await hubConnection.StopAsync();
+            await hubConnection.DisposeAsync();
+        }
     }
 }

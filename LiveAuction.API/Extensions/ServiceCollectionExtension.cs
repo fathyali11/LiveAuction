@@ -1,4 +1,6 @@
 ﻿using LiveAuction.API.Exceptions;
+using LiveAuction.API.Services;
+using LiveAuction.Application.Interfaces;
 using Serilog;
 
 namespace LiveAuction.API.Extensions;
@@ -22,13 +24,14 @@ public static class ServiceCollectionExtension
         {
             options.AddPolicy("AllowBlazorClient",
                 policy => policy
-                    // 👇 هنا بنكتب رابط الفرونت إند بتاعك بالظبط (خده من اللوج copy paste)
-                    .WithOrigins("https://localhost:7085", "http://localhost:5000")
+                    .WithOrigins("https://localhost:7085")
                     .AllowAnyMethod()
                     .AllowAnyHeader()
-                    .AllowCredentials()); // مهمة عشان الـ Auth و SignalR
+                    .AllowCredentials()); 
         });
         builder.Services.AddControllers();
+        builder.Services.AddSignalR();
+        builder.Services.AddScoped<IAuctionNotificationService, AuctionNotificationService>();
         return builder;
     }
 }

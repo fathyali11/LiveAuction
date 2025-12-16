@@ -35,10 +35,6 @@ public class AuctionMappings : IRegister
             .Map(dest => dest.Status, src => src.Status)
             .Map(dest => dest.Bids, src => src.Bids);
 
-        config.NewConfig<Bid, BidDto>()
-            .Map(dest => dest.Id, src => src.Id)
-            .Map(dest => dest.Amount, src => src.Amount)
-            .Map(dest => dest.Bidder, src => src.Bidder)
-            .Map(dest => dest.TimePlaced, src => src.BidTime);
+        
     }
 }
