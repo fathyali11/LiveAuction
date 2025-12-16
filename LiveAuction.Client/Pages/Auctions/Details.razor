@@ -48,7 +48,7 @@
                                     <MudTooltip Text="تعديل البيانات">
                                         <MudIconButton Icon="@Icons.Material.Filled.Edit"
                                                        Color="Color.Warning"
-                                                       Disabled="@(AuctionStatus.Closed.ToString() == GetAuctionStatus())"
+                                                       Disabled="@(auction.Bids.Any() ||AuctionStatus.Closed.ToString() == GetAuctionStatus())"
                                                        Href="@($"/auctions/edit/{auction.Id}")" />
                                     </MudTooltip>
 
