@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace LiveAuction.Shared.DTOs;
 
@@ -11,9 +12,7 @@ public class CreateAuctionRequest
     [Required(ErrorMessage = "وصف المزاد مطلوب")]
     [StringLength(1000, ErrorMessage = "وصف المزاد يجب أن يكون أقل من 1000 حرف")]
     public string Description { get; set; } = string.Empty;
-
-    [Url(ErrorMessage = "رابط الصورة غير صالح")]
-    public string ?ImageUrl { get; set; }
+    public IFormFile Image { get; set; } = null!;
 
     public DateTime StartTime { get; set; } = DateTime.UtcNow;
     
@@ -21,6 +20,7 @@ public class CreateAuctionRequest
     [Required(ErrorMessage = "سعر البداية مطلوب")]
     [Range(0.01, double.MaxValue, ErrorMessage = "سعر البداية يجب أن يكون أكبر من صفر")]
     public decimal StartingBid { get; set; }
+    [Required(ErrorMessage = "اسم البائع مطلوب")]
 
     public string Seller { get; set; } = string.Empty;
 

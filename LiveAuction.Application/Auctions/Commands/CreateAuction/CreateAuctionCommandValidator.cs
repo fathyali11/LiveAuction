@@ -14,6 +14,18 @@ internal class CreateAuctionCommandValidator : AbstractValidator<CreateAuctionCo
             .NotEmpty().WithMessage("æÕİ ÇáãÒÇÏ ãØáæÈ")
             .MaximumLength(1000).WithMessage("æÕİ ÇáãÒÇÏ íÌÈ Ãä íßæä ÃŞá ãä 1000 ÍÑİ");
 
+        RuleFor(x => x.Image)
+            .NotNull().WithMessage("ÕæÑÉ ÇáãÒÇÏ ãØáæÈÉ")
+            .ChildRules(image =>
+            {
+                image.RuleFor(i => i.Length)
+                    .GreaterThan(0).WithMessage("ÕæÑÉ ÇáãÒÇÏ áÇ íãßä Ãä Êßæä İÇÑÛÉ")
+                    .LessThanOrEqualTo(5 * 1024 * 1024).WithMessage("ÍÌã ÕæÑÉ ÇáãÒÇÏ íÌÈ Ãä íßæä ÃŞá ãä 5 ãíÌÇÈÇíÊ");
+                image.RuleFor(i => i.ContentType)
+                    .Must(contentType => contentType == "image/jpeg" || contentType == "image/png")
+                    .WithMessage("äæÚ ÕæÑÉ ÇáãÒÇÏ íÌÈ Ãä íßæä JPEG Ãæ PNG");
+            });
+
         RuleFor(x => x.StartTime)
             .Must(startTime => startTime >= DateTime.UtcNow.AddMinutes(-2))
             .WithMessage("æŞÊ ÈÏÁ ÇáãÒÇÏ íÌÈ Ãä íßæä ÇáÂä Ãæ İí ÇáãÓÊŞÈá");

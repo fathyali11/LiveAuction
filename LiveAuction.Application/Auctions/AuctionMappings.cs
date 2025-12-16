@@ -1,5 +1,4 @@
 ﻿using LiveAuction.Application.Auctions.Commands.CreateAuction;
-using LiveAuction.Application.Auctions.Commands.UpdateAuction;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Shared.DTOs;
 using LiveAuction.Shared.Enums;
@@ -14,7 +13,6 @@ public class AuctionMappings : IRegister
         config.NewConfig<CreateAuctionCommand, Auction>()
             .Map(dest => dest.Title, src => src.Title)
             .Map(dest => dest.Description, src => src.Description)
-            .Map(dest => dest.ImageUrl, src => src.ImageUrl)
             .Map(dest => dest.StartTime, src => src.StartTime)
             .Map(dest => dest.EndTime, src => src.StartTime.AddMinutes(src.DurationInMinutes))
             .Map(dest => dest.StartingBid, src => src.StartingBid)
@@ -27,13 +25,20 @@ public class AuctionMappings : IRegister
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.Title, src => src.Title)
             .Map(dest => dest.Description, src => src.Description)
-            .Map(dest => dest.ImageUrl, src => src.ImageUrl)
+            .Map(dest => dest.ImageName, src => src.ImageName)
             .Map(dest => dest.StartTime, src => src.StartTime)
             .Map(dest => dest.EndTime, src => src.EndTime)
             .Map(dest => dest.StartingBid, src => src.StartingBid)
             .Map(dest => dest.CurrentBid, src => src.CurrentBid)
-            .Map(dest => dest.Seller, src => src.CreatedBy)
+            .Map(dest => dest.Seller, src => src.CreatedBy.FullName)
             .Map(dest => dest.CurrentBidder, src => src.CurrentBidder)
-            .Map(dest => dest.Status, src => src.Status);
+            .Map(dest => dest.Status, src => src.Status)
+            .Map(dest => dest.Bids, src => src.Bids);
+
+        config.NewConfig<Bid, BidDto>()
+            .Map(dest => dest.Id, src => src.Id)
+            .Map(dest => dest.Amount, src => src.Amount)
+            .Map(dest => dest.Bidder, src => src.Bidder)
+            .Map(dest => dest.TimePlaced, src => src.BidTime);
     }
 }

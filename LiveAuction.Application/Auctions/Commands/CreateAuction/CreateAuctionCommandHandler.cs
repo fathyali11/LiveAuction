@@ -2,8 +2,8 @@ using FluentValidation;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
+using LiveAuction.Domain.Services;
 using LiveAuction.Shared.DTOs;
-using LiveAuction.Shared.Enums;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -16,7 +16,8 @@ internal class CreateAuctionCommandHandler(
     IAuctionRepository _auctionRepository,
     ILogger<CreateAuctionCommandHandler> _logger,
     IValidator<CreateAuctionCommand> _validator,
-    UserManager<ApplicationUser> _userManager) : IRequestHandler<CreateAuctionCommand, OneOf<Error, AuctionDto>>
+    UserManager<ApplicationUser> _userManager,
+    IAuctionService _auctionService) : IRequestHandler<CreateAuctionCommand, OneOf<Error, AuctionDto>>
 {
     public async Task<OneOf<Error, AuctionDto>> Handle(CreateAuctionCommand request, CancellationToken cancellationToken)
     {
@@ -44,12 +45,16 @@ internal class CreateAuctionCommandHandler(
             return new Error(ErrorCodes.ValidationError, errorMessage);
         }
 
+
         var auction = request.Adapt<Auction>();
+        auction.ImageName=await _auctionService.SaveImageAsync(request.Image, cancellationToken);
 
         await _auctionRepository.AddAsync(auction, cancellationToken);
 
         _logger.LogInformation("Auction created successfully: {Title} with ID: {Id}", auction.Title, auction.Id);
 
-        return auction.Adapt<AuctionDto>();
+        var auctionDto = auction.Adapt<AuctionDto>();
+        auctionDto.Bids = new List<BidDto>();
+        return auctionDto;
     }
 }

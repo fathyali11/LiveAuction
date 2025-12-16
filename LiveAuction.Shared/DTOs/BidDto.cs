@@ -6,6 +6,4 @@ public class BidDto
     public decimal Amount { get; set; }
     public string Bidder { get; set; } = string.Empty;
     public DateTime TimePlaced { get; set; }
-
-    public string FormattedTimePlaced => TimePlaced.ToString("hh:mm:ss tt");
 }

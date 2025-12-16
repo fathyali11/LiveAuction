@@ -15,6 +15,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseExceptionHandler();
+app.MapStaticAssets();
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorClient");
 app.UseAuthorization();

@@ -1,0 +1,90 @@
+﻿@page "/auctions/edit/{Id:int}"
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager NavManager
+
+<PageTitle>تعديل المزاد</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    <MudText Typo="Typo.h4" Class="mb-4">✏️ تعديل البيانات</MudText>
+
+    @if (model == null)
+    {
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    }
+    else
+    {
+        <MudPaper Class="pa-4">
+            <EditForm Model="model" OnValidSubmit="SubmitUpdate">
+                <DataAnnotationsValidator />
+
+                <MudTextField Label="اسم المنتج"
+                              @bind-Value="model.Title"
+                              For="@(() => model.Title)"
+                              Variant="Variant.Outlined"
+                              Class="mb-4" />
+
+                <MudTextField Label="وصف المنتج"
+                              @bind-Value="model.Description"
+                              For="@(() => model.Description)"
+                              Variant="Variant.Outlined"
+                              Lines="3"
+                              Class="mb-4" />
+
+                <MudTextField Label="رابط الصورة"
+                              @bind-Value="model.ImageUrl"
+                              For="@(() => model.ImageUrl)"
+                              Variant="Variant.Outlined"
+                              Class="mb-4" />
+
+                <div class="d-flex justify-end mt-4">
+                    <MudButton OnClick="@(() => NavManager.NavigateTo($"/api/auctions/{Id}"))" Class="ml-2">إلغاء</MudButton>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">حفظ التعديلات</MudButton>
+                </div>
+            </EditForm>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private UpdateAuctionRequest? model;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var auction = await Http.GetFromJsonAsync<AuctionDto>($"api/auctions/{Id}");
+            if (auction != null)
+            {
+                model = new UpdateAuctionRequest
+                {
+                    Title = auction.Title,
+                    Description = auction.Description,
+                    ImageUrl = auction.ImageName
+                };
+            }
+        }
+        catch
+        {
+            Snackbar.Add("خطأ في تحميل البيانات", Severity.Error);
+            NavManager.NavigateTo("/");
+        }
+    }
+
+    private async Task SubmitUpdate()
+    {
+        var response = await Http.PutAsJsonAsync($"api/auctions/{Id}", model);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("تم التعديل بنجاح ✅", Severity.Success);
+            NavManager.NavigateTo($"/api/auctions/{Id}");
+        }
+        else
+        {
+            Snackbar.Add("فشل التعديل! (تأكد إن المزاد معلهوش مزايدات)", Severity.Error);
+        }
+    }
+}

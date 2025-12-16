@@ -1,8 +1,13 @@
-﻿@page "/create-auction"
-@using LiveAuction.Shared.DTOs
+﻿@page "/auctions/create"
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Authorization
+
 @inject HttpClient Http
 @inject ISnackbar Snackbar
 @inject NavigationManager NavManager
+@inject AuthenticationStateProvider AuthStateProvider
+@attribute [Authorize]
+
 
 <PageTitle>إضافة مزاد جديد</PageTitle>
 
@@ -13,51 +18,76 @@
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator />
 
+            
             <MudCardContent>
                 <MudGrid>
 
                     <MudItem xs="12">
                         <MudTextField Label="اسم المنتج"
-                                      @bind-Value="model.Title"
-                                      For="@(() => model.Title)"
-                                      Variant="Variant.Outlined"
-                                      Adornment="Adornment.Start"
-                                      AdornmentIcon="@Icons.Material.Filled.ShoppingBag" />
+                                                         @bind-Value="model.Title"
+                                                         For="@(() => model.Title)"
+                                                         Variant="Variant.Outlined"
+                                                         Adornment="Adornment.Start"
+                                                         AdornmentIcon="@Icons.Material.Filled.ShoppingBag" />
                     </MudItem>
 
                     <MudItem xs="12">
                         <MudTextField Label="وصف المنتج"
-                                      @bind-Value="model.Description"
-                                      For="@(() => model.Description)"
-                                      Variant="Variant.Outlined"
-                                      Lines="3" />
+                                                         @bind-Value="model.Description"
+                                                         For="@(() => model.Description)"
+                                                         Variant="Variant.Outlined"
+                                                         Lines="3" />
                     </MudItem>
 
                     <MudItem xs="12">
-                        <MudTextField Label="رابط الصورة (URL)"
-                                      @bind-Value="model.ImageUrl"
-                                      For="@(() => model.ImageUrl)"
-                                      Variant="Variant.Outlined"
-                                      Adornment="Adornment.Start"
-                                      AdornmentIcon="@Icons.Material.Filled.Image" />
+                        <MudFileUpload T="IBrowserFile"
+                                                           Label="صورة المنتج"
+                                                           Accept="image/*"
+                                                           OnFilesChanged="OnFileSelected"
+                                                           Variant="Variant.Outlined"
+                                                           Adornment="Adornment.Start"
+                                                           AdornmentIcon="@Icons.Material.Filled.Image">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Outlined"
+                                                                 Color="Color.Primary"
+                                                                 StartIcon="@Icons.Material.Filled.CloudUpload">
+                                    @(_selectedFile != null ? _selectedFile.Name : "اختر صورة")
+                                </MudButton>
+                                @if (_selectedFile != null)
+                                {
+                                    <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                                                     Color="Color.Error"
+                                                   OnClick="() => _selectedFile = null" />
+                                }
+                            </ActivatorContent>
+                        </MudFileUpload>
                     </MudItem>
 
                     <MudItem xs="6">
                         <MudNumericField Label="سعر البداية"
-                                         @bind-Value="model.StartingBid"
-                                         For="@(() => model.StartingBid)"
-                                         Variant="Variant.Outlined"
-                                         Adornment="Adornment.Start"
-                                         AdornmentIcon="@Icons.Material.Filled.AttachMoney" />
+                                                              @bind-Value="model.StartingBid"
+                                                              For="@(() => model.StartingBid)"
+                                                              Variant="Variant.Outlined"
+                                                              Adornment="Adornment.Start"
+                                                              AdornmentIcon="@Icons.Material.Filled.AttachMoney" />
                     </MudItem>
 
                     <MudItem xs="6">
                         <MudNumericField Label="المدة (دقائق)"
-                                         @bind-Value="model.DurationInMinutes"
-                                         For="@(() => model.DurationInMinutes)"
-                                         Variant="Variant.Outlined"
-                                         Adornment="Adornment.Start"
-                                         AdornmentIcon="@Icons.Material.Filled.Timer" />
+                                                              @bind-Value="model.DurationInMinutes"
+                                                              For="@(() => model.DurationInMinutes)"
+                                                              Variant="Variant.Outlined"
+                                                              Adornment="Adornment.Start"
+                                                              AdornmentIcon="@Icons.Material.Filled.Timer" />
+                    </MudItem>
+                    <MudItem>
+                        <MudTextField Label="البائع"
+                                                          @bind-Value="model.Seller"
+                                                          For="@(() => model.Seller)"
+                                                          Variant="Variant.Outlined"
+                                                          Adornment="Adornment.Start"
+                                                         AdornmentIcon="@Icons.Material.Filled.Person"
+                                                         Disabled="true" />
                     </MudItem>
 
                 </MudGrid>
@@ -65,11 +95,11 @@
 
             <MudCardActions Class="d-flex justify-end pa-4">
                 <MudButton ButtonType="ButtonType.Submit"
-                           Variant="Variant.Filled"
-                           Color="Color.Primary"
-                           Size="Size.Large"
-                           StartIcon="@Icons.Material.Filled.Save"
-                           Disabled="@_processing">
+                                         Variant="Variant.Filled"
+                                         Color="Color.Primary"
+                                         Size="Size.Large"
+                                         StartIcon="@Icons.Material.Filled.Save"
+                                         Disabled="@_processing">
                     @(_processing ? "جاري الحفظ..." : "فتح المزاد")
                 </MudButton>
             </MudCardActions>
@@ -81,23 +111,68 @@
 @code {
     private CreateAuctionRequest model = new();
     private bool _processing = false;
+    private IBrowserFile? _selectedFile;
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            var userName = user.Identity.Name;
+            model.Seller = userName ?? null!;
+        }
+    }
 
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+    }
     private async Task OnValidSubmit()
     {
+        if (_selectedFile == null)
+        {
+            Snackbar.Add("الرجاء اختيار صورة المزاد", Severity.Warning);
+            return;
+        }
+
         _processing = true;
 
-        var response = await Http.PostAsJsonAsync("api/auctions", model);
-
-        if (response.IsSuccessStatusCode)
+        try
         {
-            Snackbar.Add("تم فتح المزاد بنجاح! 🚀", Severity.Success);
-            NavManager.NavigateTo("/");
-        }
-        else
-        {
-            Snackbar.Add("حصلت مشكلة أثناء الحفظ", Severity.Error);
-        }
+            using var content = new MultipartFormDataContent();
 
-        _processing = false;
+            var fileContent = new StreamContent(_selectedFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024));
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(_selectedFile.ContentType);
+            content.Add(fileContent, "Image", _selectedFile.Name);
+
+            content.Add(new StringContent(model.Title), "Title");
+            content.Add(new StringContent(model.Description), "Description");
+            content.Add(new StringContent(model.StartingBid.ToString()), "StartingBid");
+            content.Add(new StringContent(model.DurationInMinutes.ToString()), "DurationInMinutes");
+            content.Add(new StringContent(model.StartTime.ToString("o")), "StartTime");
+            content.Add(new StringContent(model.Seller), "Seller");
+
+            var response = await Http.PostAsync("api/auctions", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var createdAuction = await response.Content.ReadFromJsonAsync<AuctionDto>();
+                Snackbar.Add("تم انشاء المزاد بنجاح! 🚀", Severity.Success);
+                NavManager.NavigateTo($"/auctions/{createdAuction!.Id}/details");
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"حصلت مشكلة أثناء الحفظ: {error}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"حصلت مشكلة: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _processing = false;
+        }
     }
 }

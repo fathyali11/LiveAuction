@@ -16,7 +16,7 @@ internal class GetAuctionByIdQueryHandler(
     {
         _logger.LogInformation("Handling GetAuctionByIdQuery for ID: {Id}", request.Id);
 
-        var auction = await _auctionRepository.GetByIdAsync(request.Id, cancellationToken);
+        var auction = await _auctionRepository.GetByIdWithBidsAsync(request.Id, cancellationToken);
         
         if (auction == null)
         {

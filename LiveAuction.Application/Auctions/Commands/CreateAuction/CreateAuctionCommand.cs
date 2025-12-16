@@ -1,6 +1,7 @@
 using LiveAuction.Domain.Consts;
 using LiveAuction.Shared.DTOs;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using OneOf;
 
 namespace LiveAuction.Application.Auctions.Commands.CreateAuction;
@@ -8,7 +9,7 @@ namespace LiveAuction.Application.Auctions.Commands.CreateAuction;
 public record CreateAuctionCommand(
     string Title,
     string Description,
-    string? ImageUrl,
+    IFormFile Image,
     DateTime StartTime,
     decimal StartingBid,
     int DurationInMinutes,

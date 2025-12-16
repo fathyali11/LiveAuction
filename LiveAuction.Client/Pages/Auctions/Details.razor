@@ -1,0 +1,347 @@
+﻿@page "/auctions/{Id:int}/details"
+@using LiveAuction.Shared.DTOs
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager NavManager
+@inject IDialogService DialogService
+
+
+<PageTitle>تفاصيل المزاد</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-8">
+    @if (isLoading)
+    {
+        <MudGrid>
+            <MudItem xs="12" md="7">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="400px" />
+                <MudSkeleton SkeletonType="SkeletonType.Text" Count="5" Class="mt-4" />
+            </MudItem>
+            <MudItem xs="12" md="5">
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Height="200px" />
+            </MudItem>
+        </MudGrid>
+    }
+    else if (auction == null)
+    {
+        <MudAlert Severity="Severity.Error">المزاد غير موجود أو تم حذفه.</MudAlert>
+        <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/">العودة للرئيسية</MudButton>
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12" md="7">
+                <MudCard Elevation="3" Class="rounded-lg h-100">
+                    <MudCardMedia Image="@GetImageUrl(auction.ImageName)" Height="450" />
+
+                    <MudCardContent>
+                        <div class="d-flex justify-space-between align-center">
+                            <MudText Typo="Typo.h4" Color="Color.Primary"><b>@auction.Title</b></MudText>
+
+                            @if (currentUserName == auction.Seller)
+                            {
+                                <div>
+                                    <MudTooltip Text="تعديل البيانات">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                       Color="Color.Warning"
+                                                       Disabled="@(AuctionStatus.Closed.ToString() == GetAuctionStatus())"
+                                                       Href="@($"/auctions/edit/{auction.Id}")" />
+                                    </MudTooltip>
+
+                                    <MudTooltip Text="@(auction.Bids.Any() ? "لا يمكن حذف مزاد نشط" : "حذف المزاد")">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                       Color="Color.Error"
+                                                       OnClick="ConfirmDelete"
+                                                       Disabled="@(auction.Bids.Any())" />
+                                    </MudTooltip>
+                                </div>
+                            }
+                        </div>
+
+                        <MudText Typo="Typo.caption" Class="mb-4 d-block">البائع: @(string.IsNullOrEmpty(auction.Seller) ? "مجهول" : auction.Seller)</MudText>
+                        
+                        <MudDivider />
+
+                        <MudText Typo="Typo.body1" Class="mt-4" Style="white-space: pre-line;">
+                            @auction.Description
+                        </MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+                <MudCard Elevation="4" Class="pa-4 border-solid border-2 mud-border-primary">
+
+                    <div class="d-flex justify-space-between align-center mb-4">
+                        <MudText Typo="Typo.h6">حالة المزاد</MudText>
+                        @if (AuctionStatus.Open.ToString() == GetAuctionStatus())
+                        {
+                            <MudChip T="string" Color="Color.Error" Icon="@Icons.Material.Filled.LocalFireDepartment" Size="Size.Small">مباشر 🔥</MudChip>
+                        }
+                        else if (AuctionStatus.Pending.ToString() == GetAuctionStatus())
+                        {
+                            <MudChip T="string" Color="Color.Info" Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small">قريباً ⏳</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Dark" Icon="@Icons.Material.Filled.Lock" Size="Size.Small">منتهي 🔒</MudChip>
+                        }
+                    </div>
+
+                    <div class="d-flex flex-column align-center my-4">
+                        <MudText Typo="Typo.h3" Color="@(AuctionStatus.Open.ToString() == GetAuctionStatus() ? Color.Success : Color.Default)">
+                            <b>$@auction.CurrentBid</b>
+                        </MudText>
+
+                        <MudText Typo="Typo.caption" Class="mt-1" Color="Color.Secondary">
+                            @if (AuctionStatus.Open.ToString() == GetAuctionStatus())
+                            {
+                                <span>🔴 ينتهي خلال: @GetTimeRemaining(auction.EndTime)</span>
+                            }
+                            else if (AuctionStatus.Pending.ToString() == GetAuctionStatus())
+                            {
+                                <span>⌚ يبدأ في: @auction.StartTime.ToLocalTime().ToString("dd/MM/yyyy hh:mm tt")</span>
+                            }
+                            else
+                            {
+                                <span>🏁 انتهى بتاريخ: @auction.EndTime.ToLocalTime().ToString("dd/MM/yyyy")</span>
+                            }
+                        </MudText>
+                    </div>
+
+                    <MudDivider Class="my-4" />
+
+                    @if (AuctionStatus.Open.ToString()==GetAuctionStatus())
+                    {
+                        @if (currentUserName == auction.Seller)
+                        {
+                            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                                أنت صاحب المزاد، تابع الأرباح! 📈
+                            </MudAlert>
+                        }
+                        else
+                        {
+                            <div class="d-flex gap-2">
+                                <MudNumericField @bind-Value="bidAmount"
+                                                 Label="مبلغ المزايدة"
+                                                 Variant="Variant.Outlined"
+                                                 Adornment="Adornment.Start"
+                                                 AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                                                 Min="@((double)auction.CurrentBid! + 1)" />
+
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           Size="Size.Large"
+                                           OnClick="PlaceBid"
+                                           Disabled="isBidding">
+                                    @if (isBidding)
+                                    {
+                                        <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                                    }
+                                    else
+                                    {
+
+                                        <MudText>زايد! 🔨</MudText>
+                                    }
+                                </MudButton>
+                            </div>
+                        }
+                    }
+                    else if (AuctionStatus.Pending.ToString() == GetAuctionStatus())
+                    {
+                        <MudAlert Severity="Severity.Warning" Variant="Variant.Filled">
+                            لم يبدأ المزايدة بعد. جهز فلوسك! 💰
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="d-flex justify-center">
+                            @if (auction.Bids != null && auction.Bids.Any())
+                            {
+                                var winner = auction.Bids.OrderByDescending(b => b.Amount).First();
+                                <div class="d-flex flex-column align-center">
+                                    <MudText>🎉 الفائز بالمزاد</MudText>
+                                    <MudText Typo="Typo.h6">@winner.Bidder</MudText>
+                                    <MudText Typo="Typo.body2">بمبلغ $@winner.Amount</MudText>
+                                </div>
+                            }
+                            else
+                            {
+                                <MudText>للأسف، لم يتم بيع المنتج 😞</MudText>
+                            }
+                        </MudAlert>
+                    }
+
+                    <MudText Typo="Typo.subtitle1" Class="mt-6 mb-2">📊 سجل المزايدات (@(auction.Bids?.Count ?? 0))</MudText>
+                    <MudList T="string" Dense="true" Style="max-height: 250px; overflow-y: auto;" Class="mud-background-gray rounded">
+                        @if (auction.Bids == null || !auction.Bids.Any())
+                        {
+                            <div class="pa-4 d-flex flex-column align-center">
+                                <MudIcon Icon="@Icons.Material.Outlined.SentimentNeutral" />
+                                <MudText Typo="Typo.caption">لا توجد مزايدات حتى الآن</MudText>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var bid in auction.Bids.OrderByDescending(b => b.Amount))
+                            {
+                                <MudListItem>
+                                    <div class="d-flex justify-space-between align-center">
+                                        <div class="d-flex align-center gap-2">
+                                            <MudAvatar Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined">
+                                                @(string.IsNullOrEmpty(bid.Bidder) ? "?" : bid.Bidder[0].ToString().ToUpper())
+                                            </MudAvatar>
+                                            <div>
+                                                <MudText Typo="Typo.body2"><b>@bid.Bidder</b></MudText>
+                                                <MudText Typo="Typo.caption">@bid.TimePlaced.ToLocalTime().ToString("hh:mm tt")</MudText>
+                                            </div>
+                                        </div>
+                                        <MudChip T="string" Color="Color.Success" Size="Size.Small" Variant="Variant.Text">
+                                            $@bid.Amount
+                                        </MudChip>
+                                    </div>
+                                </MudListItem>
+                                <MudDivider DividerType="DividerType.Inset" />
+                            }
+                        }
+                    </MudList>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+    @code {
+    [Parameter] public int Id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
+    private AuctionDto? auction;
+    private bool isLoading = true;
+    private bool isBidding = false;
+    private string currentUserName=string.Empty;
+    private double bidAmount;
+
+    private const string LocalImagePath = "https://localhost:7293/images/";
+
+    private string GetAuctionStatus()
+    {
+        if (auction == null) return "Loading";
+        var now = DateTime.UtcNow;
+        if (now<auction.StartTime) return AuctionStatus.Pending.ToString();
+        if (now >= auction.EndTime) return AuctionStatus.Closed.ToString();
+        return AuctionStatus.Open.ToString();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateTask;
+        var user = authState.User;
+        if(user.Identity is null || !user.Identity.IsAuthenticated)
+        {
+            NavManager.NavigateTo("/login");
+            return;
+        }
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+            auction = await Http.GetFromJsonAsync<AuctionDto>($"api/auctions/{Id}");
+
+            var authState = await AuthStateTask;
+            var user = authState.User;
+            if (user.Identity?.IsAuthenticated == true)
+                currentUserName = user.Identity.Name!;
+
+            if (auction != null)
+            {
+                bidAmount = (double)auction.CurrentBid! + 10;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"حدث خطأ: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task PlaceBid()
+    {
+        if (bidAmount <= (double)auction!.CurrentBid!)
+        {
+            Snackbar.Add("يجب أن يكون المبلغ أعلى من السعر الحالي!", Severity.Warning);
+            return;
+        }
+
+        isBidding = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("api/bids", new { AuctionId = Id, Amount = bidAmount });
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("تمت المزايدة بنجاح! 🎉", Severity.Success);
+                await LoadData(); 
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"فشل: {error}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"خطأ: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isBidding = false;
+        }
+    }
+
+    private async Task ConfirmDelete()
+    {
+        var result = await DialogService.ShowMessageBox(
+            "تأكيد الحذف",
+            "هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء!",
+            yesText: "حذف", cancelText: "إلغاء");
+
+        if (result == true)
+        {
+            var response = await Http.DeleteAsync($"api/auctions/{Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("تم الحذف بنجاح 👋", Severity.Success);
+                NavManager.NavigateTo("/");
+            }
+            else
+            {
+                Snackbar.Add("لا يمكن حذف المزاد (قد يكون عليه مزايدات)", Severity.Error);
+            }
+        }
+    }
+
+    private string GetImageUrl(string imageName)
+    {
+        if (string.IsNullOrEmpty(imageName))
+            return "https://via.placeholder.com/400x200?text=No+Image";
+        return $"{LocalImagePath}{imageName}";
+
+    }
+
+    private string GetTimeRemaining(DateTime endTime)
+    {
+        var span = endTime - DateTime.UtcNow;
+        if (span.TotalSeconds <= 0) return "00:00";
+        // تنسيق الوقت: 2ي 5س 30د
+        return $"{(span.Days > 0 ? $"{span.Days}ي " : "")}{span.Hours}س {span.Minutes}د";
+    }
+}

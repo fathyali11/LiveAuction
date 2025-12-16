@@ -38,12 +38,12 @@ public class AuctionsController(IMediator _mediator) : ControllerBase
 
     [Authorize]
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateAuctionRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> Create([FromForm] CreateAuctionRequest request, CancellationToken cancellationToken)
     {
         var command = new CreateAuctionCommand(
             request.Title,
             request.Description,
-            request.ImageUrl,
+            request.Image,
             request.StartTime,
             request.StartingBid,
             request.DurationInMinutes,
