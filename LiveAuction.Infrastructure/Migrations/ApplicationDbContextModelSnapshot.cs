@@ -106,6 +106,9 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.Property<decimal?>("CurrentBid")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("CurrentBidderId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -114,7 +117,8 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<string>("ImageName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("StartTime")
@@ -137,6 +141,8 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedById");
+
+                    b.HasIndex("CurrentBidderId");
 
                     b.HasIndex("WinnerId");
 
@@ -335,11 +341,17 @@ namespace LiveAuction.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("LiveAuction.Domain.Entities.ApplicationUser", "CurrentBidder")
+                        .WithMany()
+                        .HasForeignKey("CurrentBidderId");
+
                     b.HasOne("LiveAuction.Domain.Entities.ApplicationUser", "Winner")
                         .WithMany()
                         .HasForeignKey("WinnerId");
 
                     b.Navigation("CreatedBy");
+
+                    b.Navigation("CurrentBidder");
 
                     b.Navigation("Winner");
                 });

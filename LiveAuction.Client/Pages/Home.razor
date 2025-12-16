@@ -1,27 +1,113 @@
 ﻿@page "/"
+@inject ISnackbar Snackbar
+@inject HttpClient Http
+@inject NavigationManager NavManager
 
 <PageTitle>المزادات الحالية</PageTitle>
 
-<MudText Typo="Typo.h4" Class="mb-4">🔥 المزادات المشتعلة الآن</MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Primary">🔥 المزادات المشتعلة الآن</MudText>
 
-<MudGrid>
-    @for (int i = 1; i <= 6; i++)
+    @if (isLoading)
     {
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard Elevation="3" Class="rounded-lg hover-effect">
-                <MudCardMedia Image="https://images.unsplash.com/photo-1517336714731-489689fd1ca4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" Height="200" />
-                <MudCardContent>
-                    <MudText Typo="Typo.h6">MacBook Pro M3</MudText>
-                    <MudText Typo="Typo.caption">ينتهي خلال: 00:45:12</MudText>
-                    <div class="d-flex justify-space-between mt-2">
-                        <MudText Color="Color.Success" Typo="Typo.h6">$1,500</MudText>
-                        <MudChip T="string" Color="Color.Error" Size="Size.Small">Live 🔴</MudChip>
-                    </div>
-                </MudCardContent>
-                <MudCardActions>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">زايد الآن</MudButton>
-                </MudCardActions>
-            </MudCard>
-        </MudItem>
+        <div class="d-flex justify-center mt-16">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        </div>
     }
-</MudGrid>
+    else if (auctions == null || auctions.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-4">
+            لا توجد مزادات نشطة حالياً. كن أول من <MudLink Href="/create-auction" Color="Color.Inherit">يفتح مزاد!</MudLink>
+        </MudAlert>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var auction in auctions)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Elevation="3" Class="rounded-lg hover-effect h-100">
+                        <MudCardMedia Image="@GetImageUrl(auction.ImageName)" Height="200" />
+
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6" Lines="1">@auction.Title</MudText> <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                ينتهي خلال: @(GetTimeRemaining(auction.EndTime))
+                            </MudText>
+
+                            <div class="d-flex justify-space-between mt-3 align-center">
+                                <MudText Color="Color.Success" Typo="Typo.h5">
+                                    <b>$@auction.CurrentBid</b>
+                                </MudText>
+                                @if(string.Equals(GetTimeRemaining(auction.EndTime), "انتهى"))
+                                {
+                                    <MudChip T="string" Color="Color.Default" Size="Size.Small" Icon="@Icons.Material.Filled.HourglassDisabled">
+                                        انتهى
+                                    </MudChip>
+                                }
+                                else
+                                {
+                                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.LocalFireDepartment">
+                                        Live
+                                    </MudChip>
+                                }
+                                
+                            </div>
+                        </MudCardContent>
+
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       FullWidth="true"
+                                       OnClick="@(() => GoToDetails(auction.Id))">
+                                زايد الآن 🔨
+                            </MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudContainer>
+
+    @code {
+    private List<AuctionDto>? auctions;
+    private bool isLoading = true;
+    private const string LocalImagePath = "https://localhost:7293/images/";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            auctions = await Http.GetFromJsonAsync<List<AuctionDto>>("api/auctions");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            Snackbar.Add("حدث خطأ أثناء جلب المزادات. حاول مرة أخرى لاحقاً.", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoToDetails(int id)
+    {
+        NavManager.NavigateTo($"/auctions/{id}/details");
+    }
+
+    private string GetTimeRemaining(DateTime endTime)
+    {
+        var remaining = endTime - DateTime.UtcNow;
+        if (remaining.TotalSeconds <= 0) return "انتهى";
+        return $"{remaining.Hours}س {remaining.Minutes}د";
+    }
+    private string GetImageUrl(string imageName)
+    {
+        if(string.IsNullOrEmpty(imageName))
+            return "https://via.placeholder.com/400x200?text=No+Image";
+        return $"{LocalImagePath}{imageName}";
+
+    }
+}

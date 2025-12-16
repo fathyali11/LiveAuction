@@ -7,13 +7,14 @@ public class Auction
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; }= string.Empty;
-    public string? ImageUrl { get; set; }
+    public string ImageName { get; set; }= string.Empty;
 
-    public DateTime StartTime { get; set; }= DateTime.UtcNow;
+    public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
 
     public decimal StartingBid { get; set; }
     public decimal ?CurrentBid { get; set; }
+    public string ?CurrentBidderId { get; set; }
 
 
     public string CreatedById { get; set; }= string.Empty;
@@ -24,4 +25,5 @@ public class Auction
 
     public ApplicationUser CreatedBy { get; set; } = null!;
     public ApplicationUser? Winner { get; set; }
+    public ApplicationUser? CurrentBidder { get; set; }
 }
