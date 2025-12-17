@@ -19,4 +19,12 @@ internal class AuctionService: IAuctionService
 
         return imageName;
     }
+    public async Task DeleteImageAsync(string imageName, CancellationToken cancellationToken)
+    {
+        var imagePath = Path.Combine("wwwroot", "images", imageName);
+        if (File.Exists(imagePath))
+        {
+            await Task.Run(() => File.Delete(imagePath), cancellationToken);
+        }
+    }
 }
