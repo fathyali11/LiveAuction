@@ -18,14 +18,13 @@ public class CustomAuthStateProvider(
         if(string.IsNullOrWhiteSpace(token))
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
 
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
         return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(token), "jwt")));
     }
 
-    public async Task MarkUserAsAuthenticated(string token)
+    public async Task MarkUserAsAuthenticated(string token,string refreshToken)
     {
         await _localStorageService.SetItemAsync("authToken", token);
+        await _localStorageService.SetItemAsync("refreshToken", refreshToken);
         var authState = await GetAuthenticationStateAsync();
         NotifyAuthenticationStateChanged(Task.FromResult(authState));
     }

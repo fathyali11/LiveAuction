@@ -41,7 +41,7 @@
             Snackbar.Add("تم التسجيل! سجل دخول الآن", Severity.Success);
             var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
 
-            await (AuthStateProvider as CustomAuthStateProvider)?.MarkUserAsAuthenticated(authResponse!.Token)!;
+            await (AuthStateProvider as CustomAuthStateProvider)?.MarkUserAsAuthenticated(authResponse!.Token, authResponse.RefreshToken)!;
             NavManager.NavigateTo("/");
         }
         else

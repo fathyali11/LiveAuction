@@ -80,7 +80,7 @@
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
-                await ((CustomAuthStateProvider)AuthStateProvider).MarkUserAsAuthenticated(result.Token);
+                await ((CustomAuthStateProvider)AuthStateProvider).MarkUserAsAuthenticated(result!.Token,result.RefreshToken);
                 Snackbar.Add("نورت يا غالي! 🚀", Severity.Success);
                 NavManager.NavigateTo("/");
             }
