@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using LiveAuction.Application.ApplicationUsers.Commands.LoginUser;
+using LiveAuction.Application.ApplicationUsers.Commands.RefreshToken;
 using LiveAuction.Application.ApplicationUsers.Commands.RegisterUser;
 using LiveAuction.Application.Auctions.Commands.CreateAuction;
 using LiveAuction.Application.Auctions.Commands.DeleteAuction;
@@ -26,7 +27,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IValidator<DeleteAuctionCommand>, DeleteAuctionCommandValidator>();
         services.AddScoped<IValidator<GetAuctionByIdQuery>, GetAuctionByIdQueryValidator>();
         services.AddScoped<IValidator<CreateBidCommand>, CreateBidCommandValidator>();
-
+        services.AddScoped<IValidator<RefreshTokenCommand>, RefreshTokenCommandValidator>();
         TypeAdapterConfig.GlobalSettings.Scan(assembly);
         services.AddMapster();
 

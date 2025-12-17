@@ -24,6 +24,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IBackgroundJobService,BackgroundJobService>();
         services.AddScoped<IAuthService,AuthService>();
         services.AddScoped<IAuctionService,AuctionService>();
+        services.AddScoped<IRefreshTokenRepository,RefreshTokenRepository>();
 
         var connectionString = configuration.GetConnectionString("LiveAuctionDbConnection");
         services.AddDbContext<ApplicationDbContext>(options =>
