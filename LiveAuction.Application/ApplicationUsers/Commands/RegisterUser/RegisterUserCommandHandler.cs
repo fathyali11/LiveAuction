@@ -56,16 +56,16 @@ internal class RegisterUserCommandHandler(UserManager<ApplicationUser>_userManag
         
         _logger.LogInformation("Role 'Customer' assigned to user with email {Email}", request.Email);
         var roles = await _userManager.GetRolesAsync(user);
-        var tokenCreationResult = await _authService.GenerateJwtTokenAsync(user, roles, cancellationToken);
-        await _userManager.UpdateAsync(user);
-        _logger.LogInformation("User logged in successfully: {Email}", request.Email);
+        var tokenDto = await _authService.GenerateJwtTokenAsync(user, roles, cancellationToken);
+        _logger.LogInformation("User {Email} logged in successfully.", request.Email);
         return new AuthResponse
         {
+            Token = tokenDto.Token,
+            ExpiresAt = tokenDto.Expiration,
+            RefreshToken = tokenDto.RefreshToken,
+            RefreshTokenExpiresAt = tokenDto.RefreshTokenExpiration,
             Email = user.Email!,
-            Token = tokenCreationResult.Item1,
-            ExpiresAt = tokenCreationResult.Item2,
             Roles = roles.ToList()
         };
-
     }
 }
