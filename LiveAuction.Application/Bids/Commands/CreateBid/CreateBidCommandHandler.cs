@@ -16,7 +16,8 @@ internal class CreateBidCommandHandler(IBidRepository bidRepository,
     ILogger<CreateBidCommandHandler> logger,
     IValidator<CreateBidCommand> validator,
     IAuctionNotificationService auctionNotificationService,
-    UserManager<ApplicationUser> userManager) : IRequestHandler<CreateBidCommand, OneOf<Error, BidDto>>
+    UserManager<ApplicationUser> userManager,
+    IAuctionRepository _auctionRepository) : IRequestHandler<CreateBidCommand, OneOf<Error, BidDto>>
 {
     public async Task<OneOf<Error, BidDto>> Handle(CreateBidCommand request, CancellationToken cancellationToken)
     {
@@ -37,6 +38,12 @@ internal class CreateBidCommandHandler(IBidRepository bidRepository,
             return new Error(ErrorCodes.NotFoundError, errorMessage);
         }
         var bid = request.Adapt<Bid>();
+        var addCurrentBidResult = await _auctionRepository.AddCurrentBidAsync(request.AuctionId, bid.Amount, cancellationToken);
+        if (!addCurrentBidResult)
+        {
+            logger.LogWarning("Failed to add current bid for AuctionId: {AuctionId}",request.AuctionId);
+            return new Error(ErrorCodes.ValidationError, "Failed to add current");
+        }
         await bidRepository.AddAsync(bid, cancellationToken);
         logger.LogInformation("Bid created with Id: {BidId} for AuctionId: {AuctionId}", bid.Id, request.AuctionId);
         var bidDto = bid.Adapt<BidDto>();

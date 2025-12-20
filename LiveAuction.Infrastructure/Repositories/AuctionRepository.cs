@@ -47,4 +47,12 @@ internal class AuctionRepository(ApplicationDbContext _context) : IAuctionReposi
             await _context.SaveChangesAsync(cancellationToken);
         }
     }
+
+    public async Task<bool> AddCurrentBidAsync(int auctionId, decimal amount, CancellationToken cancellationToken)
+    {
+        var added = await _context.Auctions
+            .Where(a => a.Id == auctionId)
+            .ExecuteUpdateAsync(a => a.SetProperty(a => a.CurrentBid, amount), cancellationToken);
+        return added > 0;
+    }
 }

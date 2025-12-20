@@ -7,6 +7,7 @@ using LiveAuction.Application.Auctions.Commands.DeleteAuction;
 using LiveAuction.Application.Auctions.Commands.UpdateAuction;
 using LiveAuction.Application.Auctions.Queries.GetAuctionById;
 using LiveAuction.Application.Bids.Commands.CreateBid;
+using LiveAuction.Application.Bids.Queries.UserBidsHistory;
 using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -28,6 +29,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IValidator<GetAuctionByIdQuery>, GetAuctionByIdQueryValidator>();
         services.AddScoped<IValidator<CreateBidCommand>, CreateBidCommandValidator>();
         services.AddScoped<IValidator<RefreshTokenCommand>, RefreshTokenCommandValidator>();
+        services.AddScoped<IValidator<UserBidsHistoryQuery>, UserBidsHistoryQueryValidator>();
         TypeAdapterConfig.GlobalSettings.Scan(assembly);
         services.AddMapster();
 
