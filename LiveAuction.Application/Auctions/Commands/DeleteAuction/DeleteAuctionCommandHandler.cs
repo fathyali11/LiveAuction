@@ -1,5 +1,6 @@
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Repositories;
+using LiveAuction.Domain.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using OneOf;
@@ -8,7 +9,8 @@ namespace LiveAuction.Application.Auctions.Commands.DeleteAuction;
 
 internal class DeleteAuctionCommandHandler(
     IAuctionRepository _auctionRepository,
-    ILogger<DeleteAuctionCommandHandler> _logger) : IRequestHandler<DeleteAuctionCommand, OneOf<Error, bool>>
+    ILogger<DeleteAuctionCommandHandler> _logger,
+    IAuctionService _auctionService) : IRequestHandler<DeleteAuctionCommand, OneOf<Error, bool>>
 {
     public async Task<OneOf<Error, bool>> Handle(DeleteAuctionCommand request, CancellationToken cancellationToken)
     {
@@ -34,7 +36,7 @@ internal class DeleteAuctionCommandHandler(
                 request.Id, request.SellerId);
             return new Error(ErrorCodes.UnauthorizedError, "€Ì— „”„ÊÕ ·ﬂ »Õ–› Â–« «·„“«œ ·√‰Â ·Ì” „·ﬂﬂ! ??û??");
         }
-
+        await _auctionService.DeleteImageAsync(auction.ImageName, cancellationToken);
         await _auctionRepository.DeleteAsync(request.Id, cancellationToken);
 
         _logger.LogInformation("Auction deleted successfully: {Id}", request.Id);

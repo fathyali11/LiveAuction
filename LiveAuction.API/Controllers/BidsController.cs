@@ -1,4 +1,5 @@
 ﻿using LiveAuction.Application.Bids.Commands.CreateBid;
+using LiveAuction.Application.Bids.Queries.UserBidsHistory;
 using LiveAuction.Domain.Consts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -25,5 +26,21 @@ public class BidsController(IMediator mediator):ControllerBase
                 _ => StatusCode(500, "An unexpected error occurred.")
             },
             bidDto => CreatedAtAction(nameof(Create), new { id = bidDto.Id }, bidDto));
+    }
+
+    [HttpGet("user-history")]
+    public async Task<IActionResult> GetUserBidsHistory()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var query = new UserBidsHistoryQuery(userId);
+        var result = await mediator.Send(query);
+        return result.Match<IActionResult>(
+            error => error.Code switch
+            {
+                ErrorCodes.NotFoundError => NotFound(),
+                ErrorCodes.ValidationError => BadRequest(error.Message),
+                _ => StatusCode(500, "An unexpected error occurred.")
+            },
+            userBids => Ok(userBids));
     }
 }

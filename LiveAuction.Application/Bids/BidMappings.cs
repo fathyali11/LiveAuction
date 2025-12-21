@@ -12,7 +12,9 @@ internal class BidMappings : IRegister
         config.NewConfig<Bid, BidDto>()
             .Map(dest => dest.Id, src => src.Id)
             .Map(dest => dest.Amount, src => src.Amount)
-            .Map(dest => dest.TimePlaced, src => src.BidTime);
+            .Map(dest => dest.TimePlaced, src => src.BidTime)
+            .Map(dest => dest.AuctionId, src => src.AuctionId);
+
 
         config.NewConfig<CreateBidCommand, Bid>()
             .Map(dest => dest.AuctionId, src => src.AuctionId)

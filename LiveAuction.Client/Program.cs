@@ -16,6 +16,8 @@ builder.Services.AddHttpClient("LiveAuctionAPI", client =>
     client.BaseAddress = new Uri("https://localhost:7293");
 })
     .AddHttpMessageHandler<HttpInterceptorService>();
+builder.Services.AddHttpClient("AuthClient", client =>
+    client.BaseAddress = new Uri("https://localhost:7293/"));
 builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("LiveAuctionAPI"));
 
 builder.Services.AddMudServices();

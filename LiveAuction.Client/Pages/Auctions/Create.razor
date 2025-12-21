@@ -163,11 +163,13 @@
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error: {error}");   
                 Snackbar.Add($"حصلت مشكلة أثناء الحفظ: {error}", Severity.Error);
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"Error: {ex.Message}");
             Snackbar.Add($"حصلت مشكلة: {ex.Message}", Severity.Error);
         }
         finally

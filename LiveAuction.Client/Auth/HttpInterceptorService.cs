@@ -54,7 +54,7 @@ public class HttpInterceptorService(
             }
 
             await ((CustomAuthStateProvider)serviceProvider.GetRequiredService<AuthenticationStateProvider>()).MarkUserAsLoggedOut();
-            navigationManager.NavigateTo("authentication/login");
+            navigationManager.NavigateTo("/login");
         }
         else if (response.StatusCode == HttpStatusCode.Forbidden)
         {

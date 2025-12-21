@@ -9,6 +9,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavManager
 @inject IDialogService DialogService
+@implements IAsyncDisposable
 
 
 <PageTitle>تفاصيل المزاد</PageTitle>
@@ -376,7 +377,9 @@
         return $"{(span.Days > 0 ? $"{span.Days}ي " : "")}{span.Hours}س {span.Minutes}د";
     }
 
-    public async Task DisposeAsync()
+
+
+    public async ValueTask DisposeAsync()
     {
         if (hubConnection != null)
         {
