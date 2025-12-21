@@ -47,6 +47,7 @@ internal class BidRepository(ApplicationDbContext _context) : IBidRepository
 
                 return new UserBidDto
                 {
+                    BidId = group.First().Id,
                     AuctionId = auction.Id,
                     Title = auction.Title,
                     ImageName = auction.ImageName,

@@ -1,8 +1,11 @@
 ﻿@page "/my-bids"
 @using LiveAuction.Shared.DTOs
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.SignalR.Client
 @attribute [Authorize]
 @inject HttpClient Http
+@inject ISnackbar Snackbar
+@implements IAsyncDisposable
 
 <PageTitle>مزايداتي</PageTitle>
 
@@ -133,8 +136,9 @@
     }
 </style>
 
-@code {
+    @code {
     private List<UserBidDto>? bids;
+    private HubConnection hubConnection = default!;
     private bool isLoading = true;
     private const string LocalImagePath = "https://localhost:7293/images/"; 
 
@@ -144,6 +148,44 @@
         try
         {
             bids = await Http.GetFromJsonAsync<List<UserBidDto>>("api/bids/user-history");
+
+            hubConnection = new HubConnectionBuilder()
+            .WithUrl("https://localhost:7293/hubs/auction")
+            .WithAutomaticReconnect()
+            .Build();
+
+            hubConnection.On<BidDto>("NewBidPlaced", async bid =>
+            {
+                var userBid = bids?.FirstOrDefault(b => b.AuctionId == bid.AuctionId);
+                if(userBid is not null)
+                {
+                    await InvokeAsync(() =>
+                    {
+                        if (bid.Amount > userBid.MyHighestBid)
+                        {
+                            userBid.CurrentHighBid = bid.Amount;
+                            userBid.Status = BidStatus.Outbid;
+                            Snackbar.Add($"لقد تم تخطي مزايدتك على المزاد '{userBid.Title}'. السعر الحالي هو ${bid.Amount}.", Severity.Warning);
+                            StateHasChanged();
+                        }
+                    });
+                }
+            });
+
+            await hubConnection.StartAsync();
+
+            if (bids is not null)
+            {
+                if (hubConnection.State == HubConnectionState.Connected)
+                {
+                    foreach(var bid in bids)
+                    {
+                        await hubConnection.SendAsync("JoinToGroub", bid.AuctionId.ToString());
+                    }
+                }
+            }
+
+
         }
         catch (Exception ex)
         {
@@ -160,5 +202,22 @@
         if (string.IsNullOrEmpty(imageName))
             return "https://via.placeholder.com/150?text=No+Image";
         return $"{LocalImagePath}{imageName}";
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection != null)
+        {
+            if (hubConnection.State == HubConnectionState.Connected)
+            {
+                if (bids is not null)
+                {
+                    foreach (var auction in bids)
+                        await hubConnection.InvokeAsync("LeaveFromGroub", auction!.BidId.ToString());
+                }
+            }
+            await hubConnection.StopAsync();
+            await hubConnection.DisposeAsync();
+        }
     }
 }

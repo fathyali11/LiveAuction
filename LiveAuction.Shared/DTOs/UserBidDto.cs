@@ -2,6 +2,7 @@
 
 public class UserBidDto
 {
+    public int BidId { get; set; }
     public int AuctionId { get; set; }
     public string Title { get; set; } = string.Empty;
     public string ImageName { get; set; } = string.Empty;
