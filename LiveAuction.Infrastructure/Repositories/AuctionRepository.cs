@@ -1,6 +1,7 @@
 ﻿using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
 using LiveAuction.Infrastructure.Presistence;
+using LiveAuction.Shared.DTOs;
 using LiveAuction.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,12 +15,26 @@ internal class AuctionRepository(ApplicationDbContext _context) : IAuctionReposi
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<List<Auction>> GetAllActiveAsync(CancellationToken cancellationToken)
-        => await _context.Auctions
-            .Include(a => a.CreatedBy)
+    public async Task<List<AuctionsInHomePageDto>> GetAllActiveAsync(CancellationToken cancellationToken)
+    {
+        var auctions = await _context.Auctions
             .Where(a => a.Status == AuctionStatus.Open)
-            .OrderByDescending(a => a.StartTime)
+            .Select(a => new AuctionsInHomePageDto
+            {
+                Id = a.Id,
+                Title = a.Title,
+                ImageName = a.ImageName,
+                CurrentBid = a.CurrentBid!.Value,
+                Status = a.Status,
+                EndTime = a.EndTime,
+                IsWatchListed = _context.WatchListItems
+                    .Any(w => w.AuctionId == a.Id)
+            })
             .ToListAsync(cancellationToken);
+
+        return auctions;
+
+    }
 
     public async Task<Auction?> GetByIdAsync(int id, CancellationToken cancellationToken)
         => await _context.Auctions
