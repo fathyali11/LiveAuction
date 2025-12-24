@@ -1,9 +1,5 @@
 ﻿@page "/auctions/{Id:int}/details"
-@using LiveAuction.Shared.DTOs
-@using Microsoft.AspNetCore.Components.Authorization
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.SignalR.Client
+
 @attribute [Authorize]
 @using LiveAuction.Client.Services
 @inject IAuctionsApi AuctionsApi

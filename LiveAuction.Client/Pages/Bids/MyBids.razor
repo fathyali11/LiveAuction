@@ -1,8 +1,5 @@
 ﻿@page "/my-bids"
-@using LiveAuction.Shared.DTOs
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.SignalR.Client
-@using LiveAuction.Client.Services
+
 @attribute [Authorize]
 @inject IBidsApi BidsApi
 @inject HttpClient Http
