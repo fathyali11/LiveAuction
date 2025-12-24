@@ -17,6 +17,7 @@ public class AuctionDto
     public string Seller { get; set; } = string.Empty;
     public AuctionStatus Status { get; set; }
     public List<BidDto> Bids { get; set; } = [];
+    public bool IsWatchListed { get; set; }
     public bool IsActive => Status == AuctionStatus.Open&& DateTime.UtcNow >= StartTime && DateTime.UtcNow <= EndTime;
     public TimeSpan? TimeRemaining
     {

@@ -8,6 +8,8 @@ internal class ApplicationDbContext(DbContextOptions<ApplicationDbContext> optio
     public DbSet<Auction> Auctions { get; set; }
     public DbSet<Bid> Bids { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<WatchList> WatchLists { get; set; }
+    public DbSet<WatchListItem> WatchListItems { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
