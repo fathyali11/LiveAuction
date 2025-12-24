@@ -2,10 +2,11 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.SignalR.Client
+@using LiveAuction.Client.Services
 @attribute [Authorize]
 
 @inject ISnackbar Snackbar
-@inject HttpClient Http
+@inject IWatchlistApi WatchlistApi
 @inject NavigationManager Navigation
 @implements IAsyncDisposable
 
@@ -102,7 +103,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var count = await Http.GetFromJsonAsync<int>("api/watchlists/count");
+        var count = await WatchlistApi.GetCountAsync();
         mainLayout.UpdateWatchlistCount(count);
         await LoadWatchlistItems();
 
@@ -159,7 +160,7 @@
         try
         {
             isLoading = true;
-            watchList = await Http.GetFromJsonAsync<WatchListDto>("api/watchlists");
+            watchList = await WatchlistApi.GetWatchlistAsync();
         }
         catch (Exception ex)
         {
@@ -204,7 +205,7 @@
                 CurrentPrice = auction.CurrentPrice,
                 EndTime = auction.EndTime
             };
-            var response = await Http.PostAsJsonAsync("api/watchlists/toggle", request);
+            var response = await WatchlistApi.ToggleAsync(request);
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<ToggleWatchListItemResponse>();
@@ -217,7 +218,7 @@
                     Snackbar.Add(message, result.IsInWatchList ? Severity.Success : Severity.Info);
                     watchList!.Items!.RemoveAll(a => a.AuctionId == auction.AuctionId);
                     StateHasChanged();
-                    var count = await Http.GetFromJsonAsync<int>("api/watchlists/count");
+                    var count = await WatchlistApi.GetCountAsync();
                     mainLayout.UpdateWatchlistCount(count);
                 }
             }

@@ -5,7 +5,9 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.SignalR.Client
 @attribute [Authorize]
-@inject HttpClient Http
+@using LiveAuction.Client.Services
+@inject IAuctionsApi AuctionsApi
+@inject IBidsApi BidsApi
 @inject ISnackbar Snackbar
 @inject NavigationManager NavManager
 @inject IDialogService DialogService
@@ -289,7 +291,7 @@
         try
         {
             isLoading = true;
-            auction = await Http.GetFromJsonAsync<AuctionDto>($"api/auctions/{Id}");
+            auction = await AuctionsApi.GetByIdAsync(Id);
 
             var authState = await AuthStateTask;
             var user = authState.User;
@@ -322,7 +324,12 @@
         isBidding = true;
         try
         {
-            var response = await Http.PostAsJsonAsync("api/bids", new { AuctionId = Id, Amount = bidAmount });
+            var response = await BidsApi.PlaceBidAsync(new CreateBidRequest
+                {
+                    Amount = (decimal)bidAmount,
+                    AuctionId = auction.Id
+                });
+
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
@@ -348,7 +355,7 @@
 
         if (result == true)
         {
-            var response = await Http.DeleteAsync($"api/auctions/{Id}");
+            var response = await AuctionsApi.DeleteAsync(auction!.Id);
             if (response.IsSuccessStatusCode)
             {
                 Snackbar.Add("تم الحذف بنجاح 👋", Severity.Success);

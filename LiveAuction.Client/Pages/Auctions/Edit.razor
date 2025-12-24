@@ -1,5 +1,6 @@
 ﻿@page "/auctions/edit/{Id:int}"
-@inject HttpClient Http
+@using LiveAuction.Client.Services
+@inject IAuctionsApi AuctionsApi
 @inject ISnackbar Snackbar
 @inject NavigationManager NavManager
 
@@ -55,7 +56,7 @@
     {
         try
         {
-            var auction = await Http.GetFromJsonAsync<AuctionDto>($"api/auctions/{Id}");
+            var auction = await AuctionsApi.GetByIdAsync(Id);
             if (auction != null)
             {
                 model = new UpdateAuctionRequest
@@ -75,7 +76,7 @@
 
     private async Task SubmitUpdate()
     {
-        var response = await Http.PutAsJsonAsync($"api/auctions/{Id}", model);
+        var response = await AuctionsApi.UpdateAsync(Id, model!);
 
         if (response.IsSuccessStatusCode)
         {

@@ -1,9 +1,11 @@
 ﻿@page "/"
+@using LiveAuction.Client.Services;
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @attribute [Authorize]
 @inject ISnackbar Snackbar
-@inject HttpClient Http
+@inject IAuctionsApi AuctionsApi
+@inject IWatchlistApi WatchlistApi
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthStateProvider
 
@@ -103,7 +105,7 @@
     {
         try
         {
-            var count = await Http.GetFromJsonAsync<int>("api/watchlists/count");
+            var count = await WatchlistApi.GetCountAsync();
             mainLayout.UpdateWatchlistCount(count);
         }
         catch (Exception ex)
@@ -117,7 +119,7 @@
         try
         {
             isLoading = true;
-            auctions = await Http.GetFromJsonAsync<List<AuctionsInHomePageDto>>("api/auctions");
+            auctions = await AuctionsApi.GetAllAsync();
         }
         catch (Exception ex)
         {
@@ -146,7 +148,7 @@
                 EndTime = auction.EndTime
             };
 
-            var response = await Http.PostAsJsonAsync("api/watchlists/toggle", request);
+            var response = await WatchlistApi.ToggleAsync(request);
 
             if (response.IsSuccessStatusCode)
             {
@@ -163,7 +165,7 @@
                     Snackbar.Add(message, result.IsInWatchList ? Severity.Success : Severity.Info);
 
                     StateHasChanged();
-                    var count = await Http.GetFromJsonAsync<int>("api/watchlists/count");
+                    var count = await WatchlistApi.GetCountAsync();
                     mainLayout.UpdateWatchlistCount(count);
 
                 }

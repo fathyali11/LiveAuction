@@ -1,7 +1,8 @@
 ﻿@page "/register"
 @using LiveAuction.Client.Auth
 @using LiveAuction.Shared.DTOs
-@inject HttpClient Http
+@using LiveAuction.Client.Services
+@inject IAuthApi AuthApi
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject ISnackbar Snackbar
@@ -34,7 +35,7 @@
     private async Task OnValidSubmit()
     {
         _processing = true;
-        var response = await Http.PostAsJsonAsync("api/auths/register", model);
+        var response = await AuthApi.RegisterAsync(model);
 
         if (response.IsSuccessStatusCode)
         {

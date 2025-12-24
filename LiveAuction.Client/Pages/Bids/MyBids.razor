@@ -2,7 +2,9 @@
 @using LiveAuction.Shared.DTOs
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.SignalR.Client
+@using LiveAuction.Client.Services
 @attribute [Authorize]
+@inject IBidsApi BidsApi
 @inject HttpClient Http
 @inject ISnackbar Snackbar
 @implements IAsyncDisposable
@@ -147,7 +149,7 @@
     {
         try
         {
-            bids = await Http.GetFromJsonAsync<List<UserBidDto>>("api/bids/user-history");
+            bids = await BidsApi.GetUserHistoryAsync();
 
             hubConnection = new HubConnectionBuilder()
             .WithUrl("https://localhost:7293/hubs/auction")

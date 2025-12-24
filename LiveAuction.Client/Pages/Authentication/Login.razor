@@ -1,5 +1,7 @@
 ﻿@page "/login"
-@inject HttpClient Http
+
+@using LiveAuction.Client.Services
+@inject IAuthApi AuthApi
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
@@ -75,7 +77,7 @@
 
         try
         {
-            var response = await Http.PostAsJsonAsync("api/auths/login", model);
+            var response = await AuthApi.LoginAsync(model);
 
             if (response.IsSuccessStatusCode)
             {

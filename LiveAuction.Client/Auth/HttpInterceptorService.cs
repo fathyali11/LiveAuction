@@ -5,7 +5,8 @@ using MudBlazor;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using Blazored.LocalStorage; 
+using Blazored.LocalStorage;
+using LiveAuction.Client.Services;
 
 namespace LiveAuction.Client.Auth;
 
@@ -13,8 +14,7 @@ public class HttpInterceptorService(
     IServiceProvider serviceProvider,
     ISnackbar snackbar,
     NavigationManager navigationManager,
-    ILocalStorageService _localStorageService,
-    IHttpClientFactory _httpClientFactory) 
+    ILocalStorageService _localStorageService) 
     : DelegatingHandler
 {
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -29,14 +29,8 @@ public class HttpInterceptorService(
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
             var refreshToken = await _localStorageService.GetItemAsync<string>("refreshToken");
-            var authClient = _httpClientFactory.CreateClient("AuthClient");
-
-            var resfreshResponse = await authClient.PostAsJsonAsync("api/auths/refresh-token", new
-            {
-                Token = token,
-                RefreshToken = refreshToken
-            });
-
+            var authClient = serviceProvider.GetRequiredService<IAuthApi>();
+            var resfreshResponse = await authClient.RefreshTokenAsync(new RefreshTokenRequest { Token = token, RefreshToken = refreshToken }, cancellationToken);
             if (resfreshResponse.IsSuccessStatusCode)
             {
                 var result = await resfreshResponse.Content.ReadFromJsonAsync<AuthResponse>(cancellationToken: cancellationToken);
