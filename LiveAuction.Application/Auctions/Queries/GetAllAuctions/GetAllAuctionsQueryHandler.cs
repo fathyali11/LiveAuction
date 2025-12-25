@@ -14,7 +14,7 @@ internal class GetAllAuctionsQueryHandler(
     {
         _logger.LogInformation("Handling GetAllAuctionsQuery");
 
-        var auctions = await _auctionRepository.GetAllActiveAsync(cancellationToken);
+        var auctions = await _auctionRepository.GetAllActiveAsync(request.UserId,cancellationToken);
 
         return auctions;
     }

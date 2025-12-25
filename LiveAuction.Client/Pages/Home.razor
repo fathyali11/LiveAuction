@@ -1,6 +1,5 @@
 ﻿@page "/"
 
-@attribute [Authorize]
 @inject ISnackbar Snackbar
 @inject IAuctionsApi AuctionsApi
 @inject IWatchlistApi WatchlistApi
@@ -127,6 +126,15 @@
     private async Task ToggleFavorite(AuctionsInHomePageDto auction)
     {
         if (_processingFavorite) return;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if(user == null || !user.Identity!.IsAuthenticated)
+        {
+            Snackbar.Add("يرجى تسجيل الدخول لإدارة قائمة المتابعة", Severity.Warning);
+            NavManager.NavigateTo("/login");
+            return;
+        }
 
         _processingFavorite = true;
         try

@@ -45,6 +45,8 @@ public class WatchListsController(IMediator _mediator) : ControllerBase
             },
             response => Ok(response));
     }
+
+    [AllowAnonymous]
     [HttpGet("count")]
     public async Task<IActionResult> GetWatchListCount()
     {

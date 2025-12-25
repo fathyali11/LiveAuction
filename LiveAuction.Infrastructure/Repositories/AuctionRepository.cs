@@ -15,10 +15,13 @@ internal class AuctionRepository(ApplicationDbContext _context) : IAuctionReposi
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<List<AuctionsInHomePageDto>> GetAllActiveAsync(CancellationToken cancellationToken)
+    public async Task<List<AuctionsInHomePageDto>> GetAllActiveAsync(string ?userId,CancellationToken cancellationToken)
     {
         var auctions = await _context.Auctions
-            .Where(a => a.Status == AuctionStatus.Open)
+            .Where(a => 
+            a.Status == AuctionStatus.Open
+            && a.EndTime > DateTime.UtcNow
+            )
             .Select(a => new AuctionsInHomePageDto
             {
                 Id = a.Id,
@@ -28,7 +31,7 @@ internal class AuctionRepository(ApplicationDbContext _context) : IAuctionReposi
                 Status = a.Status,
                 EndTime = a.EndTime,
                 IsWatchListed = _context.WatchListItems
-                    .Any(w => w.AuctionId == a.Id)
+                    .Any(w => w.AuctionId == a.Id&&w.WatchList.UserId==userId)
             })
             .ToListAsync(cancellationToken);
 

@@ -82,8 +82,9 @@ internal class WatchListRepository(ApplicationDbContext _context) : IWatchListRe
             }).ToList()
         };
     }
-    public async Task<int> GetCountAsync(string userId, CancellationToken cancellationToken = default)
+    public async Task<int> GetCountAsync(string ?userId, CancellationToken cancellationToken = default)
     {
+        if(userId is null) return 0;
         var count = await _context.WatchListItems
             .Where(item => item.WatchList.UserId == userId)
             .CountAsync(cancellationToken);

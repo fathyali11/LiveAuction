@@ -3,4 +3,4 @@ using MediatR;
 
 namespace LiveAuction.Application.Auctions.Queries.GetAllAuctions;
 
-public record GetAllAuctionsQuery : IRequest<List<AuctionsInHomePageDto>>;
+public record GetAllAuctionsQuery(string? UserId) : IRequest<List<AuctionsInHomePageDto>>;
