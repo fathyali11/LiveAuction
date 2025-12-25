@@ -20,4 +20,9 @@ internal class BackgroundJobService : IBackgroundJobService
     {
         RecurringJob.AddOrUpdate<T>(jobId, methodCall, cronExpression);
     }
+
+    public void DeleteScheduledJob(string jobId)
+    {
+        BackgroundJob.Delete(jobId);
+    }
 }
