@@ -4,10 +4,12 @@ using LiveAuction.Infrastructure.Presistence;
 using LiveAuction.Shared.DTOs;
 using LiveAuction.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LiveAuction.Infrastructure.Repositories;
 
-internal class AuctionRepository(ApplicationDbContext _context) : IAuctionRepository
+internal class AuctionRepository(ApplicationDbContext _context,
+    IServiceProvider _serviceProvider) : IAuctionRepository
 {
     public async Task AddAsync(Auction auction, CancellationToken cancellationToken)
     {
@@ -72,5 +74,14 @@ internal class AuctionRepository(ApplicationDbContext _context) : IAuctionReposi
             .Where(a => a.Id == auctionId)
             .ExecuteUpdateAsync(a => a.SetProperty(a => a.CurrentBid, amount), cancellationToken);
         return added > 0;
+    }
+    
+    public async Task TerminateAuctionAsync(int auctionId, CancellationToken cancellationToken)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await dbContext.Auctions
+            .Where(a => a.Id == auctionId)
+            .ExecuteUpdateAsync(a => a.SetProperty(a => a.Status, AuctionStatus.Closed), cancellationToken);
     }
 }
