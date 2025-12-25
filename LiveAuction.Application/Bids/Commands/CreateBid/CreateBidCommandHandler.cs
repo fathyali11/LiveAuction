@@ -3,6 +3,7 @@ using LiveAuction.Application.Interfaces;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
+using LiveAuction.Domain.Services;
 using LiveAuction.Shared.DTOs;
 using Mapster;
 using MediatR;
@@ -17,6 +18,8 @@ internal class CreateBidCommandHandler(IBidRepository bidRepository,
     IValidator<CreateBidCommand> validator,
     IAuctionNotificationService auctionNotificationService,
     UserManager<ApplicationUser> userManager,
+    IAuctionService _auctionService,
+    IBackgroundJobService _backgroundJobService,
     IAuctionRepository _auctionRepository) : IRequestHandler<CreateBidCommand, OneOf<Error, BidDto>>
 {
     public async Task<OneOf<Error, BidDto>> Handle(CreateBidCommand request, CancellationToken cancellationToken)
@@ -36,6 +39,21 @@ internal class CreateBidCommandHandler(IBidRepository bidRepository,
             var errorMessage = $"User with Id {request.UserId} not found.";
             logger.LogWarning(errorMessage);
             return new Error(ErrorCodes.NotFoundError, errorMessage);
+        }
+        var auction = await _auctionRepository.GetByIdAsync(request.AuctionId, cancellationToken);
+        if (auction == null)
+        {
+            var errorMessage = $"Auction with Id {request.AuctionId} not found.";
+            logger.LogWarning(errorMessage);
+            return new Error(ErrorCodes.NotFoundError, errorMessage);
+        }
+        if(auction.EndTime-DateTime.UtcNow <= TimeSpan.FromMinutes(5))
+        {
+            auction.EndTime = auction.EndTime.AddMinutes(5);
+            _backgroundJobService.DeleteScheduledJob(auction.JobId);
+            auction.JobId = await _auctionService.ScheduleAuction(auction,cancellationToken);
+            await _auctionRepository.UpdateAsync(auction, cancellationToken);
+            logger.LogInformation("AuctionId: {AuctionId} end time extended to {EndTime}", auction.Id, auction.EndTime);
         }
         var bid = request.Adapt<Bid>();
         var addCurrentBidResult = await _auctionRepository.AddCurrentBidAsync(request.AuctionId, bid.Amount, cancellationToken);
