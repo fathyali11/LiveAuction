@@ -66,6 +66,7 @@ internal class CreateBidCommandHandler(IBidRepository bidRepository,
         logger.LogInformation("Bid created with Id: {BidId} for AuctionId: {AuctionId}", bid.Id, request.AuctionId);
         var bidDto = bid.Adapt<BidDto>();
         bidDto.Bidder = bidder.FullName;
+        bidDto.AuctionEndTime = auction.EndTime;
         await auctionNotificationService.NotifyNewBidAsync(bid.AuctionId,bidDto);
         return bidDto;
 

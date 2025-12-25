@@ -251,6 +251,7 @@
                 await InvokeAsync(async () =>
                 {
                     auction!.CurrentBid = bid.Amount;
+                    auction.EndTime = bid.AuctionEndTime;
                     auction.Bids.Add(bid);
                     StateHasChanged();
                     Snackbar.Add($"مزايدة جديدة من {bid.Bidder} بـ ${bid.Amount}", Severity.Info);
