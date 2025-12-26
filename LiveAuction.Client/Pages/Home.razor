@@ -1,10 +1,11 @@
 ﻿@page "/"
-
+@using System.Timers
 @inject ISnackbar Snackbar
 @inject IAuctionsApi AuctionsApi
 @inject IWatchlistApi WatchlistApi
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthStateProvider
+@implements IAsyncDisposable
 
 <PageTitle>المزادات الحالية</PageTitle>
 
@@ -85,12 +86,19 @@
     private List<AuctionsInHomePageDto>? auctions;
     private bool isLoading = true;
     private bool _processingFavorite = false;
+    private Timer _timer;
     private const string LocalImagePath = "https://localhost:7293/images/";
 
     protected override async Task OnInitializedAsync()
     {
         await LoadAuctions();
         await LoadWatchlistCount();
+        _timer = new Timer(60000);
+        _timer.Elapsed += async (s, e) =>
+        {
+            await InvokeAsync(StateHasChanged);
+        };
+        _timer.Start();
     }
     private async Task LoadWatchlistCount()
     {
@@ -206,5 +214,14 @@
         if (string.IsNullOrEmpty(imageName))
             return "https://via.placeholder.com/400x200?text=No+Image";
         return $"{LocalImagePath}{imageName}";
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_timer != null)
+        {
+            _timer.Stop();
+            _timer.Dispose();
+        }
     }
 }

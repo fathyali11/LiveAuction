@@ -2,6 +2,7 @@
 
 @attribute [Authorize]
 @using LiveAuction.Client.Services
+@using System.Timers
 @inject IAuctionsApi AuctionsApi
 @inject IBidsApi BidsApi
 @inject ISnackbar Snackbar
@@ -224,6 +225,7 @@
     private string currentUserName=string.Empty;
     private double bidAmount;
     private HubConnection hubConnection=default!;
+    private Timer _timer;
 
     private const string LocalImagePath = "https://localhost:7293/images/";
 
@@ -280,6 +282,13 @@
             Console.WriteLine($"Error connecting to hub: {ex.Message}");
 
         }
+
+        _timer = new Timer(60000);
+        _timer.Elapsed += async (s, e) =>
+        {
+            await InvokeAsync(StateHasChanged);
+        };
+        _timer.Start();
 
     }
 
@@ -393,6 +402,11 @@
             }
             await hubConnection.StopAsync();
             await hubConnection.DisposeAsync();
+        }
+        if (_timer != null)
+        {
+            _timer.Stop();
+            _timer.Dispose();
         }
     }
 }
