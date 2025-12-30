@@ -6,7 +6,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Blazored.LocalStorage;
-using LiveAuction.Client.Services;
+using LiveAuction.Client.Features.Users.Services;
 
 namespace LiveAuction.Client.Auth;
 

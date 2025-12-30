@@ -1,4 +1,5 @@
 ﻿@page "/watchlist"
+@using LiveAuction.Client.Features.Watchlists.Services
 
 @attribute [Authorize]
 
@@ -29,53 +30,13 @@
             @foreach (var auction in watchList?.Items!)
             {
                 <MudItem xs="12" sm="6" md="4">
-                    <MudCard Elevation="3" Class="rounded-lg hover-effect h-100" Style="position: relative;">
-
-                        <div style="position: absolute; top: 8px; right: 8px; z-index: 10;">
-                            <MudIconButton Icon="@(auction.IsInWatchList? Icons.Material.Filled.Favorite : Icons.Material.Outlined.FavoriteBorder)"
-                                           Color="@(auction.IsInWatchList ? Color.Error : Color.Default)"
-                                           Style="background-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(4px);"
-                                           Size="Size.Medium"
-                                           OnClick="@(() => ToggleFavorite(auction))"
-                                           aria-label="إضافة إلى المفضلة" />
-                        </div>
-
-                        <MudCardMedia Image="@GetImageUrl(auction.ImageName)" Height="200" />
-
-                        <MudCardContent>
-                            <MudText Typo="Typo.h6" Lines="1">@auction.Title</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                ينتهي خلال: @(GetTimeRemaining(auction.EndTime))
-                            </MudText>
-
-                            <div class="d-flex justify-space-between mt-3 align-center">
-                                <MudText Color="Color.Success" Typo="Typo.h5">
-                                    <b>$@auction.CurrentPrice.ToString("N2")</b>
-                                </MudText>
-                                @if (string.Equals(GetTimeRemaining(auction.EndTime), "انتهى"))
-                                {
-                                    <MudChip T="string" Color="Color.Default" Size="Size.Small" Icon="@Icons.Material.Filled.HourglassDisabled">
-                                        انتهى
-                                    </MudChip>
-                                }
-                                else
-                                {
-                                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.LocalFireDepartment">
-                                        Live
-                                    </MudChip>
-                                }
-                            </div>
-                        </MudCardContent>
-
-                        <MudCardActions>
-                            <MudButton Variant="Variant.Filled"
-                                       Color="Color.Primary"
-                                       FullWidth="true"
-                                       OnClick="@(() => GoToDetails(auction.AuctionId))">
-                                زايد الآن 🔨
-                            </MudButton>
-                        </MudCardActions>
-                    </MudCard>
+                    <AuctionCard AuctionId="@auction.AuctionId"
+                                 Title="@auction.Title"
+                                 ImageName="@auction.ImageName"
+                                 EndTime="@auction.EndTime"
+                                 CurrentBid="@auction.CurrentBid"
+                                 IsFavorite="@auction.IsInWatchList"
+                                 OnFavoriteToggled="UpdateFavoriteStatus" />
                 </MudItem>
             }
 
@@ -118,7 +79,7 @@
                        var item = watchList?.Items?.FirstOrDefault(a => a.AuctionId == bid.AuctionId);
                        if (item != null)
                        {
-                           item.CurrentPrice = bid.Amount;
+                           item.CurrentBid = bid.Amount;
                            StateHasChanged();
                        }
                    });
@@ -170,69 +131,20 @@
         }
     }
 
-
-    private string GetImageUrl(string imageName)
+    private void UpdateFavoriteStatus((int AuctionId, bool IsFavorite) args)
     {
-        if (string.IsNullOrEmpty(imageName))
-            return "https://via.placeholder.com/400x200?text=No+Image";
-        return $"{LocalImagePath}{imageName}";
-    }
-
-    private string GetTimeRemaining(DateTime endTime)
-    {
-        var remaining = endTime - DateTime.UtcNow;
-        if (remaining.TotalSeconds <= 0) return "انتهى";
-        if (remaining.TotalDays >= 1) return $"{(int)remaining.TotalDays}ي {remaining.Hours}س";
-        return $"{remaining.Hours}س {remaining.Minutes}د";
-    }
-    private void GoToDetails(int auctionId)
-    {
-        Navigation.NavigateTo($"/auctions/{auctionId}/details");
-    }
-
-    private async Task ToggleFavorite(ToggleWatchListItemResponse auction)
-    {
-        try
+        var item = watchList?.Items?.FirstOrDefault(a => a.AuctionId == args.AuctionId);
+        if (item != null)
         {
-            var request = new ToggleWatchListItemRequest
+            item.IsInWatchList = args.IsFavorite;
+            if (!args.IsFavorite)
             {
-                AuctionId = auction.AuctionId,
-                Title = auction.Title,
-                ImageName = auction.ImageName,
-                CurrentPrice = auction.CurrentPrice,
-                EndTime = auction.EndTime
-            };
-            var response = await WatchlistApi.ToggleAsync(request);
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<ToggleWatchListItemResponse>();
-                if (result != null)
-                {
-                    auction.IsInWatchList = result.IsInWatchList;
-                    var message = result.IsInWatchList
-                        ? $"✅ تمت إضافة '{auction.Title}' إلى قائمة المتابعة"
-                        : $"❌ تمت إزالة '{auction.Title}' من قائمة المتابعة";
-                    Snackbar.Add(message, result.IsInWatchList ? Severity.Success : Severity.Info);
-                    watchList!.Items!.RemoveAll(a => a.AuctionId == auction.AuctionId);
-                    StateHasChanged();
-                    var count = await WatchlistApi.GetCountAsync();
-                    mainLayout.UpdateWatchlistCount(count);
-                }
+                watchList?.Items?.Remove(item);
+                Snackbar.Add("تمت إزالة العنصر من قائمة المراقبة.", Severity.Info);
             }
-            else
-            {
-                var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Error in toggling response favorite: {error}");
-                Snackbar.Add("حدث خطأ أثناء تحديث قائمة المتابعة", Severity.Error);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error Exception toggling favorite: {ex.Message}");
-            Snackbar.Add("حدث خطأ أثناء تحديث قائمة المتابعة", Severity.Error);
+            StateHasChanged();
         }
     }
-
 
     public async ValueTask DisposeAsync()
     {

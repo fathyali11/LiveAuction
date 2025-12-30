@@ -11,6 +11,5 @@ public interface IAuctionRepository
     Task AddAsync(Auction auction, CancellationToken cancellationToken);
     Task UpdateAsync(Auction auction, CancellationToken cancellationToken);
     Task DeleteAsync(int id, CancellationToken cancellationToken);
-    Task<bool> AddCurrentBidAsync(int auctionId, decimal amount, CancellationToken cancellationToken);
     Task TerminateAuctionAsync(int auctionId, CancellationToken cancellationToken);
 }

@@ -52,20 +52,16 @@ internal class CreateBidCommandHandler(IBidRepository bidRepository,
             auction.EndTime = auction.EndTime.AddMinutes(5);
             _backgroundJobService.DeleteScheduledJob(auction.JobId);
             auction.JobId = await _auctionService.ScheduleAuction(auction,cancellationToken);
-            await _auctionRepository.UpdateAsync(auction, cancellationToken);
             logger.LogInformation("AuctionId: {AuctionId} end time extended to {EndTime}", auction.Id, auction.EndTime);
         }
+        auction.CurrentBid = request.Amount;
+        auction.CurrentBidderId = request.UserId;
+        await _auctionRepository.UpdateAsync(auction, cancellationToken);
         var bid = request.Adapt<Bid>();
-        var addCurrentBidResult = await _auctionRepository.AddCurrentBidAsync(request.AuctionId, bid.Amount, cancellationToken);
-        if (!addCurrentBidResult)
-        {
-            logger.LogWarning("Failed to add current bid for AuctionId: {AuctionId}",request.AuctionId);
-            return new Error(ErrorCodes.ValidationError, "Failed to add current");
-        }
+        
         await bidRepository.AddAsync(bid, cancellationToken);
         logger.LogInformation("Bid created with Id: {BidId} for AuctionId: {AuctionId}", bid.Id, request.AuctionId);
         var bidDto = bid.Adapt<BidDto>();
-        bidDto.Bidder = bidder.FullName;
         bidDto.AuctionEndTime = auction.EndTime;
         await auctionNotificationService.NotifyNewBidAsync(bid.AuctionId,bidDto);
         return bidDto;

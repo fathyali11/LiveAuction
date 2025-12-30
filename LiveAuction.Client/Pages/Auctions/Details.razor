@@ -1,8 +1,9 @@
 ﻿@page "/auctions/{Id:int}/details"
 
 @attribute [Authorize]
-@using LiveAuction.Client.Services
 @using System.Timers
+@using LiveAuction.Client.Features.Auctions.Services
+@using LiveAuction.Client.Features.Bids.Services
 @inject IAuctionsApi AuctionsApi
 @inject IBidsApi BidsApi
 @inject ISnackbar Snackbar
@@ -283,7 +284,7 @@
 
         }
 
-        _timer = new Timer(60000);
+        _timer = new Timer(1000);
         _timer.Elapsed += async (s, e) =>
         {
             await InvokeAsync(StateHasChanged);
@@ -384,10 +385,10 @@
 
     private string GetTimeRemaining(DateTime endTime)
     {
-        var span = endTime - DateTime.UtcNow;
-        if (span.TotalSeconds <= 0) return "00:00";
-        // تنسيق الوقت: 2ي 5س 30د
-        return $"{(span.Days > 0 ? $"{span.Days}ي " : "")}{span.Hours}س {span.Minutes}د";
+        var remaining = endTime - DateTime.UtcNow;
+        if (remaining.TotalSeconds <= 0) return "انتهى";
+        if (remaining.TotalDays >= 1) return $"{(int)remaining.TotalDays}ي {remaining.Hours}س";
+        return $"{remaining.Hours}س {remaining.Minutes}د {remaining.Seconds}ث";
     }
 
 

@@ -49,7 +49,9 @@ internal class AuctionRepository(ApplicationDbContext _context,
     public async Task<Auction?> GetByIdWithBidsAsync(int id, CancellationToken cancellationToken)
         => await _context.Auctions
             .Include(a => a.CreatedBy)
+            .Include(a => a.Winner)
             .Include(a => a.Bids)
+            .ThenInclude(b => b.Bidder)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
 
     public async Task UpdateAsync(Auction auction, CancellationToken cancellationToken)
@@ -68,20 +70,26 @@ internal class AuctionRepository(ApplicationDbContext _context,
         }
     }
 
-    public async Task<bool> AddCurrentBidAsync(int auctionId, decimal amount, CancellationToken cancellationToken)
-    {
-        var added = await _context.Auctions
-            .Where(a => a.Id == auctionId)
-            .ExecuteUpdateAsync(a => a.SetProperty(a => a.CurrentBid, amount), cancellationToken);
-        return added > 0;
-    }
     
     public async Task TerminateAuctionAsync(int auctionId, CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await dbContext.Auctions
-            .Where(a => a.Id == auctionId)
-            .ExecuteUpdateAsync(a => a.SetProperty(a => a.Status, AuctionStatus.Closed), cancellationToken);
+        var auction = await dbContext.Auctions
+            .Include(a => a.Bids)
+            .ThenInclude(x=>x.Bidder)
+            .FirstOrDefaultAsync(a => a.Id == auctionId, cancellationToken);
+
+        if (auction is null || auction.Status != AuctionStatus.Open)
+            return;
+
+        auction.Status = AuctionStatus.Closed;
+        if (auction.Bids.Any())
+        {
+            var highestBid = auction.Bids.OrderByDescending(b => b.Amount).First();
+            auction.WinnerId = highestBid.BidderId;
+            auction.CurrentBidderId = highestBid.BidderId;
+        }
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

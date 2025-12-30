@@ -1,7 +1,7 @@
 using LiveAuction.Shared.DTOs;
 using Refit;
 
-namespace LiveAuction.Client.Services;
+namespace LiveAuction.Client.Features.Bids.Services;
 
 public interface IBidsApi 
 {

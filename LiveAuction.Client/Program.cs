@@ -1,7 +1,10 @@
 using Blazored.LocalStorage;
 using LiveAuction.Client;
 using LiveAuction.Client.Auth;
-using LiveAuction.Client.Services;
+using LiveAuction.Client.Features.Auctions.Services;
+using LiveAuction.Client.Features.Bids.Services;
+using LiveAuction.Client.Features.Users.Services;
+using LiveAuction.Client.Features.Watchlists.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;

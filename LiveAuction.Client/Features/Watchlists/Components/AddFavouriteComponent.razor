@@ -1,0 +1,90 @@
+﻿@inject ISnackbar Snackbar
+@inject NavigationManager NavManager
+@inject IWatchlistApi WatchlistApi  
+
+
+<div style="position: absolute; top: 8px; right: 8px; z-index: 10;">
+    <MudIconButton Icon="@(IsFavorite? Icons.Material.Filled.Favorite : Icons.Material.Outlined.FavoriteBorder)"
+                   Color="@(IsFavorite ? Color.Error : Color.Default)"
+                   Style="background-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(4px);"
+                   Size="Size.Medium"
+                   OnClick="ToggleFavorite"
+                   aria-label="إضافة إلى المفضلة" />
+</div>
+
+@code {
+    [Parameter]
+    public bool IsFavorite { get; set; }
+    [Parameter]
+    public int AuctionId { get; set; }
+    [Parameter]
+    public EventCallback<(int AuctionId, bool IsFavorite)> OnFavoriteToggled { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+    [CascadingParameter] public MainLayout? MainLayout { get; set; }
+
+
+    private bool _processingFavorite = false;
+
+
+
+    private async Task ToggleFavorite()
+    {
+        if (_processingFavorite) return;
+
+        var user = (await AuthStateTask).User;
+        if (user == null || !user.Identity!.IsAuthenticated)
+        {
+            Snackbar.Add("يرجى تسجيل الدخول لإدارة قائمة المتابعة", Severity.Warning);
+            NavManager.NavigateTo("/login");
+            return;
+        }
+
+        _processingFavorite = true;
+        try
+        {
+            var response = await WatchlistApi.ToggleAsync(AuctionId);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ToggleWatchListItemResponse>();
+
+                if (result != null)
+                {
+                    IsFavorite = result.IsInWatchList;
+
+                    var message = result.IsInWatchList
+                        ? $"✅ تمت إضافة  إلى قائمة المتابعة"
+                        : $"❌ تمت إزالة  من قائمة المتابعة";
+
+                    Snackbar.Add(message, result.IsInWatchList ? Severity.Success : Severity.Info);
+                    if (MainLayout != null)
+                    {
+                        var count = await WatchlistApi.GetCountAsync();
+                        MainLayout.UpdateWatchlistCount(count);
+                    }
+
+                    if (OnFavoriteToggled.HasDelegate)
+                    {
+                        Console.WriteLine($"AddFavouriteComponent: Invoking OnFavoriteToggled for AuctionId={AuctionId}, IsFavorite={IsFavorite}");
+                        await OnFavoriteToggled.InvokeAsync((AuctionId,result.IsInWatchList));
+                    }
+                }
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error in toggling response favorite: {error}");
+                Snackbar.Add("حدث خطأ أثناء تحديث قائمة المتابعة", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error Exception toggling favorite: {ex.Message}");
+            Snackbar.Add("حدث خطأ أثناء تحديث قائمة المتابعة", Severity.Error);
+        }
+        finally
+        {
+            _processingFavorite = false;
+        }
+    }
+
+}

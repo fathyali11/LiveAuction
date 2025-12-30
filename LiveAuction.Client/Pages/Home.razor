@@ -1,11 +1,11 @@
 ﻿@page "/"
-@using System.Timers
+
 @inject ISnackbar Snackbar
 @inject IAuctionsApi AuctionsApi
 @inject IWatchlistApi WatchlistApi
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthStateProvider
-@implements IAsyncDisposable
+
 
 <PageTitle>المزادات الحالية</PageTitle>
 
@@ -30,48 +30,13 @@
             @foreach (var auction in auctions)
             {
                 <MudItem xs="12" sm="6" md="4">
-                    <MudCard Elevation="3" Class="rounded-lg hover-effect h-100" Style="position: relative;">
-
-                        <AddFavouriteComponent
-                            auction="auction"
-                            OnFavoriteToggled="ToggleFavorite" />
-
-                        <MudCardMedia Image="@GetImageUrl(auction.ImageName)" Height="200" />
-
-                        <MudCardContent>
-                            <MudText Typo="Typo.h6" Lines="1">@auction.Title</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                ينتهي خلال: @(GetTimeRemaining(auction.EndTime))
-                            </MudText>
-
-                            <div class="d-flex justify-space-between mt-3 align-center">
-                                <MudText Color="Color.Success" Typo="Typo.h5">
-                                    <b>$@auction.CurrentBid.ToString("N2")</b>
-                                </MudText>
-                                @if (string.Equals(GetTimeRemaining(auction.EndTime), "انتهى"))
-                                {
-                                    <MudChip T="string" Color="Color.Default" Size="Size.Small" Icon="@Icons.Material.Filled.HourglassDisabled">
-                                        انتهى
-                                    </MudChip>
-                                }
-                                else
-                                {
-                                    <MudChip T="string" Color="Color.Error" Size="Size.Small" Icon="@Icons.Material.Filled.LocalFireDepartment">
-                                        Live
-                                    </MudChip>
-                                }
-                            </div>
-                        </MudCardContent>
-
-                        <MudCardActions>
-                            <MudButton Variant="Variant.Filled"
-                                       Color="Color.Primary"
-                                       FullWidth="true"
-                                       OnClick="@(() => GoToDetails(auction.Id))">
-                                زايد الآن 🔨
-                            </MudButton>
-                        </MudCardActions>
-                    </MudCard>
+                   <AuctionCard AuctionId="@auction.Id"
+                                 Title="@auction.Title"
+                                 ImageName="@auction.ImageName"
+                                 EndTime="@auction.EndTime"
+                                 CurrentBid="@auction.CurrentBid"
+                                 IsFavorite="@auction.IsWatchListed"
+                                 OnFavoriteToggled="UpdateFavoriteStatus" />
                 </MudItem>
             }
         </MudGrid>
@@ -86,20 +51,15 @@
     private List<AuctionsInHomePageDto>? auctions;
     private bool isLoading = true;
     private bool _processingFavorite = false;
-    private Timer _timer;
-    private const string LocalImagePath = "https://localhost:7293/images/";
+    
 
     protected override async Task OnInitializedAsync()
     {
         await LoadAuctions();
         await LoadWatchlistCount();
-        _timer = new Timer(60000);
-        _timer.Elapsed += async (s, e) =>
-        {
-            await InvokeAsync(StateHasChanged);
-        };
-        _timer.Start();
+       
     }
+
     private async Task LoadWatchlistCount()
     {
         try
@@ -131,97 +91,17 @@
         }
     }
 
-    private async Task ToggleFavorite(AuctionsInHomePageDto auction)
+    private void UpdateFavoriteStatus((int AuctionId, bool IsFavorite) args)
     {
-        if (_processingFavorite) return;
-
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        if(user == null || !user.Identity!.IsAuthenticated)
+        var auction = auctions?.FirstOrDefault(a => a.Id == args.AuctionId);
+        if (auction != null)
         {
-            Snackbar.Add("يرجى تسجيل الدخول لإدارة قائمة المتابعة", Severity.Warning);
-            NavManager.NavigateTo("/login");
-            return;
-        }
-
-        _processingFavorite = true;
-        try
-        {
-            var request = new ToggleWatchListItemRequest
-            {
-                AuctionId = auction.Id,
-                Title = auction.Title,
-                ImageName = auction.ImageName,
-                CurrentPrice = auction.CurrentBid,
-                EndTime = auction.EndTime
-            };
-
-            var response = await WatchlistApi.ToggleAsync(request);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<ToggleWatchListItemResponse>();
-
-                if (result != null)
-                {
-                    auction.IsWatchListed = result.IsInWatchList;
-                    
-                    var message = result.IsInWatchList
-                        ? $"✅ تمت إضافة '{auction.Title}' إلى قائمة المتابعة"
-                        : $"❌ تمت إزالة '{auction.Title}' من قائمة المتابعة";
-
-                    Snackbar.Add(message, result.IsInWatchList ? Severity.Success : Severity.Info);
-
-                    StateHasChanged();
-                    var count = await WatchlistApi.GetCountAsync();
-                    mainLayout.UpdateWatchlistCount(count);
-
-                }
-            }
-            else
-            {
-                var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Error in toggling response favorite: {error}");
-                Snackbar.Add("حدث خطأ أثناء تحديث قائمة المتابعة", Severity.Error);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error Exception toggling favorite: {ex.Message}");
-            Snackbar.Add("حدث خطأ أثناء تحديث قائمة المتابعة", Severity.Error);
-        }
-        finally
-        {
-            _processingFavorite = false;
+            Console.WriteLine($"Home: Updating IsWatchListed for AuctionId={args.AuctionId} to {args.IsFavorite}");
+            auction.IsWatchListed = args.IsFavorite;
+            StateHasChanged();
         }
     }
 
-    private void GoToDetails(int id)
-    {
-        NavManager.NavigateTo($"/auctions/{id}/details");
-    }
 
-    private string GetTimeRemaining(DateTime endTime)
-    {
-        var remaining = endTime - DateTime.UtcNow;
-        if (remaining.TotalSeconds <= 0) return "انتهى";
-        if (remaining.TotalDays >= 1) return $"{(int)remaining.TotalDays}ي {remaining.Hours}س";
-        return $"{remaining.Hours}س {remaining.Minutes}د";
-    }
-
-    private string GetImageUrl(string imageName)
-    {
-        if (string.IsNullOrEmpty(imageName))
-            return "https://via.placeholder.com/400x200?text=No+Image";
-        return $"{LocalImagePath}{imageName}";
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_timer != null)
-        {
-            _timer.Stop();
-            _timer.Dispose();
-        }
-    }
+    
 }
