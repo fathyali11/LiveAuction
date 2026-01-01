@@ -13,6 +13,7 @@ using LiveAuction.Application.Services.AuctionServices;
 using LiveAuction.Application.Services.AuthServices;
 using LiveAuction.Application.Services.BackgroundJobServices;
 using LiveAuction.Application.Services.WalletServices;
+using LiveAuction.Application.Wallets.Commands.Deposit;
 using LiveAuction.Application.WatchLists.Commands.ToggleWatchListItem;
 using LiveAuction.Domain.Consts;
 using Mapster;
@@ -48,6 +49,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IValidator<RefreshTokenCommand>, RefreshTokenCommandValidator>();
         services.AddScoped<IValidator<UserBidsHistoryQuery>, UserBidsHistoryQueryValidator>();
         services.AddScoped<IValidator<ToggleWatchListItemCommand>, ToggleWatchListItemCommandValidator>();
+        services.AddScoped<IValidator<DepositCommand>, DepositCommandValidator>();
         TypeAdapterConfig.GlobalSettings.Scan(assembly);
         services.AddMapster();
         var connectionString = configuration.GetConnectionString("LiveAuctionDbConnection");
