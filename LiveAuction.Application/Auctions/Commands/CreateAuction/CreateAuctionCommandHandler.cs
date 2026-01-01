@@ -1,8 +1,8 @@
 using FluentValidation;
+using LiveAuction.Application.Services.AuctionServices;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
-using LiveAuction.Domain.Services;
 using LiveAuction.Shared.DTOs;
 using Mapster;
 using MediatR;

@@ -1,8 +1,7 @@
 using Hangfire;
-using LiveAuction.Domain.Services;
 using System.Linq.Expressions;
 
-namespace LiveAuction.Infrastructure.Services;
+namespace LiveAuction.Application.Services.BackgroundJobServices;
 
 internal class BackgroundJobService : IBackgroundJobService
 {

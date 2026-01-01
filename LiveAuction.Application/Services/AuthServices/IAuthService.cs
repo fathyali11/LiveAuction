@@ -1,7 +1,7 @@
 ﻿using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
 
-namespace LiveAuction.Domain.Services;
+namespace LiveAuction.Application.Services.AuthServices;
 
 public interface IAuthService
 {

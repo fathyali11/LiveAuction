@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace LiveAuction.Domain.Services;
+namespace LiveAuction.Application.Services.BackgroundJobServices;
 
 public interface IBackgroundJobService
 {

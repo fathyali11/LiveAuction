@@ -1,9 +1,9 @@
-﻿using LiveAuction.Domain.Entities;
+﻿using LiveAuction.Application.Services.BackgroundJobServices;
+using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
-using LiveAuction.Domain.Services;
 using Microsoft.AspNetCore.Http;
 
-namespace LiveAuction.Infrastructure.Services;
+namespace LiveAuction.Application.Services.AuctionServices;
 
 internal class AuctionService(IBackgroundJobService _backgroundJobService): IAuctionService
 {

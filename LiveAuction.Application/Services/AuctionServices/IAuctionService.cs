@@ -1,7 +1,7 @@
 ﻿using LiveAuction.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 
-namespace LiveAuction.Domain.Services;
+namespace LiveAuction.Application.Services.AuctionServices;
 
 public interface IAuctionService
 {
