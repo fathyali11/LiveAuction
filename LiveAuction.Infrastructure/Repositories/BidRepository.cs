@@ -3,6 +3,7 @@ using LiveAuction.Domain.Repositories;
 using LiveAuction.Infrastructure.Presistence;
 using LiveAuction.Shared.DTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.Security.Cryptography;
 
 namespace LiveAuction.Infrastructure.Repositories;
@@ -59,4 +60,9 @@ internal class BidRepository(ApplicationDbContext _context) : IBidRepository
             });
         return userBids.ToList();
     }
+
+   
+
+    public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+        => await _context.Database.BeginTransactionAsync(cancellationToken);
 }
