@@ -26,5 +26,7 @@ internal class BidConfiguration : IEntityTypeConfiguration<Bid>
             .HasForeignKey(b => b.BidderId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.ToTable(t =>
+            t.HasCheckConstraint("CK_Bids_AuctionId", "[AuctionId] > 0"));
     }
 }

@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace LiveAuction.Infrastructure.Presistence.EntitiesConfiguration;
 
-internal class EntityNameConfiguration : IEntityTypeConfiguration<Auction>
+internal class AuctionConfiguration : IEntityTypeConfiguration<Auction>
 {
     public void Configure(EntityTypeBuilder<Auction> builder)
     {

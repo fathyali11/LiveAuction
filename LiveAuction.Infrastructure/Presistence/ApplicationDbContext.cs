@@ -10,6 +10,7 @@ internal class ApplicationDbContext(DbContextOptions<ApplicationDbContext> optio
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<WatchList> WatchLists { get; set; }
     public DbSet<WatchListItem> WatchListItems { get; set; }
+    public DbSet<Transaction> Transactions { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
