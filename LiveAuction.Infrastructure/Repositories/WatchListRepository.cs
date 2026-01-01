@@ -8,7 +8,7 @@ namespace LiveAuction.Infrastructure.Repositories;
 
 internal class WatchListRepository(ApplicationDbContext _context) : IWatchListRepository
 {
-    public async Task<bool> ToggleAndReturnCurrentStateOfExitanceAsync(string userId, ToggleWatchListItemRequest request, CancellationToken cancellationToken = default)
+    public async Task<bool> ToggleAndReturnCurrentStateOfExitanceAsync(string userId, Auction auction, CancellationToken cancellationToken = default)
     {
         var watchList = await _context.WatchLists
             .Include(wl => wl.Items)
@@ -23,7 +23,7 @@ internal class WatchListRepository(ApplicationDbContext _context) : IWatchListRe
             await _context.WatchLists.AddAsync(watchList, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
         }
-        var existingItem = watchList.Items.FirstOrDefault(item => item.AuctionId == request.AuctionId);
+        var existingItem = watchList.Items.FirstOrDefault(item => item.AuctionId == auction.Id);
         if (existingItem != null)
         {
             watchList.Items.Remove(existingItem);
@@ -35,12 +35,12 @@ internal class WatchListRepository(ApplicationDbContext _context) : IWatchListRe
         {
             var newItem = new WatchListItem
             {
-                AuctionId = request.AuctionId,
+                AuctionId = auction.Id,
                 WatchListId = watchList.Id,
-                CurrentBid = request.CurrentPrice,
-                Title = request.Title,
-                ImageName = request.ImageName,
-                EndTime = request.EndTime
+                CurrentBid = auction.CurrentBid!.Value,
+                Title = auction.Title,
+                ImageName = auction.ImageName,
+                EndTime = auction.EndTime
             };
             watchList.Items.Add(newItem);
             await _context.WatchListItems.AddAsync(newItem, cancellationToken);
@@ -71,10 +71,10 @@ internal class WatchListRepository(ApplicationDbContext _context) : IWatchListRe
         {
             Id = watchList.Id,
             UserId = watchList.UserId,
-            Items = watchList.Items.Select(item => new ToggleWatchListItemResponse
+            Items = watchList.Items.Select(item => new WatchListItemDto
             {
                 AuctionId = item.AuctionId,
-                CurrentPrice = item.CurrentBid,
+                CurrentBid = item.CurrentBid,
                 Title = item.Title,
                 ImageName = item.ImageName,
                 EndTime = item.EndTime,
@@ -82,8 +82,9 @@ internal class WatchListRepository(ApplicationDbContext _context) : IWatchListRe
             }).ToList()
         };
     }
-    public async Task<int> GetCountAsync(string userId, CancellationToken cancellationToken = default)
+    public async Task<int> GetCountAsync(string ?userId, CancellationToken cancellationToken = default)
     {
+        if(userId is null) return 0;
         var count = await _context.WatchListItems
             .Where(item => item.WatchList.UserId == userId)
             .CountAsync(cancellationToken);

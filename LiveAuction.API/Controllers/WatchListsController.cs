@@ -30,12 +30,11 @@ public class WatchListsController(IMediator _mediator) : ControllerBase
             },
             watchList => Ok(watchList));
     }
-    [HttpPost("toggle")]
-    public async Task<IActionResult> ToggleWatchListItem(ToggleWatchListItemRequest request)
+    [HttpPost("toggle/{id}")]
+    public async Task<IActionResult> ToggleWatchListItem([FromRoute] int id,CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var command = new ToggleWatchListItemCommand(userId, request.AuctionId, request.Title, request.ImageName, request.CurrentPrice, request.EndTime);
-        var result = await _mediator.Send(command);
+        var result = await _mediator.Send(new ToggleWatchListItemCommand(userId, id), cancellationToken);
         return result.Match<IActionResult>(
             error => error.Code switch
             {
@@ -45,6 +44,8 @@ public class WatchListsController(IMediator _mediator) : ControllerBase
             },
             response => Ok(response));
     }
+
+    [AllowAnonymous]
     [HttpGet("count")]
     public async Task<IActionResult> GetWatchListCount()
     {

@@ -36,6 +36,8 @@ public static class ServiceCollectionExtension
         services.AddHangfire(configuration => configuration
             .UseSqlServerStorage(connectionString));
 
+        services.AddHangfireServer();
+
         services.AddIdentity<ApplicationUser, IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();

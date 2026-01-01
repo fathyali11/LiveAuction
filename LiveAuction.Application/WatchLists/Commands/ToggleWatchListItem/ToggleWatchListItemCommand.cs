@@ -7,9 +7,5 @@ namespace LiveAuction.Application.WatchLists.Commands.ToggleWatchListItem;
 
 public record ToggleWatchListItemCommand(
     string UserId,
-    int AuctionId,
-    string Title,
-    string ImageName,
-    decimal CurrentPrice,
-    DateTime EndTime
+    int AuctionId
     ): IRequest<OneOf<Error, ToggleWatchListItemResponse>>;

@@ -1,8 +1,7 @@
 ﻿@page "/auctions/create"
-@using System.Net.Http.Headers
-@using Microsoft.AspNetCore.Authorization
+@using LiveAuction.Client.Features.Auctions.Services
 
-@inject HttpClient Http
+@inject IAuctionsApi AuctionsApi
 @inject ISnackbar Snackbar
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthStateProvider
@@ -152,7 +151,7 @@
             content.Add(new StringContent(model.StartTime.ToString("o")), "StartTime");
             content.Add(new StringContent(model.Seller), "Seller");
 
-            var response = await Http.PostAsync("api/auctions", content);
+            var response = await AuctionsApi.CreateAsync(content);
 
             if (response.IsSuccessStatusCode)
             {

@@ -19,7 +19,8 @@ public class AuctionsController(IMediator _mediator) : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<AuctionDto>>> GetAll(CancellationToken cancellationToken)
     {
-        var result = await _mediator.Send(new GetAllAuctionsQuery(), cancellationToken);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var result = await _mediator.Send(new GetAllAuctionsQuery(userId), cancellationToken);
         return Ok(result);
     }
     [HttpGet("{id}")]

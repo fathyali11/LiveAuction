@@ -31,11 +31,11 @@ internal class ToggleWatchListItemCommandHandler(
             _logger.LogWarning("Auction with ID {AuctionId} not found", request.AuctionId);
             return new Error(ErrorCodes.NotFoundError, $"Auction with ID {request.AuctionId} not found.");
         }
-        var toggleRequest = request.Adapt<ToggleWatchListItemRequest>();
-        var toggleResult = await _watchListRepository.ToggleAndReturnCurrentStateOfExitanceAsync(request.UserId,toggleRequest, cancellationToken);
+
+        var toggleResult = await _watchListRepository
+            .ToggleAndReturnCurrentStateOfExitanceAsync(request.UserId,auction, cancellationToken);
         _logger.LogInformation("Toggled watch list item for UserId: {UserId}, AuctionId: {AuctionId}. Now in watch list: {IsInWatchList}", request.UserId, request.AuctionId, toggleResult);
-        var response = toggleRequest.Adapt<ToggleWatchListItemResponse>();
-        response.IsInWatchList = toggleResult;
+        var response = new ToggleWatchListItemResponse { IsInWatchList = toggleResult };
         return response;
 
     }

@@ -1,3 +1,4 @@
+using Hangfire;
 using LiveAuction.API.Extensions;
 using LiveAuction.API.Hubs;
 using LiveAuction.Application.Extensions;
@@ -15,6 +16,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseHangfireDashboard("/jobs");
 app.UseExceptionHandler();
 app.MapStaticAssets();
 app.UseHttpsRedirection();

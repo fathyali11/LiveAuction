@@ -1,11 +1,8 @@
 ﻿@page "/auctions/{Id:int}/details"
-@using LiveAuction.Shared.DTOs
-@using Microsoft.AspNetCore.Components.Authorization
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.AspNetCore.SignalR.Client
+
 @attribute [Authorize]
-@inject HttpClient Http
+@inject IAuctionsApi AuctionsApi
+@inject IBidsApi BidsApi
 @inject ISnackbar Snackbar
 @inject NavigationManager NavManager
 @inject IDialogService DialogService
@@ -226,6 +223,7 @@
     private string currentUserName=string.Empty;
     private double bidAmount;
     private HubConnection hubConnection=default!;
+    private Timer _timer;
 
     private const string LocalImagePath = "https://localhost:7293/images/";
 
@@ -253,6 +251,7 @@
                 await InvokeAsync(async () =>
                 {
                     auction!.CurrentBid = bid.Amount;
+                    auction.EndTime = bid.AuctionEndTime;
                     auction.Bids.Add(bid);
                     StateHasChanged();
                     Snackbar.Add($"مزايدة جديدة من {bid.Bidder} بـ ${bid.Amount}", Severity.Info);
@@ -282,6 +281,13 @@
 
         }
 
+        _timer = new Timer(1000);
+        _timer.Elapsed += async (s, e) =>
+        {
+            await InvokeAsync(StateHasChanged);
+        };
+        _timer.Start();
+
     }
 
     private async Task LoadData()
@@ -289,7 +295,7 @@
         try
         {
             isLoading = true;
-            auction = await Http.GetFromJsonAsync<AuctionDto>($"api/auctions/{Id}");
+            auction = await AuctionsApi.GetByIdAsync(Id);
 
             var authState = await AuthStateTask;
             var user = authState.User;
@@ -322,7 +328,12 @@
         isBidding = true;
         try
         {
-            var response = await Http.PostAsJsonAsync("api/bids", new { AuctionId = Id, Amount = bidAmount });
+            var response = await BidsApi.PlaceBidAsync(new CreateBidRequest
+                {
+                    Amount = (decimal)bidAmount,
+                    AuctionId = auction.Id
+                });
+
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
@@ -348,7 +359,7 @@
 
         if (result == true)
         {
-            var response = await Http.DeleteAsync($"api/auctions/{Id}");
+            var response = await AuctionsApi.DeleteAsync(auction!.Id);
             if (response.IsSuccessStatusCode)
             {
                 Snackbar.Add("تم الحذف بنجاح 👋", Severity.Success);
@@ -371,10 +382,10 @@
 
     private string GetTimeRemaining(DateTime endTime)
     {
-        var span = endTime - DateTime.UtcNow;
-        if (span.TotalSeconds <= 0) return "00:00";
-        // تنسيق الوقت: 2ي 5س 30د
-        return $"{(span.Days > 0 ? $"{span.Days}ي " : "")}{span.Hours}س {span.Minutes}د";
+        var remaining = endTime - DateTime.UtcNow;
+        if (remaining.TotalSeconds <= 0) return "انتهى";
+        if (remaining.TotalDays >= 1) return $"{(int)remaining.TotalDays}ي {remaining.Hours}س";
+        return $"{remaining.Hours}س {remaining.Minutes}د {remaining.Seconds}ث";
     }
 
 
@@ -389,6 +400,11 @@
             }
             await hubConnection.StopAsync();
             await hubConnection.DisposeAsync();
+        }
+        if (_timer != null)
+        {
+            _timer.Stop();
+            _timer.Dispose();
         }
     }
 }

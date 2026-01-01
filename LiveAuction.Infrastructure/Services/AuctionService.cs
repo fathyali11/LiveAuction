@@ -1,9 +1,11 @@
-﻿using LiveAuction.Domain.Services;
+﻿using LiveAuction.Domain.Entities;
+using LiveAuction.Domain.Repositories;
+using LiveAuction.Domain.Services;
 using Microsoft.AspNetCore.Http;
 
 namespace LiveAuction.Infrastructure.Services;
 
-internal class AuctionService: IAuctionService
+internal class AuctionService(IBackgroundJobService _backgroundJobService): IAuctionService
 {
     public async Task<string> SaveImageAsync(IFormFile image, CancellationToken cancellationToken)
     {
@@ -26,5 +28,14 @@ internal class AuctionService: IAuctionService
         {
             await Task.Run(() => File.Delete(imagePath), cancellationToken);
         }
+    }
+
+    public async Task<string> ScheduleAuction(Auction auction,CancellationToken cancellationToken)
+    {
+        var jobId = _backgroundJobService.ScheduleJob<IAuctionRepository>(
+            repo => repo.TerminateAuctionAsync(auction.Id, cancellationToken),
+            auction.EndTime - DateTime.UtcNow
+            );
+        return jobId;
     }
 }
