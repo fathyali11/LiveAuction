@@ -12,6 +12,7 @@ using LiveAuction.Application.Bids.Queries.UserBidsHistory;
 using LiveAuction.Application.Services.AuctionServices;
 using LiveAuction.Application.Services.AuthServices;
 using LiveAuction.Application.Services.BackgroundJobServices;
+using LiveAuction.Application.Services.WalletServices;
 using LiveAuction.Application.WatchLists.Commands.ToggleWatchListItem;
 using LiveAuction.Domain.Consts;
 using Mapster;
@@ -35,6 +36,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IBackgroundJobService, BackgroundJobService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAuctionService, AuctionService>();
+        services.AddScoped<IWalletService, WalletService>();
 
         services.AddScoped<IValidator<RegisterUserCommand>, RegisterUserCommandValidator>();
         services.AddScoped<IValidator<LoginUserCommand>, LoginUserCommandValidator>();

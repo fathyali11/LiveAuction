@@ -16,6 +16,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IBidRepository,BidRepository>();
         services.AddScoped<IRefreshTokenRepository,RefreshTokenRepository>();
         services.AddScoped<IWatchListRepository,WatchListRepository>();
+        services.AddScoped<IWalletRepository,WalletRepository>();
 
         var connectionString = configuration.GetConnectionString("LiveAuctionDbConnection");
         services.AddDbContext<ApplicationDbContext>(options =>
