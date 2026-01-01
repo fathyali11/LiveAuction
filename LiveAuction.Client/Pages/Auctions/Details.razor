@@ -1,9 +1,6 @@
 ﻿@page "/auctions/{Id:int}/details"
 
 @attribute [Authorize]
-@using System.Timers
-@using LiveAuction.Client.Features.Auctions.Services
-@using LiveAuction.Client.Features.Bids.Services
 @inject IAuctionsApi AuctionsApi
 @inject IBidsApi BidsApi
 @inject ISnackbar Snackbar
