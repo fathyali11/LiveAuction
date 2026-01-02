@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace LiveAuction.Shared.DTOs;
+﻿namespace LiveAuction.Shared.DTOs;
 
 public class DepositRequest
 {
