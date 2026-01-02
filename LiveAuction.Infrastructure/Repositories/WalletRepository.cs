@@ -1,6 +1,8 @@
 ﻿using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
 using LiveAuction.Infrastructure.Presistence;
+using LiveAuction.Shared.DTOs;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace LiveAuction.Infrastructure.Repositories;
@@ -24,5 +26,30 @@ internal class WalletRepository(ApplicationDbContext _context) : IWalletReposito
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await _context.SaveChangesAsync(cancellationToken);
+    }
+    
+    public async Task<WalletSummaryResponse?> GetWalletSummaryAsync(string userId,CancellationToken cancellationToken=default)
+    {
+        var walletResponse = await _context.Users
+            .AsNoTracking()
+            .Include(x=> x.Transactions)
+            .Where(u => u.Id == userId)
+            .Select(u => new WalletSummaryResponse
+            {
+                TotalBalance = u.TotalBalance,
+                LockedBalance = u.LockedBalance,
+                Transactions = u.Transactions
+                    .OrderByDescending(t => t.CreateAt)
+                    .Select(t => new TransactionResponse
+                    {
+                        TransactionId = t.Id,
+                        Amount = t.Amount,
+                        Timestamp = t.CreateAt,
+                        Type = t.TransactionType.ToString()
+                    })
+                    .ToList()
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+        return walletResponse;
     }
 }
