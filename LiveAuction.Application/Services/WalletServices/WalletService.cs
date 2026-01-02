@@ -51,7 +51,7 @@ internal class WalletService(IWalletRepository _walletRepository) : IWalletServi
     public async Task<bool> ReleaseHoldAsync(string userId, decimal amount, int auctionId, CancellationToken cancellationToken)
     {
         var user = await _walletRepository.GetUserWithBalanceAsync(userId);
-        if (user is null || user.LockedBalance < amount)
+        if (user is null)
             return false;
 
         user.LockedBalance -= amount;

@@ -21,9 +21,9 @@ public class BidsController(IMediator mediator):ControllerBase
         return result.Match<IActionResult>(
             error => error.Code switch
             {
-                ErrorCodes.NotFoundError => NotFound(),
+                ErrorCodes.NotFoundError => NotFound(error.Message),
                 ErrorCodes.ValidationError => BadRequest(error.Message),
-                _ => StatusCode(500, "An unexpected error occurred.")
+                _ => StatusCode(500, error.Message)
             },
             bidDto => CreatedAtAction(nameof(Create), new { id = bidDto.Id }, bidDto));
     }
@@ -37,7 +37,7 @@ public class BidsController(IMediator mediator):ControllerBase
         return result.Match<IActionResult>(
             error => error.Code switch
             {
-                ErrorCodes.NotFoundError => NotFound(),
+                ErrorCodes.NotFoundError => NotFound(error.Message),
                 ErrorCodes.ValidationError => BadRequest(error.Message),
                 _ => StatusCode(500, "An unexpected error occurred.")
             },

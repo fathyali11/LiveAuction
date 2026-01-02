@@ -1,0 +1,170 @@
+﻿@page "/wallet"
+@using LiveAuction.Client.Features.Wallets.Components
+@attribute [Authorize]
+
+@inject IWalletApi WalletApi
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>محفظتي</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" Class="mb-6">💰 محفظتي</MudText>
+
+    @if (_isLoading)
+    {
+        <div class="d-flex justify-center align-center" style="height: 300px;">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        </div>
+    }
+    else
+    {
+        <MudGrid Class="mb-8">
+            <MudItem xs="12" sm="4">
+                <MudPaper Elevation="3" Class="pa-6 mud-theme-success d-flex flex-column justify-space-between" Style="height: 100%;">
+                    <div>
+                        <MudText Typo="Typo.subtitle1" Class="mb-1">الرصيد المتاح</MudText>
+                        <MudText Typo="Typo.h4">@_summary.AvailableBalance.ToString("C0")</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline" Size="Size.Large" Class="align-self-end mt-2" />
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudPaper Elevation="3" Class="pa-6 mud-theme-warning d-flex flex-column justify-space-between" Style="height: 100%;">
+                    <div>
+                        <MudText Typo="Typo.subtitle1" Class="mb-1">مبالغ محجوزة (في مزادات)</MudText>
+                        <MudText Typo="Typo.h4">@_summary.LockedBalance.ToString("C0")</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.LockClock" Size="Size.Large" Class="align-self-end mt-2" />
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudPaper Elevation="3" Class="pa-6 mud-theme-primary d-flex flex-column justify-space-between" Style="height: 100%;">
+                    <div>
+                        <MudText Typo="Typo.subtitle1" Class="mb-1">إجمالي رصيد الحساب</MudText>
+                        <MudText Typo="Typo.h4">@_summary.TotalBalance.ToString("C0")</MudText>
+                    </div>
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Secondary" 
+                               StartIcon="@Icons.Material.Filled.AddCard" 
+                               Class="mt-4 align-self-start"
+                               OnClick="OpenDepositDialog">
+                        شحن المحفظة
+                    </MudButton>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+
+        <MudText Typo="Typo.h5" Class="mb-4">سجل العمليات الأخيرة</MudText>
+        
+        @if (_summary.Transactions.Any())
+        {
+            <MudTable Items="@_summary.Transactions" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="2">
+                <HeaderContent>
+                    <MudTh>التاريخ</MudTh>
+                    <MudTh>نوع العملية</MudTh>
+                    <MudTh>الوصف</MudTh>
+                    <MudTh>المبلغ</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="التاريخ">@context.Timestamp.ToLocalTime().ToString("g")</MudTd>
+                    
+                    <MudTd DataLabel="نوع العملية">
+                        @switch (context.Type)
+                        {
+                            case "Deposit":
+                                <MudChip Color="Color.Success" T="string" Size="Size.Small" Icon="@Icons.Material.Filled.ArrowDownward">إيداع</MudChip>
+                                break;
+                            case "Hold":
+                                <MudChip Color="Color.Warning" T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Lock">حجز</MudChip>
+                                break;
+                            case "Release":
+                                <MudChip Color="Color.Info" T="string" Size="Size.Small" Icon="@Icons.Material.Filled.LockOpen">فك حجز</MudChip>
+                                break;
+                            default:
+                                <MudChip Color="Color.Default" T="string" Size="Size.Small">@context.Type</MudChip>
+                                break;
+                        }
+                    </MudTd>
+                    
+                    
+                    <MudTd DataLabel="المبلغ">
+                        <MudText Color="@GetAmountColor(context.Type)" Typo="Typo.body1" Style="font-weight:bold;">
+                            @context.Amount.ToString("C0")
+                        </MudText>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Filled">لا توجد معاملات سابقة في حسابك.</MudAlert>
+        }
+    }
+</MudContainer>
+
+    @code {
+    private WalletSummaryResponse _summary = new();
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            _isLoading = true;
+            var response = await WalletApi.GetWalletSummaryAsync();
+            if(!response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("فشل تحميل بيانات المحفظة", Severity.Error);
+                return;
+            }
+            _summary = await response.Content.ReadFromJsonAsync<WalletSummaryResponse>();
+            if(_summary == null)
+            {
+                Snackbar.Add("فشل تحميل بيانات المحفظة", Severity.Error);
+                return;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("فشل تحميل بيانات المحفظة", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task OpenDepositDialog()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        
+        var dialog = await DialogService.ShowAsync<DepositDialog>("شحن المحفظة", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadData();
+        }
+    }
+
+    private Color GetAmountColor(string type)
+    {
+        return type switch
+        {
+            "Deposit" => Color.Success,
+            "Release" => Color.Success,
+            "Hold" => Color.Error,
+            "Purchase" => Color.Error,
+            _ => Color.Default
+        };
+    }
+}

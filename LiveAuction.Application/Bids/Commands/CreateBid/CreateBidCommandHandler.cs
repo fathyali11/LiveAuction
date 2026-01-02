@@ -63,9 +63,9 @@ internal class CreateBidCommandHandler(IBidRepository bidRepository,
             var IsHolded = await _walletService.HoldAsync(request.UserId, request.Amount, request.AuctionId, cancellationToken);
             if (!IsHolded)
             {
-                var errorMessage = $"Failed to hold money";
+                var errorMessage = $"لا يوجدك لديك مال كافي اشحن محفظتك";
                 logger.LogWarning(errorMessage);
-                return new Error(ErrorCodes.InternalServerError, errorMessage);
+                return new Error(ErrorCodes.ValidationError, errorMessage);
             }
 
 
