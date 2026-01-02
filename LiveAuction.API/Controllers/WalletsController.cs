@@ -1,4 +1,5 @@
 ﻿using LiveAuction.Application.Wallets.Commands.Deposit;
+using LiveAuction.Application.Wallets.Queries.GetWalletSummary;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Shared.DTOs;
 using MediatR;
@@ -25,5 +26,20 @@ public class WalletsController(IMediator _mediator): ControllerBase
             ErrorCodes.ValidationError => BadRequest(result),
             _ => StatusCode(500, result)
         };
+    }
+    [HttpGet("summary")]
+    public async Task<IActionResult> GetWalletSummary(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var query = new GetWalletSummaryQuery(userId!);
+        var result = await _mediator.Send(query, cancellationToken);
+        return result.Match<IActionResult>(
+            error => error.Code switch
+            {
+                ErrorCodes.ValidationError => BadRequest(error),
+                ErrorCodes.NotFoundError => NotFound(error),
+                _ => StatusCode(500, error)
+            },
+            wallet => Ok(wallet));
     }
 }
