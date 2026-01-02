@@ -4,6 +4,7 @@ using LiveAuction.Client.Auth;
 using LiveAuction.Client.Features.Auctions.Services;
 using LiveAuction.Client.Features.Bids.Services;
 using LiveAuction.Client.Features.Users.Services;
+using LiveAuction.Client.Features.Wallets.Services;
 using LiveAuction.Client.Features.Watchlists.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
@@ -29,6 +30,10 @@ builder.Services.AddRefitClient<IWatchlistApi>()
     .AddHttpMessageHandler<HttpInterceptorService>();
 
 builder.Services.AddRefitClient<IBidsApi>()
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(("https://localhost:7293")))
+    .AddHttpMessageHandler<HttpInterceptorService>();
+
+builder.Services.AddRefitClient<IWalletApi>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(("https://localhost:7293")))
     .AddHttpMessageHandler<HttpInterceptorService>();
 
