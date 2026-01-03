@@ -89,7 +89,7 @@ internal class CreateBidCommandHandler(IBidRepository bidRepository,
             }
             auction.CurrentBid = request.Amount;
             auction.CurrentBidderId = request.UserId;
-            await _auctionRepository.UpdateAsync(auction, cancellationToken);
+            await _auctionRepository.SaveChangesAsync(cancellationToken);
             var bid = request.Adapt<Bid>();
 
             await bidRepository.AddAsync(bid, cancellationToken);
