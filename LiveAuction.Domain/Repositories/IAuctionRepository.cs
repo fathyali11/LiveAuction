@@ -1,5 +1,6 @@
 ﻿using LiveAuction.Domain.Entities;
 using LiveAuction.Shared.DTOs;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace LiveAuction.Domain.Repositories;
 
@@ -11,5 +12,7 @@ public interface IAuctionRepository
     Task AddAsync(Auction auction, CancellationToken cancellationToken);
     Task UpdateAsync(Auction auction, CancellationToken cancellationToken);
     Task DeleteAsync(int id, CancellationToken cancellationToken);
-    Task TerminateAuctionAsync(int auctionId, CancellationToken cancellationToken);
+    Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken);
+    Task SaveChangesAsync(CancellationToken cancellationToken);
+    Task<Auction?> GetAuctionToTerminateAsync(int auctionId, CancellationToken cancellationToken);
 }

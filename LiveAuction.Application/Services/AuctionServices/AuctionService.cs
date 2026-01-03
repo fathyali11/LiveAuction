@@ -1,11 +1,15 @@
 ﻿using LiveAuction.Application.Services.BackgroundJobServices;
+using LiveAuction.Application.Services.WalletServices;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
+using LiveAuction.Shared.Enums;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LiveAuction.Application.Services.AuctionServices;
 
-internal class AuctionService(IBackgroundJobService _backgroundJobService): IAuctionService
+internal class AuctionService(IBackgroundJobService _backgroundJobService,
+    IServiceProvider _serviceProvider) : IAuctionService
 {
     public async Task<string> SaveImageAsync(IFormFile image, CancellationToken cancellationToken)
     {
@@ -32,11 +36,47 @@ internal class AuctionService(IBackgroundJobService _backgroundJobService): IAuc
 
     public async Task<string> ScheduleAuction(Auction auction,CancellationToken cancellationToken)
     {
-        var jobId = _backgroundJobService.ScheduleJob<IAuctionRepository>(
+        var jobId = _backgroundJobService.ScheduleJob<IAuctionService>(
             repo => repo.TerminateAuctionAsync(auction.Id, cancellationToken),
             auction.EndTime - DateTime.UtcNow
             );
         return jobId;
+    }
+    
+    public async Task TerminateAuctionAsync(int auctionId, CancellationToken cancellationToken)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var auctionRepository = scope.ServiceProvider.GetRequiredService<IAuctionRepository>();
+        var walletService = scope.ServiceProvider.GetRequiredService<IWalletService>();
+        var transaction = await auctionRepository.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var auction = await auctionRepository.GetAuctionToTerminateAsync(auctionId, cancellationToken);
+            if (auction is null || auction.Status != AuctionStatus.Open)
+                return;
+            auction.Status = AuctionStatus.Closed;
+            if (auction.Bids.Any())
+            {
+                var highestBid = auction.Bids.OrderByDescending(b => b.Amount).First();
+                auction.WinnerId = highestBid.BidderId;
+                auction.CurrentBidderId = highestBid.BidderId;
+
+                var isMoneyTransfered= await walletService
+                    .TransferMoneyAsync(highestBid.BidderId, auction.CreatedById, highestBid.Amount,auctionId, cancellationToken);
+                if (!isMoneyTransfered)
+                {
+                    throw new Exception("Money transfer failed");
+                }
+            }
+
+            await auctionRepository.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 
 

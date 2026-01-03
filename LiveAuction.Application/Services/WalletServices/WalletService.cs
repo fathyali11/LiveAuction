@@ -66,5 +66,32 @@ internal class WalletService(IWalletRepository _walletRepository) : IWalletServi
         await _walletRepository.SaveChangesAsync(cancellationToken);
         return true;
     }
+    public async Task<bool> TransferMoneyAsync(string winnerId, string sellerId, decimal amount,int auctionId, CancellationToken cancellationToken)
+    {
+        var winner = await _walletRepository.GetUserWithBalanceAsync(winnerId);
+        var seller = await _walletRepository.GetUserWithBalanceAsync(sellerId);
+        if (winner is null || seller is null)
+            return false;
+        winner.LockedBalance -= amount;
+        winner.TotalBalance -= amount;
+        seller.TotalBalance += amount;
+        var transactionForWinner = new Transaction
+        {
+            UserId = winnerId,
+            Amount = amount,
+            AuctionId=auctionId,
+            TransactionType = TransactionType.Purchase,
+        };
+        var transactionForSeller = new Transaction
+        {
+            UserId = sellerId,
+            Amount = amount,
+            AuctionId=auctionId,
+            TransactionType = TransactionType.Deposit,
+        };
+        await _walletRepository.AddTransactionsAsync([transactionForWinner, transactionForSeller], cancellationToken);
+        await _walletRepository.SaveChangesAsync(cancellationToken);
+        return true;
+    }
 
 }

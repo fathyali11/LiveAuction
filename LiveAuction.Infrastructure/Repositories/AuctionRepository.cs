@@ -4,6 +4,7 @@ using LiveAuction.Infrastructure.Presistence;
 using LiveAuction.Shared.DTOs;
 using LiveAuction.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LiveAuction.Infrastructure.Repositories;
@@ -70,26 +71,20 @@ internal class AuctionRepository(ApplicationDbContext _context,
         }
     }
 
-    
-    public async Task TerminateAuctionAsync(int auctionId, CancellationToken cancellationToken)
+    public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var auction = await dbContext.Auctions
-            .Include(a => a.Bids)
-            .ThenInclude(x=>x.Bidder)
-            .FirstOrDefaultAsync(a => a.Id == auctionId, cancellationToken);
-
-        if (auction is null || auction.Status != AuctionStatus.Open)
-            return;
-
-        auction.Status = AuctionStatus.Closed;
-        if (auction.Bids.Any())
-        {
-            var highestBid = auction.Bids.OrderByDescending(b => b.Amount).First();
-            auction.WinnerId = highestBid.BidderId;
-            auction.CurrentBidderId = highestBid.BidderId;
-        }
-        await dbContext.SaveChangesAsync(cancellationToken);
+        return await _context.Database.BeginTransactionAsync(cancellationToken);
     }
+
+
+
+    public async Task SaveChangesAsync(CancellationToken cancellationToken)
+    {
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<Auction?> GetAuctionToTerminateAsync(int auctionId, CancellationToken cancellationToken)
+     => await _context.Auctions
+                .Include(a => a.Bids)
+                .FirstOrDefaultAsync(a => a.Id == auctionId, cancellationToken);
 }
