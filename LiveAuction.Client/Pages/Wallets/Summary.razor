@@ -65,7 +65,6 @@
                 <HeaderContent>
                     <MudTh>التاريخ</MudTh>
                     <MudTh>نوع العملية</MudTh>
-                    <MudTh>الوصف</MudTh>
                     <MudTh>المبلغ</MudTh>
                 </HeaderContent>
                 <RowTemplate>
@@ -74,13 +73,13 @@
                     <MudTd DataLabel="نوع العملية">
                         @switch (context.Type)
                         {
-                            case "Deposit":
+                            case nameof(TransactionType.Deposit):
                                 <MudChip Color="Color.Success" T="string" Size="Size.Small" Icon="@Icons.Material.Filled.ArrowDownward">إيداع</MudChip>
                                 break;
-                            case "Hold":
+                            case nameof(TransactionType.Hold):
                                 <MudChip Color="Color.Warning" T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Lock">حجز</MudChip>
                                 break;
-                            case "Release":
+                            case nameof(TransactionType.Release):
                                 <MudChip Color="Color.Info" T="string" Size="Size.Small" Icon="@Icons.Material.Filled.LockOpen">فك حجز</MudChip>
                                 break;
                             default:
@@ -88,7 +87,6 @@
                                 break;
                         }
                     </MudTd>
-                    
                     
                     <MudTd DataLabel="المبلغ">
                         <MudText Color="@GetAmountColor(context.Type)" Typo="Typo.body1" Style="font-weight:bold;">

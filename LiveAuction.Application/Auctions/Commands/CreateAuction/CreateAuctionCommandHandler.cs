@@ -51,7 +51,7 @@ internal class CreateAuctionCommandHandler(
 
         await _auctionRepository.AddAsync(auction, cancellationToken);
         auction.JobId = await _auctionService.ScheduleAuction(auction, cancellationToken);
-        await _auctionRepository.UpdateAsync(auction, cancellationToken);
+        await _auctionRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("Auction created successfully: {Title} with ID: {Id}", auction.Title, auction.Id);
 

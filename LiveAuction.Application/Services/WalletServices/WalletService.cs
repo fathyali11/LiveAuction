@@ -1,6 +1,6 @@
-﻿using LiveAuction.Domain.Consts;
-using LiveAuction.Domain.Entities;
+﻿using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
+using LiveAuction.Shared.Enums;
 
 namespace LiveAuction.Application.Services.WalletServices;
 

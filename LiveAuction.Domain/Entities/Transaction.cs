@@ -1,4 +1,4 @@
-﻿using LiveAuction.Domain.Consts;
+﻿using LiveAuction.Shared.Enums;
 
 namespace LiveAuction.Domain.Entities;
 
