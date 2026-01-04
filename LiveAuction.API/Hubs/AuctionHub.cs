@@ -14,4 +14,16 @@ public class AuctionHub(ILogger<AuctionHub> logger):Hub
         logger.LogInformation("User left from group {AuctionId}", auctionId);
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, auctionId);
     }
+    public override async Task OnConnectedAsync()
+    {
+        var signalrConnectionId = Context.UserIdentifier;
+        logger.LogInformation("User connected with SignalR ConnectionId: {ConnectionId}", signalrConnectionId);
+
+        var user = Context.User;
+        foreach (var claim in user?.Claims!)
+        {
+            logger.LogInformation("Claim Type: {ClaimType}, Claim Value: {ClaimValue}", claim.Type, claim.Value);
+        }
+        await base.OnConnectedAsync();
+    }
 }

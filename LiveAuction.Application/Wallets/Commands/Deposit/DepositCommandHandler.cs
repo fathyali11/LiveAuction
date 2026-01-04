@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using LiveAuction.Application.Interfaces;
 using LiveAuction.Application.Services.WalletServices;
 using LiveAuction.Domain.Consts;
 using MediatR;
@@ -8,7 +9,8 @@ namespace LiveAuction.Application.Wallets.Commands.Deposit;
 
 internal class DepositCommandHandler(IWalletService _walletService,
     IValidator<DepositCommand> _validator,
-    ILogger<DepositCommandHandler>_logger)
+    ILogger<DepositCommandHandler>_logger,
+    IAuctionNotificationService _auctionNotificationService)
     : IRequestHandler<DepositCommand, Error>
 {
     public async Task<Error> Handle(DepositCommand request, CancellationToken cancellationToken)

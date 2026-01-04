@@ -87,5 +87,10 @@
         var dialog = await DialogService.ShowAsync<DepositDialog>("شحن المحفظة", options);
 
         var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            StateHasChanged();
+        }
     }
 }

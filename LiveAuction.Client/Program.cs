@@ -6,6 +6,7 @@ using LiveAuction.Client.Features.Bids.Services;
 using LiveAuction.Client.Features.Users.Services;
 using LiveAuction.Client.Features.Wallets.Services;
 using LiveAuction.Client.Features.Watchlists.Services;
+using LiveAuction.Client.Services.TokenServices;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -43,5 +44,6 @@ builder.Services.AddMudServices();
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider,CustomAuthStateProvider>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 await builder.Build().RunAsync();

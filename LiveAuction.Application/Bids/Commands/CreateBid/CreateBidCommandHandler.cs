@@ -82,7 +82,7 @@ internal class CreateBidCommandHandler(IBidRepository bidRepository,
 
             if (auction.EndTime - DateTime.UtcNow <= TimeSpan.FromMinutes(5))
             {
-                auction.EndTime = auction.EndTime.AddMinutes(5);
+                auction.EndTime = auction.EndTime.AddMinutes(1);
                 _backgroundJobService.DeleteScheduledJob(auction.JobId);
                 auction.JobId = await _auctionService.ScheduleAuction(auction, cancellationToken);
                 logger.LogInformation("AuctionId: {AuctionId} end time extended to {EndTime}", auction.Id, auction.EndTime);

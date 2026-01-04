@@ -1,10 +1,14 @@
 ﻿@page "/wallet"
+@using Blazored.LocalStorage
 @using LiveAuction.Client.Features.Wallets.Components
+@using LiveAuction.Client.Services.TokenServices
 @attribute [Authorize]
 
+@implements IAsyncDisposable
 @inject IWalletApi WalletApi
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject ITokenService TokenService
 
 <PageTitle>محفظتي</PageTitle>
 
@@ -105,11 +109,20 @@
 
     @code {
     private WalletSummaryResponse _summary = new();
+    private HubConnection? _hubConnection;
     private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
+        Console.WriteLine("OnInitializedAsync Started");
+
         await LoadData();
+        Console.WriteLine("LoadData Finished");
+
+        Console.WriteLine("Calling SetupSignalRConnection...");
+        await SetupSignalRConnection();
+
+        Console.WriteLine("OnInitializedAsync Completed");
     }
 
     private async Task LoadData()
@@ -141,6 +154,31 @@
         }
     }
 
+    private async Task SetupSignalRConnection()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl("https://localhost:7293/hubs/auction",
+            options =>
+            {
+                options.AccessTokenProvider = async () =>
+                {
+                    return await TokenService.GetAccessTokenAsync();
+                };
+            })
+            .WithAutomaticReconnect()
+            .Build();
+
+        _hubConnection.On("ForceRefreshWallet", async () =>
+         {
+             Console.WriteLine("🔔 SignalR Event Received!");
+             await LoadData();
+             await InvokeAsync(StateHasChanged);
+         });
+
+        await _hubConnection.StartAsync();
+
+    }
+
     private async Task OpenDepositDialog()
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
@@ -164,5 +202,15 @@
             "Purchase" => Color.Error,
             _ => Color.Default
         };
+    }
+
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_hubConnection != null)
+        { 
+            await _hubConnection.StopAsync();
+            await _hubConnection.DisposeAsync();
+        }
     }
 }

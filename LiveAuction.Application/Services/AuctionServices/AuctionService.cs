@@ -1,4 +1,5 @@
-﻿using LiveAuction.Application.Services.BackgroundJobServices;
+﻿using LiveAuction.Application.Interfaces;
+using LiveAuction.Application.Services.BackgroundJobServices;
 using LiveAuction.Application.Services.WalletServices;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace LiveAuction.Application.Services.AuctionServices;
 
 internal class AuctionService(IBackgroundJobService _backgroundJobService,
+    IAuctionNotificationService _auctionNotificationService,
     IServiceProvider _serviceProvider) : IAuctionService
 {
     public async Task<string> SaveImageAsync(IFormFile image, CancellationToken cancellationToken)
@@ -55,6 +57,8 @@ internal class AuctionService(IBackgroundJobService _backgroundJobService,
             if (auction is null || auction.Status != AuctionStatus.Open)
                 return;
             auction.Status = AuctionStatus.Closed;
+            string? winnerIdToNotify = null;
+            string? sellerIdToNotify = null;
             if (auction.Bids.Any())
             {
                 var highestBid = auction.Bids.OrderByDescending(b => b.Amount).First();
@@ -67,10 +71,22 @@ internal class AuctionService(IBackgroundJobService _backgroundJobService,
                 {
                     throw new Exception("Money transfer failed");
                 }
+                winnerIdToNotify = highestBid.BidderId;
+                sellerIdToNotify = auction.CreatedById;
+                
             }
 
             await auctionRepository.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+
+            if (winnerIdToNotify is not null)
+            {
+                Console.WriteLine($"Notifying winner {winnerIdToNotify} and seller {sellerIdToNotify}");
+                await _auctionNotificationService
+                    .ForceRefreshWalletAsync(winnerIdToNotify);
+                await _auctionNotificationService
+                    .ForceRefreshWalletAsync(sellerIdToNotify!);
+            }
         }
         catch
         {
