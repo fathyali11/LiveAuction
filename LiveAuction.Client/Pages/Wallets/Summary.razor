@@ -168,7 +168,7 @@
             .WithAutomaticReconnect()
             .Build();
 
-        _hubConnection.On("ForceRefreshWallet", async () =>
+        _hubConnection.On(MethodNames.ForceRefreshWallet, async () =>
          {
              Console.WriteLine("🔔 SignalR Event Received!");
              await LoadData();

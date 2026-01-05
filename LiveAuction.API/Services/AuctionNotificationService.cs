@@ -1,5 +1,6 @@
 ﻿using LiveAuction.API.Hubs;
 using LiveAuction.Application.Interfaces;
+using LiveAuction.Shared.Consts;
 using LiveAuction.Shared.DTOs;
 using Microsoft.AspNetCore.SignalR;
 
@@ -10,13 +11,13 @@ public class AuctionNotificationService(IHubContext<AuctionHub> _hubContext) : I
     public Task ForceRefreshWalletAsync(string userId)
     {
         return _hubContext.Clients.User(userId)
-            .SendAsync("ForceRefreshWallet");
+            .SendAsync(MethodNames.ForceRefreshWallet);
 
     }
 
     public async Task NotifyNewBidAsync(int auctionId,BidDto bidDto)
     {
         await _hubContext.Clients.Group(auctionId.ToString())
-            .SendAsync("NewBidPlaced", bidDto);
+            .SendAsync(MethodNames.NewBidPlaced, bidDto);
     }
 }
