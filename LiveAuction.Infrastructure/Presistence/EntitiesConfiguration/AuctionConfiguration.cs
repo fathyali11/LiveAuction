@@ -14,6 +14,10 @@ internal class AuctionConfiguration : IEntityTypeConfiguration<Auction>
             .IsRequired()
             .HasMaxLength(200);
 
+        builder.Property(a => a.JobId)
+            .IsRequired()
+            .HasMaxLength(200);
+
         builder.Property(a => a.Description)
             .HasMaxLength(1000);
 
@@ -30,8 +34,9 @@ internal class AuctionConfiguration : IEntityTypeConfiguration<Auction>
             .HasColumnType("decimal(18,2)");
 
         builder.Property(a => a.CurrentBid)
-            .IsRequired(false)
+            .IsRequired()
             .HasColumnType("decimal(18,2)");
+
 
         builder.Property(a => a.CreatedById)
             .IsRequired();
@@ -40,5 +45,11 @@ internal class AuctionConfiguration : IEntityTypeConfiguration<Auction>
             .WithOne(b => b.Auction)
             .HasForeignKey(b => b.AuctionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.ToTable(t =>
+            t.HasCheckConstraint("CK_Auctions_CurrentBid", "[CurrentBid] > 0"));
+
+        builder.ToTable(t =>
+            t.HasCheckConstraint("CK_Auctions_StartingBid", "[StartingBid] > 0"));
     }
 }

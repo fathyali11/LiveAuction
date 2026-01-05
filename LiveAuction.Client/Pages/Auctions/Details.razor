@@ -129,7 +129,7 @@
                                                  Variant="Variant.Outlined"
                                                  Adornment="Adornment.Start"
                                                  AdornmentIcon="@Icons.Material.Filled.AttachMoney"
-                                                 Min="@(auction.CurrentBid!.Value + 1)" />
+                                                 Min="@(auction.CurrentBid + 1)" />
 
                                 <MudButton Variant="Variant.Filled"
                                            Color="Color.Primary"
@@ -304,7 +304,7 @@
 
             if (auction != null)
             {
-                bidAmount = auction.CurrentBid!.Value + 10;
+                bidAmount = auction.CurrentBid + 10;
             }
         }
         catch (Exception ex)

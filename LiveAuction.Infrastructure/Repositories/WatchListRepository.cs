@@ -37,7 +37,7 @@ internal class WatchListRepository(ApplicationDbContext _context) : IWatchListRe
             {
                 AuctionId = auction.Id,
                 WatchListId = watchList.Id,
-                CurrentBid = auction.CurrentBid!.Value,
+                CurrentBid = auction.CurrentBid,
                 Title = auction.Title,
                 ImageName = auction.ImageName,
                 EndTime = auction.EndTime

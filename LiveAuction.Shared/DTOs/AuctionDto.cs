@@ -12,7 +12,7 @@ public class AuctionDto
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public decimal StartingBid { get; set; }
-    public decimal? CurrentBid { get; set; }
+    public decimal CurrentBid { get; set; }
     public string? CurrentBidder { get; set; }
     public string Seller { get; set; } = string.Empty;
     public AuctionStatus Status { get; set; }

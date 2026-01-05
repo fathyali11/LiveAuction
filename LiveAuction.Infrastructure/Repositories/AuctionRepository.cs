@@ -28,7 +28,7 @@ internal class AuctionRepository(ApplicationDbContext _context) : IAuctionReposi
                 Id = a.Id,
                 Title = a.Title,
                 ImageName = a.ImageName,
-                CurrentBid = a.CurrentBid!.Value,
+                CurrentBid = a.CurrentBid,
                 Status = a.Status,
                 EndTime = a.EndTime,
                 IsWatchListed = _context.WatchListItems

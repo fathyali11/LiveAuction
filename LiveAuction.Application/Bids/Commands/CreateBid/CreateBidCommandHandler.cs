@@ -71,7 +71,7 @@ internal class CreateBidCommandHandler(IBidRepository bidRepository,
 
             if (!string.IsNullOrEmpty(auction.CurrentBidderId))
             {
-                var IsReleased = await _walletService.ReleaseHoldAsync(auction.CurrentBidderId!, auction.CurrentBid!.Value, auction.Id, cancellationToken);
+                var IsReleased = await _walletService.ReleaseHoldAsync(auction.CurrentBidderId!, auction.CurrentBid, auction.Id, cancellationToken);
                 if (!IsReleased)
                 {
                     var errorMessage = $"Failed to release money for previous highest bidder";
