@@ -37,22 +37,11 @@ internal class WalletRepository(ApplicationDbContext _context) : IWalletReposito
     {
         var walletResponse = await _context.Users
             .AsNoTracking()
-            .Include(x=> x.Transactions)
             .Where(u => u.Id == userId)
             .Select(u => new WalletSummaryResponse
             {
                 TotalBalance = u.TotalBalance,
-                LockedBalance = u.LockedBalance,
-                Transactions = u.Transactions
-                    .OrderByDescending(t => t.CreateAt)
-                    .Select(t => new TransactionResponse
-                    {
-                        TransactionId = t.Id,
-                        Amount = t.Amount,
-                        Timestamp = t.CreateAt,
-                        Type = t.TransactionType.ToString()
-                    })
-                    .ToList()
+                LockedBalance = u.LockedBalance
             })
             .FirstOrDefaultAsync(cancellationToken);
         return walletResponse;

@@ -15,9 +15,9 @@
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
     <MudText Typo="Typo.h4" Class="mb-6">💰 محفظتي</MudText>
 
-    @if (_isLoading)
+    @if (_isLoadingBalance)
     {
-        <div class="d-flex justify-center align-center" style="height: 300px;">
+        <div class="d-flex justify-center align-center" style="height: 150px;">
             <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
         </div>
     }
@@ -50,9 +50,9 @@
                         <MudText Typo="Typo.subtitle1" Class="mb-1">إجمالي رصيد الحساب</MudText>
                         <MudText Typo="Typo.h4">@_summary.TotalBalance.ToString("C0")</MudText>
                     </div>
-                    <MudButton Variant="Variant.Filled" 
-                               Color="Color.Secondary" 
-                               StartIcon="@Icons.Material.Filled.AddCard" 
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.AddCard"
                                Class="mt-4 align-self-start"
                                OnClick="OpenDepositDialog">
                         شحن المحفظة
@@ -60,155 +60,196 @@
                 </MudPaper>
             </MudItem>
         </MudGrid>
-
-        <MudText Typo="Typo.h5" Class="mb-4">سجل العمليات الأخيرة</MudText>
-        
-        @if (_summary.Transactions.Any())
-        {
-            <MudTable Items="@_summary.Transactions" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="2">
-                <HeaderContent>
-                    <MudTh>التاريخ</MudTh>
-                    <MudTh>نوع العملية</MudTh>
-                    <MudTh>المبلغ</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="التاريخ">@context.Timestamp.ToLocalTime().ToString("g")</MudTd>
-                    
-                    <MudTd DataLabel="نوع العملية">
-                        @switch (context.Type)
-                        {
-                            case nameof(TransactionType.Deposit):
-                                <MudChip Color="Color.Success" T="string" Size="Size.Small" Icon="@Icons.Material.Filled.ArrowDownward">إيداع</MudChip>
-                                break;
-                            case nameof(TransactionType.Hold):
-                                <MudChip Color="Color.Warning" T="string" Size="Size.Small" Icon="@Icons.Material.Filled.Lock">حجز</MudChip>
-                                break;
-                            case nameof(TransactionType.Release):
-                                <MudChip Color="Color.Info" T="string" Size="Size.Small" Icon="@Icons.Material.Filled.LockOpen">فك حجز</MudChip>
-                                break;
-                            default:
-                                <MudChip Color="Color.Default" T="string" Size="Size.Small">@context.Type</MudChip>
-                                break;
-                        }
-                    </MudTd>
-                    
-                    <MudTd DataLabel="المبلغ">
-                        <MudText Color="@GetAmountColor(context.Type)" Typo="Typo.body1" Style="font-weight:bold;">
-                            @context.Amount.ToString("C0")
-                        </MudText>
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
-        }
-        else
-        {
-            <MudAlert Severity="Severity.Info" Variant="Variant.Filled">لا توجد معاملات سابقة في حسابك.</MudAlert>
-        }
     }
+
+    <MudText Typo="Typo.h5" Class="mb-4 mt-8">سجل المعاملات</MudText>
+
+    <MudTable ServerData="@LoadServerData"
+              @ref="_table"
+              Hover="true"
+              Breakpoint="Breakpoint.Sm"
+              Elevation="3"
+              Dense="true"
+              Striped="true">
+
+        <HeaderContent>
+            <MudTh>التاريخ</MudTh>
+            <MudTh>نوع العملية</MudTh>
+            <MudTh>المزاد</MudTh>
+            <MudTh>المبلغ</MudTh>
+        </HeaderContent>
+
+        <RowTemplate>
+            <MudTd DataLabel="التاريخ">
+                @context.Timestamp.ToLocalTime().ToString("dd/MM/yyyy hh:mm tt")
+            </MudTd>
+
+            <MudTd DataLabel="نوع العملية">
+                <MudChip T="string" Size="Size.Small" Color="@GetTransactionColor(context.Type)">
+                    @context.Type
+                </MudChip>
+            </MudTd>
+
+            <MudTd DataLabel="المزاد">
+                @if (!string.IsNullOrEmpty(context.AuctionName))
+                {
+                    <MudLink Href="@($"/auctions/{context.AuctionId}")" Underline="Underline.Hover">
+                        @context.AuctionName
+                    </MudLink>
+                }
+                else
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Default">-</MudText>
+                }
+            </MudTd>
+
+            <MudTd DataLabel="المبلغ">
+                <MudText Color="@GetAmountColor(context.Type)" Style="font-weight:bold">
+                    @context.Amount.ToString("C0")
+                </MudText>
+            </MudTd>
+        </RowTemplate>
+
+        <NoRecordsContent>
+            <MudAlert Severity="Severity.Info" Class="my-2">لا توجد معاملات سابقة.</MudAlert>
+        </NoRecordsContent>
+
+        <PagerContent>
+            <MudTablePager RowsPerPageString="عدد الصفوف:"
+                           PageSizeOptions="new int[] { 5, 10, 20, 50 }"
+                           InfoFormat="{first_item}-{last_item} من {all_items}"
+                           HorizontalAlignment="HorizontalAlignment.Center" />
+        </PagerContent>
+
+    </MudTable>
+
 </MudContainer>
 
-    @code {
+@code {
     private WalletSummaryResponse _summary = new();
+    private bool _isLoadingBalance = true;
+
     private HubConnection? _hubConnection;
-    private bool _isLoading = true;
+
+    private MudTable<TransactionResponse>? _table;
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("OnInitializedAsync Started");
-
-        await LoadData();
-        Console.WriteLine("LoadData Finished");
-
-        Console.WriteLine("Calling SetupSignalRConnection...");
+        await LoadBalanceOnly();
         await SetupSignalRConnection();
-
-        Console.WriteLine("OnInitializedAsync Completed");
     }
 
-    private async Task LoadData()
+    private async Task LoadBalanceOnly()
     {
         try
         {
-            _isLoading = true;
+            _isLoadingBalance = true;
             var response = await WalletApi.GetWalletSummaryAsync();
-            if(!response.IsSuccessStatusCode)
-            {
-                Snackbar.Add("فشل تحميل بيانات المحفظة", Severity.Error);
-                return;
-            }
-            _summary = await response.Content.ReadFromJsonAsync<WalletSummaryResponse>();
-            if(_summary == null)
-            {
-                Snackbar.Add("فشل تحميل بيانات المحفظة", Severity.Error);
-                return;
-            }
 
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<WalletSummaryResponse>();
+                if (result != null)
+                {
+                    _summary = result;
+                }
+            }
         }
         catch (Exception ex)
         {
-            Snackbar.Add("فشل تحميل بيانات المحفظة", Severity.Error);
+            Console.WriteLine($"Error loading balance: {ex.Message}");
+            Snackbar.Add("فشل تحميل الرصيد", Severity.Error);
         }
         finally
         {
-            _isLoading = false;
+            _isLoadingBalance = false;
         }
     }
+
+    private async Task<TableData<TransactionResponse>> LoadServerData(TableState state, CancellationToken token)
+    {
+        try
+        {
+            var pageNumber = state.Page + 1;
+            var pageSize = state.PageSize;
+
+            var responseMessage = await WalletApi.GetTransactionsAsync(pageNumber, pageSize);
+            if (!responseMessage.IsSuccessStatusCode)
+            {
+                return new TableData<TransactionResponse> { TotalItems = 0, Items = [] };
+            }
+            var response = await responseMessage.Content.ReadFromJsonAsync<PaginatedResult<TransactionResponse>>();
+
+            return new TableData<TransactionResponse>
+            {
+                TotalItems = response!.TotalCount,
+                Items = response.Items
+            };
+        }
+        catch
+        {
+            return new TableData<TransactionResponse> { TotalItems = 0, Items = [] };
+        }
+    }
+
 
     private async Task SetupSignalRConnection()
     {
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl("https://localhost:7293/hubs/auction",
-            options =>
+            .WithUrl("https://localhost:7293/hubs/auction", options =>
             {
-                options.AccessTokenProvider = async () =>
-                {
-                    return await TokenService.GetAccessTokenAsync();
-                };
+                options.AccessTokenProvider = async () => await TokenService.GetAccessTokenAsync();
             })
             .WithAutomaticReconnect()
             .Build();
 
         _hubConnection.On(MethodNames.ForceRefreshWallet, async () =>
-         {
-             Console.WriteLine("🔔 SignalR Event Received!");
-             await LoadData();
-             await InvokeAsync(StateHasChanged);
-         });
+        {
+            Console.WriteLine("🔔 SignalR: Refreshing Wallet Data...");
+
+            await LoadBalanceOnly();
+
+            if (_table != null)
+            {
+                await _table.ReloadServerData();
+            }
+
+            await InvokeAsync(StateHasChanged);
+        });
 
         await _hubConnection.StartAsync();
-
     }
+
 
     private async Task OpenDepositDialog()
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        
         var dialog = await DialogService.ShowAsync<DepositDialog>("شحن المحفظة", options);
         var result = await dialog.Result;
 
         if (!result.Canceled)
         {
-            await LoadData();
+            await LoadBalanceOnly();
+            if (_table != null) await _table.ReloadServerData();
         }
     }
 
-    private Color GetAmountColor(string type)
+    private Color GetTransactionColor(string type) => type switch
     {
-        return type switch
-        {
-            "Deposit" => Color.Success,
-            "Release" => Color.Success,
-            "Hold" => Color.Error,
-            "Purchase" => Color.Error,
-            _ => Color.Default
-        };
-    }
+        nameof(TransactionType.Deposit) => Color.Success,
+        nameof(TransactionType.Release) => Color.Info,
+        nameof(TransactionType.Hold) => Color.Warning,
+        nameof(TransactionType.Purchase) => Color.Error,
+        _ => Color.Default
+    };
 
+    private Color GetAmountColor(string type) =>
+        (type == nameof(TransactionType.Deposit) || type == nameof(TransactionType.Release)) ? Color.Success : Color.Error;
 
     public async ValueTask DisposeAsync()
     {
         if (_hubConnection != null)
-        { 
+        {
             await _hubConnection.StopAsync();
             await _hubConnection.DisposeAsync();
         }
