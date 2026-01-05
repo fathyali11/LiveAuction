@@ -57,4 +57,30 @@ internal class WalletRepository(ApplicationDbContext _context) : IWalletReposito
             .FirstOrDefaultAsync(cancellationToken);
         return walletResponse;
     }
+    
+    public async Task<List<TransactionResponse>> GetTransactionsAsync(string userId,int pageNumber,int pageSize,CancellationToken cancellationToken = default)
+    {
+        var query = _context.Transactions
+            .AsNoTracking()
+            .Where(t => t.UserId == userId)
+            .OrderByDescending(t => t.CreateAt);
+
+        var count = await query.CountAsync(cancellationToken);
+
+        var transactions = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(t => new TransactionResponse
+            {
+                TransactionId = t.Id,
+                Amount = t.Amount,
+                Timestamp = t.CreateAt,
+                Type = t.TransactionType.ToString(),
+                AuctionId = t.AuctionId,
+                AuctionName = t.AuctionId != null ? t.Auction!.Title : null
+            })
+            .ToListAsync(cancellationToken);
+
+        return transactions;
+    }
 }

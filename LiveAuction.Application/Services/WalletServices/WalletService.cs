@@ -1,5 +1,6 @@
 ﻿using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
+using LiveAuction.Shared.DTOs;
 using LiveAuction.Shared.Enums;
 
 namespace LiveAuction.Application.Services.WalletServices;
@@ -94,4 +95,16 @@ internal class WalletService(IWalletRepository _walletRepository) : IWalletServi
         return true;
     }
 
+    public async Task<PaginatedResult<TransactionResponse>> GetAllTransactionsAsync(string userId, int pageNumber, int pageSize, CancellationToken cancellationToken)
+    {
+        var transactions = await _walletRepository.GetTransactionsAsync(userId, pageNumber, pageSize, cancellationToken);
+
+        return new PaginatedResult<TransactionResponse>
+        {
+            Items = transactions,
+            TotalCount = transactions.Count,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
+    }
 }

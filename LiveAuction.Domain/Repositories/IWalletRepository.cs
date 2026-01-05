@@ -12,4 +12,5 @@ public interface IWalletRepository
     Task<IDbContextTransaction> BeginTransaction(CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<WalletSummaryResponse?> GetWalletSummaryAsync(string userId, CancellationToken cancellationToken = default);
+    Task<List<TransactionResponse>> GetTransactionsAsync(string userId, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
 }

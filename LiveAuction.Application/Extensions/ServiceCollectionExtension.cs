@@ -14,6 +14,7 @@ using LiveAuction.Application.Services.AuthServices;
 using LiveAuction.Application.Services.BackgroundJobServices;
 using LiveAuction.Application.Services.WalletServices;
 using LiveAuction.Application.Wallets.Commands.Deposit;
+using LiveAuction.Application.Wallets.Queries.GetTransactions;
 using LiveAuction.Application.Wallets.Queries.GetWalletSummary;
 using LiveAuction.Application.WatchLists.Commands.ToggleWatchListItem;
 using LiveAuction.Domain.Consts;
@@ -52,6 +53,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IValidator<ToggleWatchListItemCommand>, ToggleWatchListItemCommandValidator>();
         services.AddScoped<IValidator<DepositCommand>, DepositCommandValidator>();
         services.AddScoped<IValidator<GetWalletSummaryQuery>, GetWalletSummaryQueryValidator>();
+        services.AddScoped<IValidator<GetTransactionsQuery>, GetTransactionsQueryValidator>();
         TypeAdapterConfig.GlobalSettings.Scan(assembly);
         services.AddMapster();
         var connectionString = configuration.GetConnectionString("LiveAuctionDbConnection");
