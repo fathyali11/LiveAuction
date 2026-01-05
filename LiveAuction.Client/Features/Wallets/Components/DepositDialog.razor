@@ -1,0 +1,135 @@
+﻿@inject IWalletApi WalletApi
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet" Class="mr-3 mb-n1" />
+            شحن المحفظة
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudContainer Style="max-height: 400px; overflow-y: scroll">
+
+            <MudText Typo="Typo.body2" Class="mb-4 text-secondary">
+                أدخل المبلغ الذي تود إضافته إلى رصيدك للمشاركة في المزادات.
+            </MudText>
+
+            <MudNumericField @bind-Value="Amount"
+                             Label="المبلغ (جنيه مصري)"
+                             Variant="Variant.Outlined"
+                             Adornment="Adornment.Start"
+                             AdornmentIcon="@Icons.Material.Filled.AttachMoney"
+                             Validation="@(ValidateAmount)"
+                             Class="mb-2" />
+
+            <MudChipSet T="decimal" SelectedValueChanged="OnChipSelected" Filter="true" Mandatory="false" Class="mb-4 d-flex justify-center">
+                <MudChip T="decimal" Value="100" Text="100" Color="Color.Primary" Variant="Variant.Outlined" Clickable="true">+100</MudChip>
+                <MudChip T="decimal" Value="500" Text="500" Color="Color.Primary" Variant="Variant.Outlined" Clickable="true">+500</MudChip>
+                <MudChip T="decimal" Value="1000" Text="1000" Color="Color.Primary" Variant="Variant.Outlined" Clickable="true">+1000</MudChip>
+            </MudChipSet>
+
+            <MudPaper Elevation="0" Class="pa-4 rounded-lg border-solid border-2 mud-border-primary" Style="background-color: var(--mud-palette-background-grey);">
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">بيانات البطاقة البنكية (محاكاة)</MudText>
+
+                <MudGrid Spacing="1">
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="CardNumber" T="string" Label="رقم البطاقة"
+                                      Placeholder="0000 0000 0000 0000"
+                                      Mask="@(new PatternMask("0000 0000 0000 0000"))"
+                                      Variant="Variant.Text"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@Icons.Material.Filled.CreditCard" />
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudTextField @bind-Value="ExpiryDate" T="string" Label="MM/YY" Mask="@(new PatternMask("00/00"))" Variant="Variant.Text" />
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudTextField @bind-Value="Cvc" T="string" Label="CVC" Mask="@(new PatternMask("000"))" Variant="Variant.Text" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Lock" />
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Color="Color.Default">إلغاء</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="SubmitDeposit"
+                   Disabled="@(IsSubmitting || Amount < 10)"
+                   Class="ml-2 px-6">
+            @if (IsSubmitting)
+            {
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ms-2">جاري الدفع...</MudText>
+            }
+            else
+            {
+                <MudText>تأكيد دفع @Amount.ToString("N0")</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private decimal Amount { get; set; } = 100;
+    private bool IsSubmitting { get; set; } = false;
+    private string CardNumber { get; set; } = string.Empty;
+    private string ExpiryDate { get; set; } = string.Empty;
+    private string Cvc { get; set; } = string.Empty;
+
+    private Func<decimal, string> ValidateAmount => value =>
+    {
+        if (value <= 0)
+            return "أقل قيمه للشحن 1 جنيه.";
+        return null!;
+    };
+
+    private void OnChipSelected(decimal value)
+    {
+        if (value > 0)
+        {
+            Amount = value;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SubmitDeposit()
+    {
+        if (Amount <= 0)
+        {
+            Snackbar.Add("يرجى إدخال مبلغ صحيح", Severity.Warning);
+            return;
+        }
+
+        IsSubmitting = true;
+        try
+        {
+            var request = new DepositRequest { Amount = Amount };
+            var response = await WalletApi.DepositAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("حدث خطأ أثناء الشحن. حاول مرة أخرى.", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add($"تم شحن {Amount} بنجاح! 🤑", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+        }
+        catch
+        {
+            Snackbar.Add("خطأ في الاتصال بالخادم", Severity.Error);
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

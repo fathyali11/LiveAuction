@@ -1,6 +1,6 @@
+using LiveAuction.Application.Services.AuctionServices;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Repositories;
-using LiveAuction.Domain.Services;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using OneOf;

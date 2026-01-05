@@ -50,8 +50,7 @@ internal class UpdateAuctionCommandHandler(
         }
         request.Adapt(auction);
 
-        await _auctionRepository.UpdateAsync(auction, cancellationToken);
-
+        await _auctionRepository.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("Auction updated successfully: {Id}", auction.Id);
 
         return auction.Adapt<AuctionDto>();

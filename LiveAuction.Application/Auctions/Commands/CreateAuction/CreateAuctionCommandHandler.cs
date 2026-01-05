@@ -1,8 +1,8 @@
 using FluentValidation;
+using LiveAuction.Application.Services.AuctionServices;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
-using LiveAuction.Domain.Services;
 using LiveAuction.Shared.DTOs;
 using Mapster;
 using MediatR;
@@ -51,7 +51,7 @@ internal class CreateAuctionCommandHandler(
 
         await _auctionRepository.AddAsync(auction, cancellationToken);
         auction.JobId = await _auctionService.ScheduleAuction(auction, cancellationToken);
-        await _auctionRepository.UpdateAsync(auction, cancellationToken);
+        await _auctionRepository.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation("Auction created successfully: {Title} with ID: {Id}", auction.Title, auction.Id);
 

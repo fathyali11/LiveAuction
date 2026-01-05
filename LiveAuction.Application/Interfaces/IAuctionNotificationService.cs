@@ -5,4 +5,5 @@ namespace LiveAuction.Application.Interfaces;
 public interface IAuctionNotificationService
 {
     Task NotifyNewBidAsync(int auctionId, BidDto bidDto);
+    Task ForceRefreshWalletAsync(string userId);
 }

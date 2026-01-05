@@ -1,0 +1,99 @@
+﻿using LiveAuction.Application.Interfaces;
+using LiveAuction.Application.Services.BackgroundJobServices;
+using LiveAuction.Application.Services.WalletServices;
+using LiveAuction.Domain.Entities;
+using LiveAuction.Domain.Repositories;
+using LiveAuction.Shared.Enums;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace LiveAuction.Application.Services.AuctionServices;
+
+internal class AuctionService(IBackgroundJobService _backgroundJobService,
+    IAuctionNotificationService _auctionNotificationService,
+    IServiceProvider _serviceProvider) : IAuctionService
+{
+    public async Task<string> SaveImageAsync(IFormFile image, CancellationToken cancellationToken)
+    {
+        var imageName = $"{Guid.NewGuid()}{Path.GetExtension(image.FileName)}";
+        var imageFolder = Path.Combine("wwwroot", "images");
+        if (!Directory.Exists(imageFolder))
+        {
+            Directory.CreateDirectory(imageFolder);
+        }
+        var imagePath = Path.Combine(imageFolder, imageName);
+        using var stream = new FileStream(imagePath, FileMode.Create);
+        await image.CopyToAsync(stream, cancellationToken);
+
+        return imageName;
+    }
+    public async Task DeleteImageAsync(string imageName, CancellationToken cancellationToken)
+    {
+        var imagePath = Path.Combine("wwwroot", "images", imageName);
+        if (File.Exists(imagePath))
+        {
+            await Task.Run(() => File.Delete(imagePath), cancellationToken);
+        }
+    }
+
+    public async Task<string> ScheduleAuction(Auction auction,CancellationToken cancellationToken)
+    {
+        var jobId = _backgroundJobService.ScheduleJob<IAuctionService>(
+            repo => repo.TerminateAuctionAsync(auction.Id, cancellationToken),
+            auction.EndTime - DateTime.UtcNow
+            );
+        return jobId;
+    }
+    
+    public async Task TerminateAuctionAsync(int auctionId, CancellationToken cancellationToken)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var auctionRepository = scope.ServiceProvider.GetRequiredService<IAuctionRepository>();
+        var walletService = scope.ServiceProvider.GetRequiredService<IWalletService>();
+        var transaction = await auctionRepository.BeginTransactionAsync(cancellationToken);
+        try
+        {
+            var auction = await auctionRepository.GetAuctionToTerminateAsync(auctionId, cancellationToken);
+            if (auction is null || auction.Status != AuctionStatus.Open)
+                return;
+            auction.Status = AuctionStatus.Closed;
+            string? winnerIdToNotify = null;
+            string? sellerIdToNotify = null;
+            if (auction.Bids.Any())
+            {
+                var highestBid = auction.Bids.OrderByDescending(b => b.Amount).First();
+                auction.WinnerId = highestBid.BidderId;
+                auction.CurrentBidderId = highestBid.BidderId;
+
+                var isMoneyTransfered= await walletService
+                    .TransferMoneyAsync(highestBid.BidderId, auction.CreatedById, highestBid.Amount,auctionId, cancellationToken);
+                if (!isMoneyTransfered)
+                {
+                    throw new Exception("Money transfer failed");
+                }
+                winnerIdToNotify = highestBid.BidderId;
+                sellerIdToNotify = auction.CreatedById;
+                
+            }
+
+            await auctionRepository.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            if (winnerIdToNotify is not null)
+            {
+                Console.WriteLine($"Notifying winner {winnerIdToNotify} and seller {sellerIdToNotify}");
+                await _auctionNotificationService
+                    .ForceRefreshWalletAsync(winnerIdToNotify);
+                await _auctionNotificationService
+                    .ForceRefreshWalletAsync(sellerIdToNotify!);
+            }
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+
+}

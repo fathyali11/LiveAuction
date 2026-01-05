@@ -309,7 +309,8 @@
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"حدث خطأ: {ex.Message}", Severity.Error);
+            Snackbar.Add($"حدث خطأ", Severity.Error);
+            Console.WriteLine($"Error loading auction details: {ex.Message}");
         }
         finally
         {
@@ -336,13 +337,21 @@
 
             if (!response.IsSuccessStatusCode)
             {
+                var statusCode = (int)response.StatusCode;
                 var error = await response.Content.ReadAsStringAsync();
+                if (statusCode == 500)
+                {
+                    Snackbar.Add("فشل في تقديم المزايدة. حاول مرة أخرى لاحقاً.", Severity.Error);
+                    Console.WriteLine($"Server error: {error}");
+                    return;
+                }
                 Snackbar.Add($"فشل: {error}", Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"خطأ: {ex.Message}", Severity.Error);
+            Snackbar.Add("فشل في تقديم المزايدة. حاول مرة أخرى لاحقاً.", Severity.Error);
+            Console.WriteLine($"Server error: {ex.Message}");
         }
         finally
         {

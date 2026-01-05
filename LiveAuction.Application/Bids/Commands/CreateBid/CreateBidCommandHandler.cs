@@ -1,9 +1,11 @@
 ﻿using FluentValidation;
 using LiveAuction.Application.Interfaces;
+using LiveAuction.Application.Services.AuctionServices;
+using LiveAuction.Application.Services.BackgroundJobServices;
+using LiveAuction.Application.Services.WalletServices;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
-using LiveAuction.Domain.Services;
 using LiveAuction.Shared.DTOs;
 using Mapster;
 using MediatR;
@@ -20,7 +22,8 @@ internal class CreateBidCommandHandler(IBidRepository bidRepository,
     UserManager<ApplicationUser> userManager,
     IAuctionService _auctionService,
     IBackgroundJobService _backgroundJobService,
-    IAuctionRepository _auctionRepository) : IRequestHandler<CreateBidCommand, OneOf<Error, BidDto>>
+    IAuctionRepository _auctionRepository,
+    IWalletService _walletService) : IRequestHandler<CreateBidCommand, OneOf<Error, BidDto>>
 {
     public async Task<OneOf<Error, BidDto>> Handle(CreateBidCommand request, CancellationToken cancellationToken)
     {
@@ -33,38 +36,77 @@ internal class CreateBidCommandHandler(IBidRepository bidRepository,
             logger.LogWarning("Validation failed for CreateBidCommand: {Errors}", errorMessage);
             return new Error(ErrorCodes.ValidationError, errorMessage);
         }
-        var bidder = await userManager.FindByIdAsync(request.UserId);
-        if (bidder == null)
+        using var transaction = await bidRepository.BeginTransactionAsync(cancellationToken);
+        try
         {
-            var errorMessage = $"User with Id {request.UserId} not found.";
-            logger.LogWarning(errorMessage);
-            return new Error(ErrorCodes.NotFoundError, errorMessage);
+            var bidder = await userManager.FindByIdAsync(request.UserId);
+            if (bidder == null)
+            {
+                var errorMessage = $"User with Id {request.UserId} not found.";
+                logger.LogWarning(errorMessage);
+                return new Error(ErrorCodes.NotFoundError, errorMessage);
+            }
+
+            var auction = await _auctionRepository.GetByIdAsync(request.AuctionId, cancellationToken);
+            if (auction == null)
+            {
+                var errorMessage = $"Auction with Id {request.AuctionId} not found.";
+                logger.LogWarning(errorMessage);
+                return new Error(ErrorCodes.NotFoundError, errorMessage);
+            }
+            if (request.Amount <= auction.CurrentBid)
+            {
+                var errorMessage = $"Bid amount must be higher than the current bid of {auction.CurrentBid}.";
+                logger.LogWarning(errorMessage);
+                return new Error(ErrorCodes.ValidationError, errorMessage);
+            }
+            var IsHolded = await _walletService.HoldAsync(request.UserId, request.Amount, request.AuctionId, cancellationToken);
+            if (!IsHolded)
+            {
+                var errorMessage = $"لا يوجدك لديك مال كافي اشحن محفظتك";
+                logger.LogWarning(errorMessage);
+                return new Error(ErrorCodes.ValidationError, errorMessage);
+            }
+
+
+            if (!string.IsNullOrEmpty(auction.CurrentBidderId))
+            {
+                var IsReleased = await _walletService.ReleaseHoldAsync(auction.CurrentBidderId!, auction.CurrentBid!.Value, auction.Id, cancellationToken);
+                if (!IsReleased)
+                {
+                    var errorMessage = $"Failed to release money for previous highest bidder";
+                    logger.LogWarning(errorMessage);
+                    return new Error(ErrorCodes.InternalServerError, errorMessage);
+                }
+            }
+
+            if (auction.EndTime - DateTime.UtcNow <= TimeSpan.FromMinutes(5))
+            {
+                auction.EndTime = auction.EndTime.AddMinutes(1);
+                _backgroundJobService.DeleteScheduledJob(auction.JobId);
+                auction.JobId = await _auctionService.ScheduleAuction(auction, cancellationToken);
+                logger.LogInformation("AuctionId: {AuctionId} end time extended to {EndTime}", auction.Id, auction.EndTime);
+            }
+            auction.CurrentBid = request.Amount;
+            auction.CurrentBidderId = request.UserId;
+            await _auctionRepository.SaveChangesAsync(cancellationToken);
+            var bid = request.Adapt<Bid>();
+
+            await bidRepository.AddAsync(bid, cancellationToken);
+            logger.LogInformation("Bid created with Id: {BidId} for AuctionId: {AuctionId}", bid.Id, request.AuctionId);
+            var bidDto = bid.Adapt<BidDto>();
+            bidDto.AuctionEndTime = auction.EndTime;
+            await transaction.CommitAsync(cancellationToken);
+            await auctionNotificationService.NotifyNewBidAsync(bid.AuctionId, bidDto);
+            return bidDto;
         }
-        var auction = await _auctionRepository.GetByIdAsync(request.AuctionId, cancellationToken);
-        if (auction == null)
+        catch (Exception ex)
         {
-            var errorMessage = $"Auction with Id {request.AuctionId} not found.";
-            logger.LogWarning(errorMessage);
-            return new Error(ErrorCodes.NotFoundError, errorMessage);
+            logger.LogError(ex, "Error occurred while creating bid for AuctionId: {AuctionId}, UserId: {UserId}",
+                request.AuctionId, request.UserId);
+            await transaction.RollbackAsync(cancellationToken);
+            return new Error(ErrorCodes.InternalServerError, "An error occurred while processing your bid.");
         }
-        if(auction.EndTime-DateTime.UtcNow <= TimeSpan.FromMinutes(5))
-        {
-            auction.EndTime = auction.EndTime.AddMinutes(5);
-            _backgroundJobService.DeleteScheduledJob(auction.JobId);
-            auction.JobId = await _auctionService.ScheduleAuction(auction,cancellationToken);
-            logger.LogInformation("AuctionId: {AuctionId} end time extended to {EndTime}", auction.Id, auction.EndTime);
-        }
-        auction.CurrentBid = request.Amount;
-        auction.CurrentBidderId = request.UserId;
-        await _auctionRepository.UpdateAsync(auction, cancellationToken);
-        var bid = request.Adapt<Bid>();
-        
-        await bidRepository.AddAsync(bid, cancellationToken);
-        logger.LogInformation("Bid created with Id: {BidId} for AuctionId: {AuctionId}", bid.Id, request.AuctionId);
-        var bidDto = bid.Adapt<BidDto>();
-        bidDto.AuctionEndTime = auction.EndTime;
-        await auctionNotificationService.NotifyNewBidAsync(bid.AuctionId,bidDto);
-        return bidDto;
 
 
     }

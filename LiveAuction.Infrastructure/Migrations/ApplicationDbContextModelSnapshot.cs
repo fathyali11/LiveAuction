@@ -43,7 +43,11 @@ namespace LiveAuction.Infrastructure.Migrations
 
                     b.Property<string>("FullName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("LockedBalance")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
@@ -71,6 +75,9 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal>("TotalBalance")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -88,7 +95,12 @@ namespace LiveAuction.Infrastructure.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("AspNetUsers", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Users_LockedBalance", "[LockedBalance] >= 0");
+
+                            t.HasCheckConstraint("CK_Users_TotalBalance", "[TotalBalance] >= 0");
+                        });
                 });
 
             modelBuilder.Entity("LiveAuction.Domain.Entities.Auction", b =>
@@ -185,7 +197,10 @@ namespace LiveAuction.Infrastructure.Migrations
 
                     b.HasIndex("BidderId");
 
-                    b.ToTable("Bids");
+                    b.ToTable("Bids", t =>
+                        {
+                            t.HasCheckConstraint("CK_Bids_AuctionId", "[AuctionId] > 0");
+                        });
                 });
 
             modelBuilder.Entity("LiveAuction.Domain.Entities.RefreshToken", b =>
@@ -219,6 +234,39 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.HasIndex("ApplicationUserId");
 
                     b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("LiveAuction.Domain.Entities.Transaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("AuctionId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreateAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TransactionType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuctionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Transactions");
                 });
 
             modelBuilder.Entity("LiveAuction.Domain.Entities.WatchList", b =>
@@ -276,7 +324,10 @@ namespace LiveAuction.Infrastructure.Migrations
 
                     b.HasIndex("WatchListId");
 
-                    b.ToTable("WatchListItems");
+                    b.ToTable("WatchListItems", t =>
+                        {
+                            t.HasCheckConstraint("CK_WatchListItems_WatchListId", "[WatchListId] > 0");
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -485,6 +536,23 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.Navigation("ApplicationUser");
                 });
 
+            modelBuilder.Entity("LiveAuction.Domain.Entities.Transaction", b =>
+                {
+                    b.HasOne("LiveAuction.Domain.Entities.Auction", "Auction")
+                        .WithMany()
+                        .HasForeignKey("AuctionId");
+
+                    b.HasOne("LiveAuction.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("Transactions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Auction");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("LiveAuction.Domain.Entities.WatchList", b =>
                 {
                     b.HasOne("LiveAuction.Domain.Entities.ApplicationUser", "User")
@@ -563,6 +631,8 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.Navigation("Bids");
 
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("Transactions");
 
                     b.Navigation("WatchList")
                         .IsRequired();

@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
-using LiveAuction.Domain.Services;
 using OneOf;
 using System.Transactions;
 using LiveAuction.Shared.DTOs;
+using LiveAuction.Application.Services.AuthServices;
 
 namespace LiveAuction.Application.ApplicationUsers.Commands.RegisterUser;
 

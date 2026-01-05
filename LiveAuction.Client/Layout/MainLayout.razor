@@ -1,5 +1,5 @@
-﻿
-
+﻿@using LiveAuction.Client.Features.Wallets.Components
+@inject IDialogService DialogService
 @inherits LayoutComponentBase
 
 <MudThemeProvider IsDarkMode="true" />
@@ -14,6 +14,12 @@
         <MudSpacer />
         <AuthorizeView>
             <Authorized>
+                <MudButton Class="mr-4" OnClick="OpenDepositDialogAsync"
+                           Variant="Variant.Filled"
+                           Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.AddCard">
+                    شحن الرصيد
+                </MudButton>
                 <MudText Class="mr-4">👤 @context.User.Identity?.Name</MudText>
                 <MudButton Variant="Variant.Text" Color="Color.Inherit" OnClick="Logout">خروج</MudButton>
             </Authorized>
@@ -32,6 +38,7 @@
                 <Authorized>
                     <MudNavLink Href="/auctions/create" Icon="@Icons.Material.Filled.AddCircle">إضافة مزاد</MudNavLink>
                     <MudNavLink Href="/my-bids" Icon="@Icons.Material.Filled.History">سجل مزايداتي</MudNavLink>
+                    <MudNavLink Href="/wallet" Icon="@Icons.Material.Filled.AddCard">محفظتي</MudNavLink>
                     <MudNavLink Href="/watchlist" Icon="@Icons.Material.Filled.Favorite">
                         قائمة المراقبة
                         @if (WatchlistCount > 0)
@@ -71,5 +78,19 @@
     {
         WatchlistCount = count;
         StateHasChanged();
+    }
+
+    private async Task OpenDepositDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<DepositDialog>("شحن المحفظة", options);
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            StateHasChanged();
+        }
     }
 }
