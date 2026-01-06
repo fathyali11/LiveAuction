@@ -97,12 +97,11 @@ internal class WalletService(IWalletRepository _walletRepository) : IWalletServi
 
     public async Task<PaginatedResult<TransactionResponse>> GetAllTransactionsAsync(string userId, int pageNumber, int pageSize, CancellationToken cancellationToken)
     {
-        var transactions = await _walletRepository.GetTransactionsAsync(userId, pageNumber, pageSize, cancellationToken);
-
+        var (transactions, count) = await _walletRepository.GetTransactionsAndItsCountAsync(userId, pageNumber, pageSize, cancellationToken);
         return new PaginatedResult<TransactionResponse>
         {
             Items = transactions,
-            TotalCount = transactions.Count,
+            TotalCount = count,
             PageNumber = pageNumber,
             PageSize = pageSize
         };

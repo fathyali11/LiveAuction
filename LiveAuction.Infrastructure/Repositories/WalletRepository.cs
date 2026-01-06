@@ -47,7 +47,7 @@ internal class WalletRepository(ApplicationDbContext _context) : IWalletReposito
         return walletResponse;
     }
     
-    public async Task<List<TransactionResponse>> GetTransactionsAsync(string userId,int pageNumber,int pageSize,CancellationToken cancellationToken = default)
+    public async Task<(List<TransactionResponse> transactions, int count)> GetTransactionsAndItsCountAsync(string userId,int pageNumber,int pageSize,CancellationToken cancellationToken = default)
     {
         var query = _context.Transactions
             .AsNoTracking()
@@ -70,6 +70,6 @@ internal class WalletRepository(ApplicationDbContext _context) : IWalletReposito
             })
             .ToListAsync(cancellationToken);
 
-        return transactions;
+        return (transactions,count);
     }
 }
