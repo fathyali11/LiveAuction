@@ -5,20 +5,20 @@
 @inject IWatchlistApi WatchlistApi
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthStateProvider
-
+@inject IJSRuntime JSRuntime
 
 <PageTitle>المزادات الحالية</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-8">
     <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Primary">🔥 المزادات المشتعلة الآن</MudText>
 
-    @if (isLoading)
+    @if (_isLoading)
     {
-        <div class="d-flex justify-center mt-16">
+        <div class="d-flex justify-center align-center" style="height: 50vh;">
             <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
         </div>
     }
-    else if (auctions == null || auctions.Count == 0)
+    else if (_auctions == null || !_auctions.Any())
     {
         <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-4">
             لا توجد مزادات نشطة حالياً. كن أول من <MudLink Href="/create-auction" Color="Color.Inherit">يفتح مزاد!</MudLink>
@@ -27,10 +27,10 @@
     else
     {
         <MudGrid>
-            @foreach (var auction in auctions)
+            @foreach (var auction in _auctions)
             {
-                <MudItem xs="12" sm="6" md="4">
-                   <AuctionCard AuctionId="@auction.Id"
+                <MudItem xs="12" sm="6" md="4" lg="3">
+                    <AuctionCard AuctionId="@auction.Id"
                                  Title="@auction.Title"
                                  ImageName="@auction.ImageName"
                                  EndTime="@auction.EndTime"
@@ -40,24 +40,83 @@
                 </MudItem>
             }
         </MudGrid>
+
+        <div class="d-flex flex-column align-center mt-8">
+            <MudPagination Color="Color.Primary"
+                           Count="@_totalPages"
+                           Selected="@_pageNumber"
+                           SelectedChanged="OnPageChanged"
+                           Variant="Variant.Outlined"
+                           Shape="Shape.Rounded"
+                           Size="Size.Large" />
+
+            <MudText Typo="Typo.caption" Class="mt-2 text-muted">
+                صفحة @_pageNumber من @_totalPages
+            </MudText>
+        </div>
     }
 </MudContainer>
-
 
     @code {
     [CascadingParameter]
     public MainLayout mainLayout { get; set; } = default!;
 
-    private List<AuctionsInHomePageDto>? auctions;
-    private bool isLoading = true;
-    private bool _processingFavorite = false;
-    
+    private List<AuctionsInHomePageDto> _auctions = new();
+    private bool _isLoading = true;
+
+
+    private int _pageNumber = 1;
+    private int _pageSize = 12; 
+    private int _totalPages = 1;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadAuctions();
         await LoadWatchlistCount();
-       
+    }
+
+
+    private async Task OnPageChanged(int i)
+    {
+        _pageNumber = i;
+        await LoadAuctions();
+        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
+    }
+
+    private async Task LoadAuctions()
+    {
+        try
+        {
+            _isLoading = true;
+
+            var response = await AuctionsApi.GetAllAsync(_pageNumber, _pageSize);
+            if(!response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("فشل في جلب المزادات.", Severity.Error);
+                return;
+            }
+            var paginatedResult = await response.Content.ReadFromJsonAsync<PaginatedResult<AuctionsInHomePageDto>>();
+            if (paginatedResult == null)
+            {
+                Snackbar.Add("فشل في جلب المزادات.", Severity.Error);
+                return;
+            }
+            _auctions = paginatedResult.Items;
+            _pageNumber = paginatedResult.PageNumber;
+
+            _totalPages = (int)Math.Ceiling((double)paginatedResult.TotalCount / _pageSize);
+
+            if (_totalPages == 0) _totalPages = 1;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            Snackbar.Add("حدث خطأ أثناء جلب المزادات.", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     private async Task LoadWatchlistCount()
@@ -67,41 +126,19 @@
             var count = await WatchlistApi.GetCountAsync();
             mainLayout.UpdateWatchlistCount(count);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error loading watchlist count: {ex.Message}");
-        }
-    }
-
-    private async Task LoadAuctions()
-    {
-        try
-        {
-            isLoading = true;
-            auctions = await AuctionsApi.GetAllAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-            Snackbar.Add("حدث خطأ أثناء جلب المزادات. حاول مرة أخرى لاحقاً.", Severity.Error);
-        }
-        finally
-        {
-            isLoading = false;
+            Console.WriteLine("Failed to load watchlist count.");
         }
     }
 
     private void UpdateFavoriteStatus((int AuctionId, bool IsFavorite) args)
     {
-        var auction = auctions?.FirstOrDefault(a => a.Id == args.AuctionId);
+        var auction = _auctions.FirstOrDefault(a => a.Id == args.AuctionId);
         if (auction != null)
         {
-            Console.WriteLine($"Home: Updating IsWatchListed for AuctionId={args.AuctionId} to {args.IsFavorite}");
             auction.IsWatchListed = args.IsFavorite;
             StateHasChanged();
         }
     }
-
-
-    
 }

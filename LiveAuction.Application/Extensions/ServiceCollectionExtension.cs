@@ -6,6 +6,7 @@ using LiveAuction.Application.ApplicationUsers.Commands.RegisterUser;
 using LiveAuction.Application.Auctions.Commands.CreateAuction;
 using LiveAuction.Application.Auctions.Commands.DeleteAuction;
 using LiveAuction.Application.Auctions.Commands.UpdateAuction;
+using LiveAuction.Application.Auctions.Queries.GetAllAuctions;
 using LiveAuction.Application.Auctions.Queries.GetAuctionById;
 using LiveAuction.Application.Bids.Commands.CreateBid;
 using LiveAuction.Application.Bids.Queries.UserBidsHistory;
@@ -54,6 +55,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IValidator<DepositCommand>, DepositCommandValidator>();
         services.AddScoped<IValidator<GetWalletSummaryQuery>, GetWalletSummaryQueryValidator>();
         services.AddScoped<IValidator<GetTransactionsQuery>, GetTransactionsQueryValidator>();
+        services.AddScoped<IValidator<GetAllAuctionsQuery>, GetAllAuctionsQueryValidator>();
         TypeAdapterConfig.GlobalSettings.Scan(assembly);
         services.AddMapster();
         var connectionString = configuration.GetConnectionString("LiveAuctionDbConnection");

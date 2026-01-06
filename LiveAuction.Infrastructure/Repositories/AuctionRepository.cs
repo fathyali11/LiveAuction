@@ -16,13 +16,27 @@ internal class AuctionRepository(ApplicationDbContext _context) : IAuctionReposi
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<List<AuctionsInHomePageDto>> GetAllActiveAsync(string ?userId,CancellationToken cancellationToken)
+    public async Task<(List<AuctionsInHomePageDto> auctions, int count)>GetAllActiveAndItsCountAsync(
+    string? userId,
+    int pageSize,
+    int pageNumber,
+    CancellationToken cancellationToken)
     {
-        var auctions = await _context.Auctions
-            .Where(a => 
-            a.Status == AuctionStatus.Open
-            && a.EndTime > DateTime.UtcNow
-            )
+        pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+        pageSize = pageSize <= 0 ? 10 : pageSize;
+
+        var query = _context.Auctions
+            .AsNoTracking()
+            .Where(a =>
+                a.Status == AuctionStatus.Open &&
+                a.EndTime > DateTime.UtcNow)
+            .OrderByDescending(a => a.StartTime);
+
+        var count = await query.CountAsync(cancellationToken);
+
+        var auctions = await query
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .Select(a => new AuctionsInHomePageDto
             {
                 Id = a.Id,
@@ -31,14 +45,15 @@ internal class AuctionRepository(ApplicationDbContext _context) : IAuctionReposi
                 CurrentBid = a.CurrentBid,
                 Status = a.Status,
                 EndTime = a.EndTime,
-                IsWatchListed = _context.WatchListItems
-                    .Any(w => w.AuctionId == a.Id&&w.WatchList.UserId==userId)
+                IsWatchListed = userId != null &&
+                    _context.WatchListItems
+                        .Any(w => w.AuctionId == a.Id && w.WatchList.UserId == userId)
             })
             .ToListAsync(cancellationToken);
 
-        return auctions;
-
+        return (auctions, count);
     }
+
 
     public async Task<Auction?> GetByIdAsync(int id, CancellationToken cancellationToken)
         => await _context.Auctions

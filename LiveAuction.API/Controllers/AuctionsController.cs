@@ -17,11 +17,13 @@ namespace LiveAuction.API.Controllers;
 public class AuctionsController(IMediator _mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<AuctionDto>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<List<AuctionDto>>> GetAll([FromQuery]int pageNumber, [FromQuery]int pageSize,CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var result = await _mediator.Send(new GetAllAuctionsQuery(userId), cancellationToken);
-        return Ok(result);
+        var result = await _mediator.Send(new GetAllAuctionsQuery(userId,pageNumber,pageSize), cancellationToken);
+        return result.Match<ActionResult<List<AuctionDto>>>(
+            error => BadRequest(new { message = error.Message }),
+            paginatedResult => Ok(paginatedResult));
     }
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById([FromRoute]int id, CancellationToken cancellationToken)
