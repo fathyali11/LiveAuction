@@ -1,11 +1,13 @@
 ﻿@page "/"
 
+
 @inject ISnackbar Snackbar
 @inject IAuctionsApi AuctionsApi
 @inject IWatchlistApi WatchlistApi
 @inject NavigationManager NavManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JSRuntime
+@inject ILocalStorageService LocalStorage
 
 <PageTitle>المزادات الحالية</PageTitle>
 
@@ -87,38 +89,59 @@
     {
         try
         {
-            _isLoading = true;
+            string cacheKey = $"home_auctions_page_{_pageNumber}";
+
+          
+            var cachedResult = await LocalStorage.GetItemAsync<PaginatedResult<AuctionsInHomePageDto>>(cacheKey);
+
+            if (cachedResult != null && cachedResult.Items.Any())
+            {
+                _auctions = cachedResult.Items;
+                _totalPages = (int)Math.Ceiling((double)cachedResult.TotalCount / _pageSize);
+                if (_totalPages == 0) _totalPages = 1;
+
+                _isLoading = false;
+                StateHasChanged(); 
+            }
+            else
+            {
+                _isLoading = true;
+            }
 
             var response = await AuctionsApi.GetAllAsync(_pageNumber, _pageSize);
-            if(!response.IsSuccessStatusCode)
-            {
-                Snackbar.Add("فشل في جلب المزادات.", Severity.Error);
-                return;
-            }
-            var paginatedResult = await response.Content.ReadFromJsonAsync<PaginatedResult<AuctionsInHomePageDto>>();
-            if (paginatedResult == null)
-            {
-                Snackbar.Add("فشل في جلب المزادات.", Severity.Error);
-                return;
-            }
-            _auctions = paginatedResult.Items;
-            _pageNumber = paginatedResult.PageNumber;
 
-            _totalPages = (int)Math.Ceiling((double)paginatedResult.TotalCount / _pageSize);
+            if (response.IsSuccessStatusCode)
+            {
+                var freshResult = await response.Content.ReadFromJsonAsync<PaginatedResult<AuctionsInHomePageDto>>();
 
-            if (_totalPages == 0) _totalPages = 1;
+                if (freshResult != null)
+                {
+
+                    _auctions = freshResult.Items;
+                    _pageNumber = freshResult.PageNumber;
+                    _totalPages = (int)Math.Ceiling((double)freshResult.TotalCount / _pageSize);
+                    if (_totalPages == 0) _totalPages = 1;
+
+
+                    await LocalStorage.SetItemAsync(cacheKey, freshResult);
+                }
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error: {ex.Message}");
-            Snackbar.Add("حدث خطأ أثناء جلب المزادات.", Severity.Error);
+
+            if (!_auctions.Any())
+            {
+                Snackbar.Add("فشل الاتصال بالسيرفر", Severity.Error);
+            }
         }
         finally
         {
             _isLoading = false;
+            StateHasChanged();
         }
     }
-
     private async Task LoadWatchlistCount()
     {
         try
