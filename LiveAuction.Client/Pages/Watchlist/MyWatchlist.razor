@@ -1,35 +1,40 @@
 ﻿@page "/watchlist"
-@using LiveAuction.Client.Features.Watchlists.Services
+
 
 @attribute [Authorize]
 
 @inject ISnackbar Snackbar
 @inject IWatchlistApi WatchlistApi
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject ILocalStorageService LocalStorage
 @implements IAsyncDisposable
 
+
 <PageTitle>قائمتي للمراقبة</PageTitle>
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-8">
     <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Primary">قائمتي للمراقبة</MudText>
-    @if (isLoading)
+
+    @if (_isLoading)
     {
         <div class="d-flex justify-center mt-16">
             <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
         </div>
     }
-    else if (watchList?.Items == null || watchList?.Items.Count == 0)
+    else if (_watchlistItems == null || !_watchlistItems.Any())
     {
         <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-4">
-            لا توجد عناصر في قائمتك للمراقبة حالياً. تصفح 
-        <MudLink Href="/" Color="Color.Inherit">المزادات الحالية</MudLink> لإضافة عناصر إلى قائمتك للمراقبة.
+            لا توجد عناصر في قائمتك للمراقبة حالياً. تصفح
+            <MudLink Href="/" Color="Color.Inherit">المزادات الحالية</MudLink> لإضافة عناصر.
         </MudAlert>
     }
     else
     {
         <MudGrid>
-            @foreach (var auction in watchList?.Items!)
+            @foreach (var auction in _watchlistItems)
             {
-                <MudItem xs="12" sm="6" md="4">
+                <MudItem xs="12" sm="6" md="4" lg="3">
                     <AuctionCard AuctionId="@auction.AuctionId"
                                  Title="@auction.Title"
                                  ImageName="@auction.ImageName"
@@ -39,13 +44,22 @@
                                  OnFavoriteToggled="UpdateFavoriteStatus" />
                 </MudItem>
             }
-
         </MudGrid>
+
+        <div class="d-flex flex-column align-center mt-8">
+            <MudPagination Color="Color.Primary"
+                           Count="@_totalPages"
+                           Selected="@_pageNumber"
+                           SelectedChanged="OnPageChanged"
+                           Variant="Variant.Outlined"
+                           Shape="Shape.Rounded"
+                           Size="Size.Large" />
+
+            <MudText Typo="Typo.caption" Class="mt-2 text-muted">
+                صفحة @_pageNumber من @_totalPages
+            </MudText>
+        </div>
     }
-
-
-    
-    
 
 </MudContainer>
 
@@ -54,93 +68,182 @@
     [CascadingParameter]
     public MainLayout mainLayout { get; set; } = default!;
 
-    private WatchListDto? watchList;
-    private bool isLoading = true;
-    private HubConnection hubConnection = default!;
-    private const string LocalImagePath = "https://localhost:7293/images/";
+    private List<WatchListItemDto> _watchlistItems = new();
+    private bool _isLoading = true;
+
+    private int _pageNumber = 1;
+    private int _pageSize = 8;
+    private int _totalPages = 1;
+
+    private HubConnection? _hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
-        var count = await WatchlistApi.GetCountAsync();
-        mainLayout.UpdateWatchlistCount(count);
-        await LoadWatchlistItems();
+        await SetupSignalRConnection();
 
-        try
-        {
-            hubConnection = new HubConnectionBuilder()
-            .WithUrl("https://localhost:7293/hubs/auction")
-            .WithAutomaticReconnect()
-            .Build();
+        await LoadWatchlistData();
 
-            hubConnection.On<BidDto>("NewBidPlaced", async bid =>
-               {
-                   await InvokeAsync(async () =>
-                   {
-                       var item = watchList?.Items?.FirstOrDefault(a => a.AuctionId == bid.AuctionId);
-                       if (item != null)
-                       {
-                           item.CurrentBid = bid.Amount;
-                           StateHasChanged();
-                       }
-                   });
-               });
-
-            Console.WriteLine("Hub connection will be created.");
-            await hubConnection.StartAsync();
-            Console.WriteLine("Hub connection started.");
-
-            if (hubConnection.State == HubConnectionState.Connected)
-            {
-                if (watchList?.Items != null)
-                    foreach (var auction in watchList?.Items!)
-                        await hubConnection.SendAsync("JoinToGroub", auction!.AuctionId.ToString());
-            }
-
-            hubConnection.Reconnected += async (string? connectionId) =>
-            {
-                Console.WriteLine("Reconnected to hub.");
-                if (hubConnection.State == HubConnectionState.Connected)
-                {
-                    if (watchList?.Items != null)
-                        foreach (var auction in watchList?.Items!)
-                            await hubConnection.SendAsync("JoinToGroub", auction!.AuctionId.ToString());
-                }
-            };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error setting up SignalR hub connection: {ex.Message}");
-        }
+        await LoadWatchlistCount();
     }
 
-    private async Task LoadWatchlistItems()
+    private async Task OnPageChanged(int i)
     {
+        _pageNumber = i;
+        await LoadWatchlistData();
+        await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
+    }
+
+    private async Task LoadWatchlistData()
+    {
+        
         try
         {
-            isLoading = true;
-            watchList = await WatchlistApi.GetWatchlistAsync();
+            var cacheKey = $"watchlist_data_{_pageNumber}";
+            await ManageSignalRGroups(_watchlistItems, false);
+            var cacheData = await LocalStorage.GetItemAsync<PaginatedResult<WatchListItemDto>>(cacheKey);
+            if(cacheData is not null &&cacheData.Items.Any())
+            {
+
+                _watchlistItems = cacheData.Items;
+                _pageNumber = cacheData.PageNumber;
+                _totalPages = (int)Math.Ceiling((double)cacheData.TotalCount / _pageSize);
+                if (_totalPages == 0) _totalPages = 1;
+
+                _isLoading = false;
+                StateHasChanged();
+                await ManageSignalRGroups(_watchlistItems, true);
+            }
+
+
+            _isLoading = true;
+
+            await ManageSignalRGroups(_watchlistItems, false);
+
+            var responseMessage = await WatchlistApi.GetWatchlistAsync(_pageNumber, _pageSize);
+            if(!responseMessage.IsSuccessStatusCode)
+            {
+                Snackbar.Add("حدث خطأ أثناء تحميل القائمة.", Severity.Error);
+                return;
+            }
+            var paginatedResult = await responseMessage.Content.ReadFromJsonAsync<PaginatedResult<WatchListItemDto>>();
+
+            if (paginatedResult is null)
+            {
+                Snackbar.Add("حدث خطأ أثناء تحميل القائمة.", Severity.Error);
+                return;
+            }
+            if (cacheData is not null && cacheData.Items.Any())
+            {
+                await ManageSignalRGroups(_watchlistItems, false);
+            }
+            _watchlistItems = paginatedResult.Items;
+            _pageNumber = paginatedResult.PageNumber;
+            _totalPages = (int)Math.Ceiling((double)paginatedResult.TotalCount / _pageSize);
+            if (_totalPages == 0) _totalPages = 1;
+
+            await LocalStorage.SetItemAsync(cacheKey, paginatedResult);
+
+            await ManageSignalRGroups(_watchlistItems, true); 
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading watchlist items: {ex.Message}");
-            Snackbar.Add("حدث خطأ أثناء تحميل عناصر قائمة المراقبة.", Severity.Error);
+            Console.WriteLine($"Error loading watchlist: {ex.Message}");
+            Snackbar.Add("حدث خطأ أثناء تحميل القائمة.", Severity.Error);
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadWatchlistCount()
+    {
+        try
+        {
+            var count = await WatchlistApi.GetCountAsync();
+            mainLayout.UpdateWatchlistCount(count);
+        }
+        catch { }
+    }
+
+
+    private async Task ManageSignalRGroups(List<WatchListItemDto> items, bool join)
+    {
+        if (_hubConnection?.State == HubConnectionState.Connected && items != null && items.Any())
+        {
+            var methodName = join ? MethodNames.JoinToGroup : MethodNames.LeaveFromGroup;
+            foreach (var item in items)
+            {
+                await _hubConnection.SendAsync(methodName, item.AuctionId.ToString());
+            }
+        }
+    }
+
+    private async Task SetupSignalRConnection()
+    {
+        try
+        {
+            _hubConnection = new HubConnectionBuilder()
+                .WithUrl("https://localhost:7293/hubs/auction")
+                .WithAutomaticReconnect()
+                .Build();
+
+            _hubConnection.On<BidDto>(MethodNames.NewBidPlaced, async bid =>
+            {
+                await InvokeAsync(() =>
+                {
+                    var item = _watchlistItems.FirstOrDefault(a => a.AuctionId == bid.AuctionId);
+                    if (item != null)
+                    {
+                        item.CurrentBid = bid.Amount;
+                        StateHasChanged();
+                    }
+                });
+            });
+
+            await _hubConnection.StartAsync();
+            _hubConnection.Reconnected += async (connectionId) =>
+           {
+
+               await ManageSignalRGroups(_watchlistItems, true);
+           };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SignalR Error: {ex.Message}");
         }
     }
 
     private void UpdateFavoriteStatus((int AuctionId, bool IsFavorite) args)
     {
-        var item = watchList?.Items?.FirstOrDefault(a => a.AuctionId == args.AuctionId);
+        var item = _watchlistItems.FirstOrDefault(a => a.AuctionId == args.AuctionId);
         if (item != null)
         {
             item.IsInWatchList = args.IsFavorite;
             if (!args.IsFavorite)
             {
-                watchList?.Items?.Remove(item);
+                _watchlistItems.Remove(item);
                 Snackbar.Add("تمت إزالة العنصر من قائمة المراقبة.", Severity.Info);
+
+                mainLayout.UpdateWatchlistCount(Math.Max(0, mainLayout.WatchlistCount - 1));
+
+                if (_hubConnection?.State == HubConnectionState.Connected)
+                {
+                    _hubConnection.SendAsync(MethodNames.LeaveFromGroup, args.AuctionId.ToString());
+                }
+
+
+                if (!_watchlistItems.Any() && _pageNumber > 1)
+                {
+                    _pageNumber--; 
+                    _ = LoadWatchlistData();
+                }
+                else if (!_watchlistItems.Any())
+                {
+
+                    _ = LoadWatchlistData();
+                }
             }
             StateHasChanged();
         }
@@ -148,13 +251,12 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (hubConnection != null)
+        if (_hubConnection != null)
         {
-            if (watchList?.Items != null)
-                foreach (var auction in watchList?.Items!)
-                    await hubConnection.SendAsync("LeaveFromGroub", auction!.AuctionId.ToString());
-            await hubConnection.StopAsync();
-            await hubConnection.DisposeAsync();
+
+            await ManageSignalRGroups(_watchlistItems, false);
+            await _hubConnection.StopAsync();
+            await _hubConnection.DisposeAsync();
         }
     }
 }

@@ -7,7 +7,7 @@ namespace LiveAuction.Client.Features.Watchlists.Services;
 public interface IWatchlistApi 
 {
     [Get("/api/watchlists")]
-    Task<WatchListDto> GetWatchlistAsync(CancellationToken cancellationToken = default);
+    Task<HttpResponseMessage> GetWatchlistAsync([Query]int pageNumber,[Query]int pageSize,CancellationToken cancellationToken = default);
     
     [Get("/api/watchlists/count")]
     Task<int> GetCountAsync(CancellationToken cancellationToken = default);

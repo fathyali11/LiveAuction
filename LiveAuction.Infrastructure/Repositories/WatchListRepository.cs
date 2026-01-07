@@ -54,34 +54,6 @@ internal class WatchListRepository(ApplicationDbContext _context) : IWatchListRe
             .Where(item => item.WatchList.UserId == userId)
             .ExecuteDeleteAsync(cancellationToken);
     }
-    public async Task<WatchListDto> GetWatchListItems(string userId, CancellationToken cancellationToken = default)
-    {
-        var watchList = await _context.WatchLists
-            .Include(wl => wl.Items)
-            .FirstOrDefaultAsync(x=>x.UserId==userId, cancellationToken);
-        if (watchList is null)
-        {
-            return new WatchListDto
-            {
-                UserId = userId,
-                Items = []
-            };
-        }
-        return new WatchListDto
-        {
-            Id = watchList.Id,
-            UserId = watchList.UserId,
-            Items = watchList.Items.Select(item => new WatchListItemDto
-            {
-                AuctionId = item.AuctionId,
-                CurrentBid = item.CurrentBid,
-                Title = item.Title,
-                ImageName = item.ImageName,
-                EndTime = item.EndTime,
-                IsInWatchList = true
-            }).ToList()
-        };
-    }
     public async Task<int> GetCountAsync(string ?userId, CancellationToken cancellationToken = default)
     {
         if(userId is null) return 0;
@@ -89,5 +61,28 @@ internal class WatchListRepository(ApplicationDbContext _context) : IWatchListRe
             .Where(item => item.WatchList.UserId == userId)
             .CountAsync(cancellationToken);
         return count;
+    }
+
+    public async Task<(List<WatchListItemDto> items,int count)> GetWatchListItemAndItsCountAsync(string userId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var query = _context.WatchListItems
+            .Where(item => item.WatchList.UserId == userId);
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderBy(item => item.Id)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .Select(item => new WatchListItemDto
+            {
+                AuctionId = item.AuctionId,
+                CurrentBid = item.CurrentBid,
+                Title = item.Title,
+                ImageName = item.ImageName,
+                EndTime = item.EndTime,
+                IsInWatchList = true
+            })
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
     }
 }
