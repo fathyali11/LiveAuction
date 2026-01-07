@@ -28,6 +28,17 @@
     }
     else
     {
+        <div class="d-flex justify-center mb-6">
+            <MudTextField @bind-Value="_searchTerm"
+                          Placeholder="ابحث عن منتج..."
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          OnDebounceIntervalElapsed="OnSearch"
+                          DebounceInterval="500"
+                          Class="mt-0"
+                          Style="max-width: 500px;" />
+        </div>
         <MudGrid>
             @foreach (var auction in _auctions)
             {
@@ -70,6 +81,7 @@
     private int _pageNumber = 1;
     private int _pageSize = 12; 
     private int _totalPages = 1;
+    private string _searchTerm = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -83,6 +95,11 @@
         _pageNumber = i;
         await LoadAuctions();
         await JSRuntime.InvokeVoidAsync("window.scrollTo", 0, 0);
+    }
+    private async Task OnSearch()
+    {
+        _pageNumber = 1;
+        await LoadAuctions();
     }
 
     private async Task LoadAuctions()
@@ -107,8 +124,14 @@
             {
                 _isLoading = true;
             }
+            var paginatedRequest = new PaginatedRequest
+            {
+                PageNumber = _pageNumber,
+                PageSize = _pageSize,
+                SearchTerm = _searchTerm
+            };
 
-            var response = await AuctionsApi.GetAllAsync(_pageNumber, _pageSize);
+            var response = await AuctionsApi.GetAllAsync(paginatedRequest);
 
             if (response.IsSuccessStatusCode)
             {

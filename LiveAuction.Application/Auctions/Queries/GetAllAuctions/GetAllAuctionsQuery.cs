@@ -6,5 +6,5 @@ using OneOf;
 namespace LiveAuction.Application.Auctions.Queries.GetAllAuctions;
 
 public record GetAllAuctionsQuery(string? UserId,
-    int PageNumber, int PageSize
+    PaginatedRequest PaginatedRequest
     ) : IRequest<OneOf<Error, PaginatedResult<AuctionsInHomePageDto>>>;

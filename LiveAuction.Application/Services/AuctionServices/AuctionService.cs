@@ -15,17 +15,19 @@ internal class AuctionService(IBackgroundJobService _backgroundJobService,
     IAuctionRepository _auctionRepository,
     IServiceProvider _serviceProvider) : IAuctionService
 {
-    public async Task<PaginatedResult<AuctionsInHomePageDto>> GetAllActiveAuctionsAsync(string? userId, int pageNumber, int pageSize, CancellationToken cancellationToken)
+    public async Task<PaginatedResult<AuctionsInHomePageDto>> GetAllActiveAuctionsAsync(string? userId, PaginatedRequest paginatedRequest, CancellationToken cancellationToken)
     {
-        if(pageNumber <= 0) pageNumber = 1;
-        if(pageSize <= 0) pageSize = 10;
-        var (auctions , count) = await _auctionRepository.GetAllActiveAndItsCountAsync(userId, pageSize, pageNumber, cancellationToken);
+        if(paginatedRequest.PageNumber <= 0)
+            paginatedRequest.PageNumber = 1;
+        if(paginatedRequest.PageSize <= 0)
+            paginatedRequest.PageSize = 10;
+        var (auctions , count) = await _auctionRepository.GetAllActiveAndItsCountAsync(userId,paginatedRequest, cancellationToken);
         return new PaginatedResult<AuctionsInHomePageDto>
         {
             Items = auctions,
             TotalCount = count,
-            PageNumber = pageNumber,
-            PageSize = pageSize
+            PageNumber = paginatedRequest.PageNumber,
+            PageSize = paginatedRequest.PageSize
         };
     }
     public async Task<string> SaveImageAsync(IFormFile image, CancellationToken cancellationToken)

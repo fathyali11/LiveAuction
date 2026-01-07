@@ -18,25 +18,31 @@ internal class AuctionRepository(ApplicationDbContext _context) : IAuctionReposi
 
     public async Task<(List<AuctionsInHomePageDto> auctions, int count)>GetAllActiveAndItsCountAsync(
     string? userId,
-    int pageSize,
-    int pageNumber,
+    PaginatedRequest paginatedRequest,
     CancellationToken cancellationToken)
     {
-        pageNumber = pageNumber <= 0 ? 1 : pageNumber;
-        pageSize = pageSize <= 0 ? 10 : pageSize;
+        paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 1 : paginatedRequest.PageNumber;
+        paginatedRequest.PageSize = paginatedRequest.PageSize <= 0 ? 10 : paginatedRequest.PageSize;
 
         var query = _context.Auctions
             .AsNoTracking()
             .Where(a =>
                 a.Status == AuctionStatus.Open &&
-                a.EndTime > DateTime.UtcNow)
-            .OrderByDescending(a => a.StartTime);
+                a.EndTime > DateTime.UtcNow);
+
+        if (!string.IsNullOrWhiteSpace(paginatedRequest.SearchTerm))
+        {
+            query = query.Where(a =>
+                a.Title.Contains(paginatedRequest.SearchTerm) ||
+                a.Description.Contains(paginatedRequest.SearchTerm));
+        }
 
         var count = await query.CountAsync(cancellationToken);
 
         var auctions = await query
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
+            .OrderByDescending(a => a.StartTime)
+            .Skip((paginatedRequest.PageNumber - 1) * paginatedRequest.PageSize)
+            .Take(paginatedRequest.PageSize)
             .Select(a => new AuctionsInHomePageDto
             {
                 Id = a.Id,

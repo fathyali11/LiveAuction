@@ -6,10 +6,10 @@ internal class GetAllAuctionsQueryValidator : AbstractValidator<GetAllAuctionsQu
 {
     public GetAllAuctionsQueryValidator()
     {
-        RuleFor(x => x.PageNumber)
+        RuleFor(x => x.PaginatedRequest.PageNumber)
             .GreaterThan(0)
             .WithMessage("Page number must be greater than 0.");
-        RuleFor(x => x.PageSize)
+        RuleFor(x => x.PaginatedRequest.PageSize)
             .GreaterThan(0)
             .WithMessage("Page size must be greater than 0.");
     }

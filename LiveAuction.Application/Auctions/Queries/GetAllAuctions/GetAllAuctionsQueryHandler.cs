@@ -24,7 +24,7 @@ internal class GetAllAuctionsQueryHandler(
             _logger.LogWarning("Validation failed for GetAllAuctionsQuery: {Errors}", validationResult.Errors);
             return new Error(ErrorCodes.ValidationError,  string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage).ToList()));
         }
-        var auctions = await _auctionService.GetAllActiveAuctionsAsync(request.UserId, request.PageNumber, request.PageSize, cancellationToken);
+        var auctions = await _auctionService.GetAllActiveAuctionsAsync(request.UserId, request.PaginatedRequest, cancellationToken);
         _logger.LogInformation("Successfully retrieved auctions for GetAllAuctionsQuery");
         return auctions;
     }
