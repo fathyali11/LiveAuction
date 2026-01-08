@@ -13,7 +13,7 @@ public class Auction
     public DateTime EndTime { get; set; }
 
     public decimal StartingBid { get; set; }
-    public decimal ?CurrentBid { get; set; }
+    public decimal CurrentBid { get; set; }
     public string ?CurrentBidderId { get; set; }
 
     public string JobId { get; set; }= string.Empty;

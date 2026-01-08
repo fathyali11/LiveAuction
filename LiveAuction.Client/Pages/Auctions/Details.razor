@@ -129,7 +129,7 @@
                                                  Variant="Variant.Outlined"
                                                  Adornment="Adornment.Start"
                                                  AdornmentIcon="@Icons.Material.Filled.AttachMoney"
-                                                 Min="@((double)auction.CurrentBid! + 1)" />
+                                                 Min="@(auction.CurrentBid + 1)" />
 
                                 <MudButton Variant="Variant.Filled"
                                            Color="Color.Primary"
@@ -221,24 +221,32 @@
     private bool isLoading = true;
     private bool isBidding = false;
     private string currentUserName=string.Empty;
-    private double bidAmount;
+    private decimal bidAmount;
     private HubConnection hubConnection=default!;
     private Timer _timer;
 
     private const string LocalImagePath = "https://localhost:7293/images/";
 
-    private string GetAuctionStatus()
-    {
-        if (auction == null) return "Loading";
-        var now = DateTime.UtcNow;
-        if (now<auction.StartTime) return AuctionStatus.Pending.ToString();
-        if (now >= auction.EndTime) return AuctionStatus.Closed.ToString();
-        return AuctionStatus.Open.ToString();
-    }
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+        await SetupSignalRConnection();
+        await StartingTimer();
+
+    }
+    private async Task StartingTimer()
+    {
+        _timer = new Timer(1000);
+        _timer.Elapsed += async (s, e) =>
+        {
+            await InvokeAsync(StateHasChanged);
+        };
+        _timer.Start();
+    }
+
+    private async Task SetupSignalRConnection()
+    {
         try
         {
             hubConnection = new HubConnectionBuilder()
@@ -246,7 +254,7 @@
             .WithAutomaticReconnect()
             .Build();
 
-            hubConnection.On<BidDto>("NewBidPlaced", async bid =>
+            hubConnection.On<BidDto>(MethodNames.NewBidPlaced, async bid =>
             {
                 await InvokeAsync(async () =>
                 {
@@ -263,7 +271,7 @@
 
             if (hubConnection.State == HubConnectionState.Connected)
             {
-                await hubConnection.SendAsync("JoinToGroub", auction!.Id.ToString());
+                await hubConnection.SendAsync(MethodNames.JoinToGroup, auction!.Id.ToString());
             }
 
             hubConnection.Reconnected += async (string? connectionId) =>
@@ -280,14 +288,6 @@
             Console.WriteLine($"Error connecting to hub: {ex.Message}");
 
         }
-
-        _timer = new Timer(1000);
-        _timer.Elapsed += async (s, e) =>
-        {
-            await InvokeAsync(StateHasChanged);
-        };
-        _timer.Start();
-
     }
 
     private async Task LoadData()
@@ -304,7 +304,7 @@
 
             if (auction != null)
             {
-                bidAmount = (double)auction.CurrentBid! + 10;
+                bidAmount = auction.CurrentBid + 10;
             }
         }
         catch (Exception ex)
@@ -320,7 +320,7 @@
 
     private async Task PlaceBid()
     {
-        if (bidAmount <= (double)auction!.CurrentBid!)
+        if (bidAmount <= auction!.CurrentBid!)
         {
             Snackbar.Add("يجب أن يكون المبلغ أعلى من السعر الحالي!", Severity.Warning);
             return;
@@ -397,7 +397,14 @@
         return $"{remaining.Hours}س {remaining.Minutes}د {remaining.Seconds}ث";
     }
 
-
+    private string GetAuctionStatus()
+    {
+        if (auction == null) return AuctionStatus.Loading.ToString();
+        var now = DateTime.UtcNow;
+        if (now < auction.StartTime) return AuctionStatus.Pending.ToString();
+        if (now >= auction.EndTime) return AuctionStatus.Closed.ToString();
+        return AuctionStatus.Open.ToString();
+    }
 
     public async ValueTask DisposeAsync()
     {
@@ -405,7 +412,7 @@
         {
             if (hubConnection.State == HubConnectionState.Connected)
             {
-                await hubConnection.InvokeAsync("LeaveFromGroub", auction!.Id.ToString());
+                await hubConnection.InvokeAsync(MethodNames.LeaveFromGroup, auction!.Id.ToString());
             }
             await hubConnection.StopAsync();
             await hubConnection.DisposeAsync();

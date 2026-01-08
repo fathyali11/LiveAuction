@@ -16,29 +16,50 @@ internal class AuctionRepository(ApplicationDbContext _context) : IAuctionReposi
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<List<AuctionsInHomePageDto>> GetAllActiveAsync(string ?userId,CancellationToken cancellationToken)
+    public async Task<(List<AuctionsInHomePageDto> auctions, int count)>GetAllActiveAndItsCountAsync(
+    string? userId,
+    PaginatedRequest paginatedRequest,
+    CancellationToken cancellationToken)
     {
-        var auctions = await _context.Auctions
-            .Where(a => 
-            a.Status == AuctionStatus.Open
-            && a.EndTime > DateTime.UtcNow
-            )
+        paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 1 : paginatedRequest.PageNumber;
+        paginatedRequest.PageSize = paginatedRequest.PageSize <= 0 ? 10 : paginatedRequest.PageSize;
+
+        var query = _context.Auctions
+            .AsNoTracking()
+            .Where(a =>
+                a.Status == AuctionStatus.Open &&
+                a.EndTime > DateTime.UtcNow);
+
+        if (!string.IsNullOrWhiteSpace(paginatedRequest.SearchTerm))
+        {
+            query = query.Where(a =>
+                a.Title.Contains(paginatedRequest.SearchTerm) ||
+                a.Description.Contains(paginatedRequest.SearchTerm));
+        }
+
+        var count = await query.CountAsync(cancellationToken);
+
+        var auctions = await query
+            .OrderByDescending(a => a.StartTime)
+            .Skip((paginatedRequest.PageNumber - 1) * paginatedRequest.PageSize)
+            .Take(paginatedRequest.PageSize)
             .Select(a => new AuctionsInHomePageDto
             {
                 Id = a.Id,
                 Title = a.Title,
                 ImageName = a.ImageName,
-                CurrentBid = a.CurrentBid!.Value,
+                CurrentBid = a.CurrentBid,
                 Status = a.Status,
                 EndTime = a.EndTime,
-                IsWatchListed = _context.WatchListItems
-                    .Any(w => w.AuctionId == a.Id&&w.WatchList.UserId==userId)
+                IsWatchListed = userId != null &&
+                    _context.WatchListItems
+                        .Any(w => w.AuctionId == a.Id && w.WatchList.UserId == userId)
             })
             .ToListAsync(cancellationToken);
 
-        return auctions;
-
+        return (auctions, count);
     }
+
 
     public async Task<Auction?> GetByIdAsync(int id, CancellationToken cancellationToken)
         => await _context.Auctions

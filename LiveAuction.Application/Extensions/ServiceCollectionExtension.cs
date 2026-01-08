@@ -6,6 +6,7 @@ using LiveAuction.Application.ApplicationUsers.Commands.RegisterUser;
 using LiveAuction.Application.Auctions.Commands.CreateAuction;
 using LiveAuction.Application.Auctions.Commands.DeleteAuction;
 using LiveAuction.Application.Auctions.Commands.UpdateAuction;
+using LiveAuction.Application.Auctions.Queries.GetAllAuctions;
 using LiveAuction.Application.Auctions.Queries.GetAuctionById;
 using LiveAuction.Application.Bids.Commands.CreateBid;
 using LiveAuction.Application.Bids.Queries.UserBidsHistory;
@@ -13,9 +14,13 @@ using LiveAuction.Application.Services.AuctionServices;
 using LiveAuction.Application.Services.AuthServices;
 using LiveAuction.Application.Services.BackgroundJobServices;
 using LiveAuction.Application.Services.WalletServices;
+using LiveAuction.Application.Services.WatchlistServices;
 using LiveAuction.Application.Wallets.Commands.Deposit;
+using LiveAuction.Application.Wallets.Queries.GetTransactions;
 using LiveAuction.Application.Wallets.Queries.GetWalletSummary;
+using LiveAuction.Application.WatchLists.Commands.ClearWatchlist;
 using LiveAuction.Application.WatchLists.Commands.ToggleWatchListItem;
+using LiveAuction.Application.WatchLists.Queries.GetWatchList;
 using LiveAuction.Domain.Consts;
 using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -39,6 +44,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAuctionService, AuctionService>();
         services.AddScoped<IWalletService, WalletService>();
+        services.AddScoped<IWatchlistService, WatchlistService>();
 
         services.AddScoped<IValidator<RegisterUserCommand>, RegisterUserCommandValidator>();
         services.AddScoped<IValidator<LoginUserCommand>, LoginUserCommandValidator>();
@@ -52,6 +58,12 @@ public static class ServiceCollectionExtension
         services.AddScoped<IValidator<ToggleWatchListItemCommand>, ToggleWatchListItemCommandValidator>();
         services.AddScoped<IValidator<DepositCommand>, DepositCommandValidator>();
         services.AddScoped<IValidator<GetWalletSummaryQuery>, GetWalletSummaryQueryValidator>();
+        services.AddScoped<IValidator<GetTransactionsQuery>, GetTransactionsQueryValidator>();
+        services.AddScoped<IValidator<GetAllAuctionsQuery>, GetAllAuctionsQueryValidator>();
+        services.AddScoped<IValidator<GetWatchListQuery>, GetWatchListQueryValidator>();
+        services.AddScoped<IValidator<ClearWatchlistQuery>, ClearWatchlistQueryValidator>();
+
+
         TypeAdapterConfig.GlobalSettings.Scan(assembly);
         services.AddMapster();
         var connectionString = configuration.GetConnectionString("LiveAuctionDbConnection");

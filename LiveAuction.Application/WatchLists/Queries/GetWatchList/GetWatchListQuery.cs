@@ -5,4 +5,4 @@ using OneOf;
 
 namespace LiveAuction.Application.WatchLists.Queries.GetWatchList;
 
-public record GetWatchListQuery(string UserId) : IRequest<OneOf<Error, WatchListDto>>;
+public record GetWatchListQuery(string UserId,PaginatedRequest PaginatedRequest) : IRequest<OneOf<Error, PaginatedResult<WatchListItemDto>>>;

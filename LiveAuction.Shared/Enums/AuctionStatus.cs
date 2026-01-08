@@ -7,5 +7,6 @@ public enum AuctionStatus
 {
     Pending=0,
     Open=1,
-    Closed= 2
+    Closed= 2,
+    Loading= 3
 }

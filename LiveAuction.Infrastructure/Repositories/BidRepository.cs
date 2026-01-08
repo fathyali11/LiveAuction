@@ -39,7 +39,7 @@ internal class BidRepository(ApplicationDbContext _context) : IBidRepository
             {
                 var auction = group.First().Auction;
                 var myHighestBid = group.Max(b => b.Amount);
-                var currentAuctionBid = auction.CurrentBid!.Value;
+                var currentAuctionBid = auction.CurrentBid;
                 string status;
                 if (now > auction.EndTime)
                     status = myHighestBid >= currentAuctionBid ? BidStatus.Won.ToString() : BidStatus.Lost.ToString();

@@ -6,7 +6,7 @@ namespace LiveAuction.Client.Features.Auctions.Services;
 public interface IAuctionsApi 
 {
     [Get("/api/auctions")]
-    Task<List<AuctionsInHomePageDto>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<HttpResponseMessage> GetAllAsync([Query] PaginatedRequest paginatedRequest, CancellationToken cancellationToken = default);
     
     [Get("/api/auctions/{id}")]
     Task<AuctionDto> GetByIdAsync(int id, CancellationToken cancellationToken = default);

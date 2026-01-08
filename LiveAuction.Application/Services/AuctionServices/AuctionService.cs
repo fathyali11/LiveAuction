@@ -3,6 +3,7 @@ using LiveAuction.Application.Services.BackgroundJobServices;
 using LiveAuction.Application.Services.WalletServices;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
+using LiveAuction.Shared.DTOs;
 using LiveAuction.Shared.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,8 +12,22 @@ namespace LiveAuction.Application.Services.AuctionServices;
 
 internal class AuctionService(IBackgroundJobService _backgroundJobService,
     IAuctionNotificationService _auctionNotificationService,
+    IAuctionRepository _auctionRepository,
     IServiceProvider _serviceProvider) : IAuctionService
 {
+    public async Task<PaginatedResult<AuctionsInHomePageDto>> GetAllActiveAuctionsAsync(string? userId, PaginatedRequest paginatedRequest, CancellationToken cancellationToken)
+    {
+        paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 1 : paginatedRequest.PageNumber;
+        paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 8 : paginatedRequest.PageNumber;
+        var (auctions , count) = await _auctionRepository.GetAllActiveAndItsCountAsync(userId,paginatedRequest, cancellationToken);
+        return new PaginatedResult<AuctionsInHomePageDto>
+        {
+            Items = auctions,
+            TotalCount = count,
+            PageNumber = paginatedRequest.PageNumber,
+            PageSize = paginatedRequest.PageSize
+        };
+    }
     public async Task<string> SaveImageAsync(IFormFile image, CancellationToken cancellationToken)
     {
         var imageName = $"{Guid.NewGuid()}{Path.GetExtension(image.FileName)}";

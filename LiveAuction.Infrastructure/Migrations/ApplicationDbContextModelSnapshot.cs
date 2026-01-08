@@ -115,7 +115,7 @@ namespace LiveAuction.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<decimal?>("CurrentBid")
+                    b.Property<decimal>("CurrentBid")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("CurrentBidderId")
@@ -135,7 +135,8 @@ namespace LiveAuction.Infrastructure.Migrations
 
                     b.Property<string>("JobId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime2");
@@ -162,7 +163,12 @@ namespace LiveAuction.Infrastructure.Migrations
 
                     b.HasIndex("WinnerId");
 
-                    b.ToTable("Auctions");
+                    b.ToTable("Auctions", t =>
+                        {
+                            t.HasCheckConstraint("CK_Auctions_CurrentBid", "[CurrentBid] > 0");
+
+                            t.HasCheckConstraint("CK_Auctions_StartingBid", "[StartingBid] > 0");
+                        });
                 });
 
             modelBuilder.Entity("LiveAuction.Domain.Entities.Bid", b =>

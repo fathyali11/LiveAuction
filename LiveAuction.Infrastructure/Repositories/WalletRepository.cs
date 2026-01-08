@@ -37,24 +37,47 @@ internal class WalletRepository(ApplicationDbContext _context) : IWalletReposito
     {
         var walletResponse = await _context.Users
             .AsNoTracking()
-            .Include(x=> x.Transactions)
             .Where(u => u.Id == userId)
             .Select(u => new WalletSummaryResponse
             {
                 TotalBalance = u.TotalBalance,
-                LockedBalance = u.LockedBalance,
-                Transactions = u.Transactions
-                    .OrderByDescending(t => t.CreateAt)
-                    .Select(t => new TransactionResponse
-                    {
-                        TransactionId = t.Id,
-                        Amount = t.Amount,
-                        Timestamp = t.CreateAt,
-                        Type = t.TransactionType.ToString()
-                    })
-                    .ToList()
+                LockedBalance = u.LockedBalance
             })
             .FirstOrDefaultAsync(cancellationToken);
         return walletResponse;
+    }
+    
+    public async Task<(List<TransactionResponse> transactions, int count)> GetTransactionsAndItsCountAsync(string userId, PaginatedRequest paginatedRequest, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Transactions
+            .AsNoTracking()
+            .Where(t => t.UserId == userId);
+
+        if(!string.IsNullOrWhiteSpace(paginatedRequest.SearchTerm))
+        {
+            query = query.Where(t =>
+                t.TransactionType.ToString().Contains(paginatedRequest.SearchTerm) ||
+                (t.Auction != null && t.Auction.Title.Contains(paginatedRequest.SearchTerm))
+            );
+        }
+
+        var count = await query.CountAsync(cancellationToken);
+
+        var transactions = await query
+            .OrderByDescending(t => t.CreateAt)
+            .Skip((paginatedRequest.PageNumber - 1) * paginatedRequest.PageSize)
+            .Take(paginatedRequest.PageSize)
+            .Select(t => new TransactionResponse
+            {
+                TransactionId = t.Id,
+                Amount = t.Amount,
+                Timestamp = t.CreateAt,
+                Type = t.TransactionType.ToString(),
+                AuctionId = t.AuctionId,
+                AuctionName = t.AuctionId != null ? t.Auction!.Title : null
+            })
+            .ToListAsync(cancellationToken);
+
+        return (transactions,count);
     }
 }

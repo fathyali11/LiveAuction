@@ -1,3 +1,4 @@
+using LiveAuction.Application.WatchLists.Commands.ClearWatchlist;
 using LiveAuction.Application.WatchLists.Commands.ToggleWatchListItem;
 using LiveAuction.Application.WatchLists.Queries.GetWatchList;
 using LiveAuction.Application.WatchLists.Queries.GetWatchListCount;
@@ -16,11 +17,11 @@ namespace LiveAuction.API.Controllers;
 public class WatchListsController(IMediator _mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetWatchList()
+    public async Task<IActionResult> GetWatchList([FromQuery] PaginatedRequest paginatedRequest, CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var query = new GetWatchListQuery(userId);
-        var result = await _mediator.Send(query);
+        var query = new GetWatchListQuery(userId, paginatedRequest);
+        var result = await _mediator.Send(query,cancellationToken);
 
         return result.Match<IActionResult>(
             error => error.Code switch
@@ -53,5 +54,17 @@ public class WatchListsController(IMediator _mediator) : ControllerBase
         var query = new GetWatchListCountQuery(userId);
         var count = await _mediator.Send(query);
         return Ok(count);
+    }
+    [HttpPut("clear")]
+    public async Task<IActionResult> ClearWatchlist(CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await _mediator.Send(new ClearWatchlistQuery(userId), cancellationToken);
+        return result.Code switch
+        {
+            ErrorCodes.ValidationError => BadRequest(result.Message),
+            ErrorCodes.InternalServerError => StatusCode(500, "ÍÏË ÎØÃ ÛíÑ ãÊæÞÚ"),
+            _ => NoContent()
+        };
     }
 }
