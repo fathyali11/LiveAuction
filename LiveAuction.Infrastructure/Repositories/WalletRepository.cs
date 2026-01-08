@@ -12,7 +12,7 @@ internal class WalletRepository(ApplicationDbContext _context) : IWalletReposito
     public async Task AddTransactionAsync(Transaction transaction, CancellationToken cancellationToken = default)
     {
         await _context.Transactions.AddAsync(transaction,cancellationToken);
-        await _context.Transactions.AddRangeAsync(new[] { transaction }, cancellationToken);
+        await _context.Transactions.AddRangeAsync([transaction], cancellationToken);
     }
     public async Task AddTransactionsAsync(List<Transaction> transactions, CancellationToken cancellationToken = default)
     {
