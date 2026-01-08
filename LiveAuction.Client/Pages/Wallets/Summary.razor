@@ -104,7 +104,7 @@
             <MudTd DataLabel="المزاد">
                 @if (!string.IsNullOrEmpty(context.AuctionName))
                 {
-                    <MudLink Href="@($"/auctions/{context.AuctionId}")" Underline="Underline.Hover">
+                    <MudLink Href="@($"/auctions/{context.AuctionId}/details")" Underline="Underline.Hover">
                         @context.AuctionName
                     </MudLink>
                 }
