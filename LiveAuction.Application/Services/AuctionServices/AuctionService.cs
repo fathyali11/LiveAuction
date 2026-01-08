@@ -17,10 +17,8 @@ internal class AuctionService(IBackgroundJobService _backgroundJobService,
 {
     public async Task<PaginatedResult<AuctionsInHomePageDto>> GetAllActiveAuctionsAsync(string? userId, PaginatedRequest paginatedRequest, CancellationToken cancellationToken)
     {
-        if(paginatedRequest.PageNumber <= 0)
-            paginatedRequest.PageNumber = 1;
-        if(paginatedRequest.PageSize <= 0)
-            paginatedRequest.PageSize = 10;
+        paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 1 : paginatedRequest.PageNumber;
+        paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 8 : paginatedRequest.PageNumber;
         var (auctions , count) = await _auctionRepository.GetAllActiveAndItsCountAsync(userId,paginatedRequest, cancellationToken);
         return new PaginatedResult<AuctionsInHomePageDto>
         {

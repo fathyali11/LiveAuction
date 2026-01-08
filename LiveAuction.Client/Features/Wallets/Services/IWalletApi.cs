@@ -12,5 +12,5 @@ public interface IWalletApi
     Task<HttpResponseMessage> GetWalletSummaryAsync(CancellationToken cancellationToken = default);
 
     [Get("/api/wallets/transactions")]
-    Task<HttpResponseMessage> GetTransactionsAsync([Query] int pageNumber = 1, [Query] int pageSize = 10, CancellationToken cancellationToken = default);
+    Task<HttpResponseMessage> GetTransactionsAsync([Query] PaginatedRequest paginatedRequest, CancellationToken cancellationToken = default);
 }

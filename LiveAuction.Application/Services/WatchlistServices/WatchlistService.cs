@@ -8,17 +8,17 @@ namespace LiveAuction.Application.Services.WatchlistServices;
 
 internal class WatchlistService(IWatchListRepository _watchListRepository): IWatchlistService
 {
-    public async Task<PaginatedResult<WatchListItemDto>> GetWatchlistAsync(string userId, int pageNumber, int pageSize, CancellationToken cancellationToken)
+    public async Task<PaginatedResult<WatchListItemDto>> GetWatchlistAsync(string userId, PaginatedRequest paginatedRequest, CancellationToken cancellationToken)
     {
-        pageNumber = pageNumber <= 0 ? 1 : pageNumber;
-        pageSize = pageSize <= 0 ? 10 : pageSize;
-        var (watchlistItems, totalCount) = await _watchListRepository.GetWatchListItemAndItsCountAsync(userId, pageNumber,pageSize, cancellationToken);
+        paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 1 : paginatedRequest.PageNumber;
+        paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 8 : paginatedRequest.PageNumber;
+        var (watchlistItems, totalCount) = await _watchListRepository.GetWatchListItemAndItsCountAsync(userId, paginatedRequest, cancellationToken);
         return new PaginatedResult<WatchListItemDto>
         {
             Items = watchlistItems,
             TotalCount = totalCount,
-            PageNumber = pageNumber,
-            PageSize = pageSize
+            PageNumber = paginatedRequest.PageNumber,
+            PageSize = paginatedRequest.PageSize
         }; 
     }
 }

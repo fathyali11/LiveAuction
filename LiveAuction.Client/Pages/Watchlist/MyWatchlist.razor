@@ -31,6 +31,17 @@
     }
     else
     {
+        <div class="d-flex justify-center mb-6">
+            <MudTextField @bind-Value="_searchTerm"
+                          Placeholder="ابحث عن منتج..."
+                          Variant="Variant.Outlined"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          OnDebounceIntervalElapsed="OnSearch"
+                          DebounceInterval="500"
+                          Class="mt-0"
+                          Style="max-width: 500px;" />
+        </div>
         <MudGrid>
             @foreach (var auction in _watchlistItems)
             {
@@ -65,15 +76,15 @@
 
 @code {
 
-    [CascadingParameter]
-    public MainLayout mainLayout { get; set; } = default!;
-
     private List<WatchListItemDto> _watchlistItems = new();
     private bool _isLoading = true;
 
     private int _pageNumber = 1;
     private int _pageSize = 8;
     private int _totalPages = 1;
+    private int _totalCount = 0;
+    private string _searchTerm = string.Empty;
+
 
     private HubConnection? _hubConnection;
 
@@ -82,10 +93,13 @@
         await SetupSignalRConnection();
 
         await LoadWatchlistData();
-
-        await LoadWatchlistCount();
+        
     }
-
+    private async Task OnSearch()
+    {
+        _pageNumber = 1;
+        await LoadWatchlistData();
+    }
     private async Task OnPageChanged(int i)
     {
         _pageNumber = i;
@@ -95,10 +109,10 @@
 
     private async Task LoadWatchlistData()
     {
-        
+
         try
         {
-            var cacheKey = $"watchlist_data_{_pageNumber}";
+            var cacheKey = $"watchlist_data_{_pageNumber}_{_searchTerm}";
             await ManageSignalRGroups(_watchlistItems, false);
             var cacheData = await LocalStorage.GetItemAsync<PaginatedResult<WatchListItemDto>>(cacheKey);
             if(cacheData is not null &&cacheData.Items.Any())
@@ -106,6 +120,7 @@
 
                 _watchlistItems = cacheData.Items;
                 _pageNumber = cacheData.PageNumber;
+                _totalCount = cacheData.TotalCount;
                 _totalPages = (int)Math.Ceiling((double)cacheData.TotalCount / _pageSize);
                 if (_totalPages == 0) _totalPages = 1;
 
@@ -118,8 +133,13 @@
             _isLoading = true;
 
             await ManageSignalRGroups(_watchlistItems, false);
-
-            var responseMessage = await WatchlistApi.GetWatchlistAsync(_pageNumber, _pageSize);
+            var paginatedRequest = new PaginatedRequest
+            {
+                PageNumber = _pageNumber,
+                PageSize = _pageSize,
+                SearchTerm = _searchTerm
+            };
+            var responseMessage = await WatchlistApi.GetWatchlistAsync(paginatedRequest);
             if(!responseMessage.IsSuccessStatusCode)
             {
                 Snackbar.Add("حدث خطأ أثناء تحميل القائمة.", Severity.Error);
@@ -138,6 +158,7 @@
             }
             _watchlistItems = paginatedResult.Items;
             _pageNumber = paginatedResult.PageNumber;
+            _totalCount = paginatedResult.TotalCount;
             _totalPages = (int)Math.Ceiling((double)paginatedResult.TotalCount / _pageSize);
             if (_totalPages == 0) _totalPages = 1;
 
@@ -157,15 +178,6 @@
         }
     }
 
-    private async Task LoadWatchlistCount()
-    {
-        try
-        {
-            var count = await WatchlistApi.GetCountAsync();
-            mainLayout.UpdateWatchlistCount(count);
-        }
-        catch { }
-    }
 
 
     private async Task ManageSignalRGroups(List<WatchListItemDto> items, bool join)
@@ -215,7 +227,7 @@
         }
     }
 
-    private void UpdateFavoriteStatus((int AuctionId, bool IsFavorite) args)
+    private async Task UpdateFavoriteStatus((int AuctionId, bool IsFavorite) args)
     {
         var item = _watchlistItems.FirstOrDefault(a => a.AuctionId == args.AuctionId);
         if (item != null)
@@ -224,28 +236,49 @@
             if (!args.IsFavorite)
             {
                 _watchlistItems.Remove(item);
-                Snackbar.Add("تمت إزالة العنصر من قائمة المراقبة.", Severity.Info);
+                _totalCount--;
 
-                mainLayout.UpdateWatchlistCount(Math.Max(0, mainLayout.WatchlistCount - 1));
 
                 if (_hubConnection?.State == HubConnectionState.Connected)
                 {
-                    _hubConnection.SendAsync(MethodNames.LeaveFromGroup, args.AuctionId.ToString());
+                    await _hubConnection.SendAsync(MethodNames.LeaveFromGroup, args.AuctionId.ToString());
                 }
+                string cacheKey = $"watchlist_data_{_pageNumber}_{_searchTerm}";
+                _ = UpdateCacheAfterRemoval(cacheKey);
 
-
-                if (!_watchlistItems.Any() && _pageNumber > 1)
+                if (!_watchlistItems.Any())
                 {
-                    _pageNumber--; 
-                    _ = LoadWatchlistData();
-                }
-                else if (!_watchlistItems.Any())
-                {
-
-                    _ = LoadWatchlistData();
+                    if (!string.IsNullOrWhiteSpace(_searchTerm))
+                    {
+                        _searchTerm = string.Empty;
+                        _pageNumber = 1;
+                        await LoadWatchlistData();
+                    }
+                    else if (_pageNumber > 1)
+                    {
+                        _pageNumber--;
+                        await LoadWatchlistData();
+                    }
+                    else
+                    {
+                        await LoadWatchlistData();
+                    }
                 }
             }
             StateHasChanged();
+        }
+    }
+    private async Task UpdateCacheAfterRemoval(string key)
+    {
+        var currentData = await LocalStorage.GetItemAsync<PaginatedResult<WatchListItemDto>>(key);
+
+        if (currentData != null)
+        {
+            currentData.Items = _watchlistItems;
+
+            currentData.TotalCount = _totalCount;
+
+            await LocalStorage.SetItemAsync(key, currentData);
         }
     }
 

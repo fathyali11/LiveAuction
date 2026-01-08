@@ -16,10 +16,10 @@ namespace LiveAuction.API.Controllers;
 public class WatchListsController(IMediator _mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetWatchList([FromQuery] int pageNumber, [FromQuery] int pageSize, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetWatchList([FromQuery] PaginatedRequest paginatedRequest, CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var query = new GetWatchListQuery(userId, pageNumber, pageSize);
+        var query = new GetWatchListQuery(userId, paginatedRequest);
         var result = await _mediator.Send(query,cancellationToken);
 
         return result.Match<IActionResult>(

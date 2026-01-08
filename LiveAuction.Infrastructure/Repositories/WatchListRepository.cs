@@ -63,15 +63,20 @@ internal class WatchListRepository(ApplicationDbContext _context) : IWatchListRe
         return count;
     }
 
-    public async Task<(List<WatchListItemDto> items,int count)> GetWatchListItemAndItsCountAsync(string userId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<(List<WatchListItemDto> items,int count)> GetWatchListItemAndItsCountAsync(string userId, PaginatedRequest paginatedRequest, CancellationToken cancellationToken = default)
     {
         var query = _context.WatchListItems
             .Where(item => item.WatchList.UserId == userId);
+        if(!string.IsNullOrWhiteSpace(paginatedRequest.SearchTerm))
+        {
+            var searchTerm = paginatedRequest.SearchTerm.Trim().ToLower();
+            query = query.Where(item => item.Title.ToLower().Contains(searchTerm));
+        }
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
             .OrderBy(item => item.Id)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
+            .Skip((paginatedRequest.PageNumber - 1) * paginatedRequest.PageSize)
+            .Take(paginatedRequest.PageSize)
             .Select(item => new WatchListItemDto
             {
                 AuctionId = item.AuctionId,

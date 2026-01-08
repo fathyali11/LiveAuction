@@ -24,7 +24,7 @@ internal class GetWatchListQueryHandler(
             _logger.LogWarning("Validation failed for GetWatchListQuery: {Errors}", errorMessage);
             return new Error(ErrorCodes.ValidationError, errorMessage);
         }
-        var result = await _watchlistService.GetWatchlistAsync(request.UserId, request.PageNumber, request.PageSize, cancellationToken);
+        var result = await _watchlistService.GetWatchlistAsync(request.UserId, request.PaginatedRequest, cancellationToken);
         _logger.LogInformation("Successfully retrieved watchlist for user {UserId}", request.UserId);
         return result;
     }

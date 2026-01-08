@@ -7,5 +7,5 @@ namespace LiveAuction.Application.Services.WatchlistServices;
 
 internal interface IWatchlistService
 {
-    Task<PaginatedResult<WatchListItemDto>> GetWatchlistAsync(string userId, int pageNumber, int pageSize, CancellationToken cancellationToken);
+    Task<PaginatedResult<WatchListItemDto>> GetWatchlistAsync(string userId, PaginatedRequest paginatedRequest, CancellationToken cancellationToken);
 }

@@ -44,10 +44,10 @@ public class WalletsController(IMediator _mediator): ControllerBase
             wallet => Ok(wallet));
     }
     [HttpGet("transactions")]
-    public async Task<IActionResult> GetTransactions([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetTransactions([FromQuery] PaginatedRequest paginatedRequest, CancellationToken cancellationToken = default)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var query = new GetTransactionsQuery(userId!, pageNumber, pageSize);
+        var query = new GetTransactionsQuery(userId!, paginatedRequest);
         var result = await _mediator.Send(query, cancellationToken);
         return result.Match<IActionResult>(
             error => error.Code switch

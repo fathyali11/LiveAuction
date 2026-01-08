@@ -95,15 +95,17 @@ internal class WalletService(IWalletRepository _walletRepository) : IWalletServi
         return true;
     }
 
-    public async Task<PaginatedResult<TransactionResponse>> GetAllTransactionsAsync(string userId, int pageNumber, int pageSize, CancellationToken cancellationToken)
+    public async Task<PaginatedResult<TransactionResponse>> GetAllTransactionsAsync(string userId, PaginatedRequest paginatedRequest, CancellationToken cancellationToken)
     {
-        var (transactions, count) = await _walletRepository.GetTransactionsAndItsCountAsync(userId, pageNumber, pageSize, cancellationToken);
+        paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 1 : paginatedRequest.PageNumber;
+        paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 8 : paginatedRequest.PageNumber;
+        var (transactions, count) = await _walletRepository.GetTransactionsAndItsCountAsync(userId, paginatedRequest, cancellationToken);
         return new PaginatedResult<TransactionResponse>
         {
             Items = transactions,
             TotalCount = count,
-            PageNumber = pageNumber,
-            PageSize = pageSize
+            PageNumber = paginatedRequest.PageNumber,
+            PageSize = paginatedRequest.PageSize
         };
     }
 }

@@ -63,6 +63,17 @@
     }
 
     <MudText Typo="Typo.h5" Class="mb-4 mt-8">سجل المعاملات</MudText>
+    <div class="d-flex justify-center mb-6">
+        <MudTextField @bind-Value="_searchTerm"
+                      Placeholder="ابحث عن منتج..."
+                      Variant="Variant.Outlined"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      OnDebounceIntervalElapsed="OnSearch"
+                      DebounceInterval="500"
+                      Class="mt-0"
+                      Style="max-width: 500px;" />
+    </div>
 
     <MudTable ServerData="@LoadServerData"
               @ref="_table"
@@ -132,6 +143,15 @@
     private HubConnection? _hubConnection;
 
     private MudTable<TransactionResponse>? _table;
+    private string _searchTerm = string.Empty;
+
+    private async Task OnSearch()
+    {
+        if (_table != null)
+        {
+            await _table.ReloadServerData();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -173,7 +193,12 @@
             var pageNumber = state.Page + 1;
             var pageSize = state.PageSize;
 
-            var responseMessage = await WalletApi.GetTransactionsAsync(pageNumber, pageSize);
+            var responseMessage = await WalletApi.GetTransactionsAsync(new PaginatedRequest
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                SearchTerm = _searchTerm?.Trim()
+            });
             if (!responseMessage.IsSuccessStatusCode)
             {
                 return new TableData<TransactionResponse> { TotalItems = 0, Items = [] };

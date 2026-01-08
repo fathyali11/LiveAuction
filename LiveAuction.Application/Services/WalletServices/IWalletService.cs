@@ -9,5 +9,5 @@ internal interface IWalletService
     Task<bool> ReleaseHoldAsync(string userId, decimal amount, int auctionId, CancellationToken cancellationToken);
     Task<bool> TransferMoneyAsync(string winnerId, string sellerId, decimal amount, int auctionId, CancellationToken cancellationToken);
 
-    Task<PaginatedResult<TransactionResponse>> GetAllTransactionsAsync(string userId, int pageNumber, int pageSize, CancellationToken cancellationToken);
+    Task<PaginatedResult<TransactionResponse>> GetAllTransactionsAsync(string userId, PaginatedRequest paginatedRequest, CancellationToken cancellationToken);
 }
