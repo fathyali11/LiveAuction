@@ -14,5 +14,7 @@ public interface IWatchlistApi
     
     [Post("/api/watchlists/toggle/{id}")]
     Task<HttpResponseMessage> ToggleAsync(int id, CancellationToken cancellationToken = default);
-    
+    [Put("/api/watchlists/clear")]
+    Task<HttpResponseMessage> ClearAsync(CancellationToken cancellationToken = default);
+
 }

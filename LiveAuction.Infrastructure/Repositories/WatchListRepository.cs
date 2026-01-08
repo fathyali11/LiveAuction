@@ -48,11 +48,12 @@ internal class WatchListRepository(ApplicationDbContext _context) : IWatchListRe
         await _context.SaveChangesAsync(cancellationToken);
         return true;
     }
-    public async Task ClearAsync(string userId, CancellationToken cancellationToken = default)
+    public async Task<bool> ClearAsync(string userId, CancellationToken cancellationToken = default)
     {
-        await _context.WatchListItems
+        var result= await _context.WatchListItems
             .Where(item => item.WatchList.UserId == userId)
             .ExecuteDeleteAsync(cancellationToken);
+        return result>0;
     }
     public async Task<int> GetCountAsync(string ?userId, CancellationToken cancellationToken = default)
     {

@@ -21,4 +21,8 @@ internal class WatchlistService(IWatchListRepository _watchListRepository): IWat
             PageSize = paginatedRequest.PageSize
         }; 
     }
+    public async Task<bool> ClearWatchlistAsync(string userId, CancellationToken cancellationToken)
+    {
+        return await _watchListRepository.ClearAsync(userId, cancellationToken);
+    }
 }

@@ -18,6 +18,7 @@ using LiveAuction.Application.Services.WatchlistServices;
 using LiveAuction.Application.Wallets.Commands.Deposit;
 using LiveAuction.Application.Wallets.Queries.GetTransactions;
 using LiveAuction.Application.Wallets.Queries.GetWalletSummary;
+using LiveAuction.Application.WatchLists.Commands.ClearWatchlist;
 using LiveAuction.Application.WatchLists.Commands.ToggleWatchListItem;
 using LiveAuction.Application.WatchLists.Queries.GetWatchList;
 using LiveAuction.Domain.Consts;
@@ -60,6 +61,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IValidator<GetTransactionsQuery>, GetTransactionsQueryValidator>();
         services.AddScoped<IValidator<GetAllAuctionsQuery>, GetAllAuctionsQueryValidator>();
         services.AddScoped<IValidator<GetWatchListQuery>, GetWatchListQueryValidator>();
+        services.AddScoped<IValidator<ClearWatchlistQuery>, ClearWatchlistQueryValidator>();
 
 
         TypeAdapterConfig.GlobalSettings.Scan(assembly);
