@@ -12,4 +12,5 @@ public class ApplicationUser:IdentityUser
     public ICollection<Bid> Bids { get; set;} = [];
     public ICollection<RefreshToken> RefreshTokens { get; set;} = [];
     public ICollection<Transaction> Transactions { get; set;} = [];
+    public ICollection<Notification> Notifications { get; set;} = [];
 }
