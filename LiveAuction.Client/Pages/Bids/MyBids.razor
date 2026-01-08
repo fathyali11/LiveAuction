@@ -154,7 +154,7 @@
             .WithAutomaticReconnect()
             .Build();
 
-            hubConnection.On<BidDto>("NewBidPlaced", async bid =>
+            hubConnection.On<BidDto>(MethodNames.NewBidPlaced, async bid =>
             {
                 var userBid = bids?.FirstOrDefault(b => b.AuctionId == bid.AuctionId);
                 if(userBid is not null)
@@ -180,7 +180,7 @@
                 {
                     foreach(var bid in bids)
                     {
-                        await hubConnection.SendAsync("JoinToGroub", bid.AuctionId.ToString());
+                        await hubConnection.SendAsync(MethodNames.JoinToGroup, bid.AuctionId.ToString());
                     }
                 }
             }
@@ -213,7 +213,7 @@
                 if (bids is not null)
                 {
                     foreach (var auction in bids)
-                        await hubConnection.InvokeAsync("LeaveFromGroub", auction!.BidId.ToString());
+                        await hubConnection.InvokeAsync(MethodNames.LeaveFromGroup, auction!.BidId.ToString());
                 }
             }
             await hubConnection.StopAsync();
