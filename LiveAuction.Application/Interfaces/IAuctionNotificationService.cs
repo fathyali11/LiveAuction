@@ -6,4 +6,5 @@ public interface IAuctionNotificationService
 {
     Task NotifyNewBidAsync(int auctionId, BidDto bidDto);
     Task ForceRefreshWalletAsync(string userId);
+    Task AddNotification(string userId, NotificationDto notificationDto);
 }

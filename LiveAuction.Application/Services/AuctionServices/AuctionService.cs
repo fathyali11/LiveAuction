@@ -1,5 +1,6 @@
 ﻿using LiveAuction.Application.Interfaces;
 using LiveAuction.Application.Services.BackgroundJobServices;
+using LiveAuction.Application.Services.NotificationServices;
 using LiveAuction.Application.Services.WalletServices;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
@@ -101,7 +102,37 @@ internal class AuctionService(IBackgroundJobService _backgroundJobService,
                     .ForceRefreshWalletAsync(winnerIdToNotify);
                 await _auctionNotificationService
                     .ForceRefreshWalletAsync(sellerIdToNotify!);
+                var notificationWinner = new NotificationDto
+                (
+                    UserId: winnerIdToNotify!,
+                    Title: "Auction Won!",
+                    Message: $"Congratulations! You have won the auction for '{auction.Title}' with a bid of {auction.Bids.Max(b => b.Amount):C}.",
+                    false,
+                    NotificationType: NotificationType.Auction,
+                    RelatedEntityId: auction.Id
+                );
+                var notificationSeller = new NotificationDto
+                    (
+                        UserId: sellerIdToNotify!,
+                        Title: "Auction Ended!",
+                        Message: $"Your auction for '{auction.Title}' has ended. The winning bid was {auction.Bids.Max(b => b.Amount):C}.",
+                        false,
+                        NotificationType: NotificationType.Auction,
+                        RelatedEntityId: auction.Id
+                    );
+                _backgroundJobService.EnqueueJob<INotificationService>(
+                x => x.AddNotificationAsync(notificationWinner, cancellationToken)
+                );
+                await _auctionNotificationService.AddNotification(winnerIdToNotify, notificationWinner);
+
+                _backgroundJobService.EnqueueJob<INotificationService>(
+                x => x.AddNotificationAsync(notificationSeller, cancellationToken)
+                );
+                await _auctionNotificationService.AddNotification(sellerIdToNotify!, notificationSeller);
             }
+            
+
+
         }
         catch
         {

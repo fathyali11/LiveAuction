@@ -1,11 +1,16 @@
-﻿using LiveAuction.Domain.Entities;
+﻿using LiveAuction.Application.Interfaces;
+using LiveAuction.Application.Services.BackgroundJobServices;
+using LiveAuction.Application.Services.NotificationServices;
+using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
 using LiveAuction.Shared.DTOs;
 using LiveAuction.Shared.Enums;
 
 namespace LiveAuction.Application.Services.WalletServices;
 
-internal class WalletService(IWalletRepository _walletRepository) : IWalletService
+internal class WalletService(IWalletRepository _walletRepository,
+    IBackgroundJobService _backgroundJobService,
+    IAuctionNotificationService _auctionNotificationService) : IWalletService
 {
     public async Task<bool> HoldAsync(string userId, decimal amount, int auctionId, CancellationToken cancellationToken)
     {
@@ -46,6 +51,19 @@ internal class WalletService(IWalletRepository _walletRepository) : IWalletServi
         };
         await _walletRepository.AddTransactionAsync(transaction, cancellationToken);
         await _walletRepository.SaveChangesAsync(cancellationToken);
+        var notificationDto = new NotificationDto(
+            userId,
+            "Deposit Successful",
+            $"Your deposit of {amount:C} was successful.",
+            false,
+            NotificationType.Wallet,
+            null
+            );
+        _backgroundJobService.EnqueueJob<INotificationService>(
+            x=>x.AddNotificationAsync(notificationDto, cancellationToken)
+            );
+        await _auctionNotificationService.AddNotification(userId, notificationDto);
+
         return true;
     }
 

@@ -1,10 +1,11 @@
 ﻿using LiveAuction.Shared.Enums;
 
-namespace LiveAuction.Domain.Consts;
+namespace LiveAuction.Shared.DTOs;
 
-public record CreateNotificationDto(
+public record NotificationDto(
     string UserId, 
     string Title,
     string Message, 
+    bool IsRead,
     NotificationType NotificationType, 
-    int RelatedEntityId);
+    int ?RelatedEntityId=null);

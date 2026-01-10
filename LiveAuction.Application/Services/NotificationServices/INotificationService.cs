@@ -1,4 +1,4 @@
-﻿using LiveAuction.Domain.Consts;
+﻿using LiveAuction.Shared.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,5 +7,9 @@ namespace LiveAuction.Application.Services.NotificationServices;
 
 internal interface INotificationService
 {
-    Task AddNotificationAsync(CreateNotificationDto createNotificationDto, CancellationToken cancellationToken = default);
+    Task AddNotificationAsync(NotificationDto createNotificationDto, CancellationToken cancellationToken = default);
+    Task<List<NotificationDto>> GetUserNotificationsAsync(string userId, CancellationToken cancellationToken = default);
+    Task<int> GetCountUnRead(string userId, CancellationToken cancellationToken = default);
+    Task<bool> MarkAllAsRead(string userId, CancellationToken cancellationToken = default);
+
 }
