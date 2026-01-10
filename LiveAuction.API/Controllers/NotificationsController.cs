@@ -57,5 +57,20 @@ public class NotificationsController(IMediator _mediator):ControllerBase
             },
             isUpdated => Ok(isUpdated));
     }
+    [HttpPut("mark-as-read/{notificationId}")]
+    public async Task<IActionResult> MarkAsRead([FromRoute] int notificationId,CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var command = new MarkAllAsReadCommand(userId);
+        var result = await _mediator.Send(command, cancellationToken);
+        return result.Match<IActionResult>(
+            error => error.Code switch
+            {
+                ErrorCodes.ValidationError => BadRequest(error),
+                ErrorCodes.NotFoundError => NotFound(error),
+                _ => StatusCode(StatusCodes.Status500InternalServerError, error)
+            },
+            isUpdated => Ok(isUpdated));
+    }
 
 }

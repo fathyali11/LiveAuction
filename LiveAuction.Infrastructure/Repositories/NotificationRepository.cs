@@ -20,15 +20,18 @@ internal class NotificationRepository(ApplicationDbContext _context) : INotifica
             .AsNoTracking()
             .Where(x => x.UserId == userId)
             .Take(20)
+            .OrderByDescending(x => x.CreatedAt)
             .Select(x => new NotificationDto
-            (
-                x.UserId,
-                x.Title,
-                x.Message,
-                x.IsRead,
-                x.NotificationType,
-                x.RelatedEntityId.Value
-                )).ToListAsync(cancellationToken);
+            {
+                Id=x.Id,
+                UserId = x.UserId,
+                Title = x.Title,
+                Message = x.Message,
+                IsRead = x.IsRead,
+                NotificationType = x.NotificationType,
+                CreatedAt = x.CreatedAt,
+                RelatedEntityId = x.RelatedEntityId
+            }).ToListAsync(cancellationToken);
         return notifications;
     }
     public async Task<int> GetCountUnRead(string userId, CancellationToken cancellationToken = default)
@@ -45,5 +48,12 @@ internal class NotificationRepository(ApplicationDbContext _context) : INotifica
             .Where(x => x.UserId == userId && !x.IsRead)
             .ExecuteUpdateAsync(x => x.SetProperty(n => n.IsRead, true), cancellationToken);
         return isUpdated > 0;
+    }
+    public async Task<bool> MarkAsReadAsync(string userId, int notificationId, CancellationToken cancellationToken = default)
+    {
+        var isMarkedAsRead = await _context.Notifications
+            .Where(x => x.UserId == userId && x.Id == notificationId && !x.IsRead)
+            .ExecuteUpdateAsync(x => x.SetProperty(n => n.IsRead, true), cancellationToken);
+        return isMarkedAsRead > 0;
     }
 }

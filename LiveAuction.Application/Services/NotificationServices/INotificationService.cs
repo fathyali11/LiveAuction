@@ -11,5 +11,6 @@ internal interface INotificationService
     Task<List<NotificationDto>> GetUserNotificationsAsync(string userId, CancellationToken cancellationToken = default);
     Task<int> GetCountUnRead(string userId, CancellationToken cancellationToken = default);
     Task<bool> MarkAllAsRead(string userId, CancellationToken cancellationToken = default);
+    Task<bool> MarkAsReadAsync(string userId, int notificationId, CancellationToken cancellationToken = default);
 
 }

@@ -42,4 +42,9 @@ internal class NotificationService(IServiceProvider _serviceProvider,
         var isUpdated = await notificationRepository.MarkAllAsRead(userId, cancellationToken);
         return isUpdated;
     }
+    public async Task<bool> MarkAsReadAsync(string userId, int notificationId, CancellationToken cancellationToken = default)
+    {
+        var isMarkedAsRead = await notificationRepository.MarkAsReadAsync(userId, notificationId, cancellationToken);
+        return isMarkedAsRead;
+    }
 }

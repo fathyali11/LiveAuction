@@ -11,6 +11,7 @@ using LiveAuction.Application.Auctions.Queries.GetAuctionById;
 using LiveAuction.Application.Bids.Commands.CreateBid;
 using LiveAuction.Application.Bids.Queries.UserBidsHistory;
 using LiveAuction.Application.Notifications.Commands.MarkAllAsRead;
+using LiveAuction.Application.Notifications.Commands.MarkAsRead;
 using LiveAuction.Application.Notifications.Queries.GetAllNotifications;
 using LiveAuction.Application.Notifications.Queries.GetCountUnRead;
 using LiveAuction.Application.Services.AuctionServices;
@@ -72,6 +73,7 @@ public static class ServiceCollectionExtension
         services.AddScoped<IValidator<GetAllNotificationsQuery>, GetAllNotificationsQueryValidator>();
         services.AddScoped<IValidator<GetCountUnReadQuery>, GetCountUnReadQueryValidator>();
         services.AddScoped<IValidator<MarkAllAsReadCommand>, MarkAllAsReadCommandValidator>();
+        services.AddScoped<IValidator<MarkAsReadCommand>, MarkAsReadCommandValidator>();
 
         TypeAdapterConfig.GlobalSettings.Scan(assembly);
         services.AddMapster();
