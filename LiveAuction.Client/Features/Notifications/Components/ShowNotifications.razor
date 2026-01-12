@@ -137,16 +137,6 @@
                 {
                     _notifications.Insert(0, notification);
                     _unreadCount++;
-
-                    // Snackbar.Add(string.Empty, Severity.Info, config =>
-                    // {
-                    //     config.Icon = GetIcon(notification.NotificationType);
-                    //     config.OnClick = async snackbar =>
-                    //     {
-                    //         await OnNotificationClick(notification);
-                    //     };
-                    // });
-
                     StateHasChanged();
                 });
             });

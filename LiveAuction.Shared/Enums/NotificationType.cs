@@ -3,6 +3,5 @@
 public enum NotificationType
 {
     Auction,
-    System,
     Wallet
 }
