@@ -1,6 +1,7 @@
 ﻿using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
 using LiveAuction.Shared.DTOs;
+using LiveAuction.Shared.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -22,7 +23,7 @@ internal class NotificationService(IServiceProvider _serviceProvider,
             UserId = createNotificationDto.UserId,
             CreatedAt = DateTime.UtcNow,
             IsRead = false,
-            NotificationType = createNotificationDto.NotificationType,
+            NotificationType = Enum.Parse<NotificationType>(createNotificationDto.NotificationType),
             RelatedEntityId = createNotificationDto.RelatedEntityId
         };
         await _notificationRepository.AddAsync(notification, cancellationToken);

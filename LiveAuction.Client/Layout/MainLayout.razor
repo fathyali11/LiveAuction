@@ -1,5 +1,9 @@
-﻿@using LiveAuction.Client.Features.Wallets.Components
+﻿
+
 @inject IDialogService DialogService
+@inject INotificationsApi NotificationsApi
+@inject ITokenService TokenService
+@inject ISnackbar Snackbar
 @inherits LayoutComponentBase
 
 <MudThemeProvider IsDarkMode="true" />
@@ -12,8 +16,10 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h5" Class="ml-3">🔨 Live Auction</MudText>
         <MudSpacer />
+
         <AuthorizeView>
             <Authorized>
+                <ShowNotifications></ShowNotifications>
                 <MudButton Class="mr-4" OnClick="OpenDepositDialogAsync"
                            Variant="Variant.Filled"
                            Color="Color.Secondary"
@@ -33,7 +39,7 @@
     <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <MudNavMenu>
             <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">الرئيسية</MudNavLink>
-            
+
             <AuthorizeView>
                 <Authorized>
                     <MudNavLink Href="/auctions/create" Icon="@Icons.Material.Filled.AddCircle">إضافة مزاد</MudNavLink>
@@ -62,18 +68,24 @@
 </MudLayout>
 
 @code {
-    [Inject] AuthenticationStateProvider authenticationStateProvider { get; set; }
-    [Inject] NavigationManager NavigationManager { get; set; }
+    [Inject] AuthenticationStateProvider authenticationStateProvider { get; set; } = default!;
+    [Inject] NavigationManager NavigationManager { get; set; } = default!;
 
     bool _drawerOpen = true;
     void DrawerToggle() => _drawerOpen = !_drawerOpen;
     public int WatchlistCount { get; set; } = 0;
+
+
+    
+
+    
 
     private async Task Logout()
     {
         await ((CustomAuthStateProvider)authenticationStateProvider).MarkUserAsLoggedOut();
         NavigationManager.NavigateTo("/");
     }
+
     public void UpdateWatchlistCount(int count)
     {
         WatchlistCount = count;
@@ -83,14 +95,15 @@
     private async Task OpenDepositDialogAsync()
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-
         var dialog = await DialogService.ShowAsync<DepositDialog>("شحن المحفظة", options);
-
         var result = await dialog.Result;
-
         if (!result.Canceled)
         {
             StateHasChanged();
         }
     }
+
+
+   
+    
 }

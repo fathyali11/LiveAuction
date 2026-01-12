@@ -103,23 +103,27 @@ internal class AuctionService(IBackgroundJobService _backgroundJobService,
                 await _auctionNotificationService
                     .ForceRefreshWalletAsync(sellerIdToNotify!);
                 var notificationWinner = new NotificationDto
-                (
-                    UserId: winnerIdToNotify!,
-                    Title: "Auction Won!",
-                    Message: $"Congratulations! You have won the auction for '{auction.Title}' with a bid of {auction.Bids.Max(b => b.Amount):C}.",
-                    false,
-                    NotificationType: NotificationType.Auction,
-                    RelatedEntityId: auction.Id
-                );
+                {
+                    UserId = winnerIdToNotify!,
+                    Title = "Auction Won!",
+                    Message = $"Congratulations! You have won the auction for '{auction.Title}' with a bid of {auction.Bids.Max(b => b.Amount):C}.",
+                    IsRead = false,
+                    NotificationType = NotificationType.Auction.ToString(),
+                    RelatedEntityId = auction.Id,
+                    CreatedAt = DateTime.UtcNow
+
+                };
                 var notificationSeller = new NotificationDto
-                    (
-                        UserId: sellerIdToNotify!,
-                        Title: "Auction Ended!",
-                        Message: $"Your auction for '{auction.Title}' has ended. The winning bid was {auction.Bids.Max(b => b.Amount):C}.",
-                        false,
-                        NotificationType: NotificationType.Auction,
-                        RelatedEntityId: auction.Id
-                    );
+                {
+                    UserId = sellerIdToNotify!,
+                    Title = "Auction Ended!",
+                    Message = $"Your auction for '{auction.Title}' has ended. The winning bid was {auction.Bids.Max(b => b.Amount):C}.",
+                    IsRead = false,
+                    NotificationType = NotificationType.Auction.ToString(),
+                    RelatedEntityId = auction.Id,
+                    CreatedAt = DateTime.UtcNow
+
+                };
                 _backgroundJobService.EnqueueJob<INotificationService>(
                 x => x.AddNotificationAsync(notificationWinner, cancellationToken)
                 );

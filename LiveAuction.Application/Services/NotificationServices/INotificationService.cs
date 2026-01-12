@@ -1,7 +1,4 @@
 ﻿using LiveAuction.Shared.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace LiveAuction.Application.Services.NotificationServices;
 

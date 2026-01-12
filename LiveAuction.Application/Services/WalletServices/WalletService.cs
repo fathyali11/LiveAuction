@@ -51,14 +51,18 @@ internal class WalletService(IWalletRepository _walletRepository,
         };
         await _walletRepository.AddTransactionAsync(transaction, cancellationToken);
         await _walletRepository.SaveChangesAsync(cancellationToken);
-        var notificationDto = new NotificationDto(
-            userId,
-            "Deposit Successful",
-            $"Your deposit of {amount:C} was successful.",
-            false,
-            NotificationType.Wallet,
-            null
-            );
+        var notificationDto = new NotificationDto
+        {
+            Id = transaction.Id,
+            UserId = userId,
+            Title = "Deposit Successful",
+            Message = $"Your deposit of {amount:C} was successful.",
+            IsRead = false,
+            NotificationType = NotificationType.Wallet.ToString(),
+            RelatedEntityId = null,
+            CreatedAt = transaction.CreateAt
+
+        };
         _backgroundJobService.EnqueueJob<INotificationService>(
             x=>x.AddNotificationAsync(notificationDto, cancellationToken)
             );

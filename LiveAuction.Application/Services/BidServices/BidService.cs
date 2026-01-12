@@ -50,12 +50,14 @@ internal class BidService(
                 _logger.LogWarning(errorMessage);
                 return new Error(ErrorCodes.NotFoundError, errorMessage);
             }
+
             if (request.Amount <= auction.CurrentBid)
             {
                 var errorMessage = $"Bid amount must be higher than the current bid of {auction.CurrentBid}.";
                 _logger.LogWarning(errorMessage);
                 return new Error(ErrorCodes.ValidationError, errorMessage);
             }
+
             var IsHolded = await _walletService.HoldAsync(request.UserId, request.Amount, request.AuctionId, cancellationToken);
             if (!IsHolded)
             {
@@ -64,10 +66,11 @@ internal class BidService(
                 return new Error(ErrorCodes.ValidationError, errorMessage);
             }
 
+            var lastBidderId = auction.CurrentBidderId;
 
-            if (!string.IsNullOrEmpty(auction.CurrentBidderId))
+            if (!string.IsNullOrEmpty(lastBidderId))
             {
-                var IsReleased = await _walletService.ReleaseHoldAsync(auction.CurrentBidderId!, auction.CurrentBid, auction.Id, cancellationToken);
+                var IsReleased = await _walletService.ReleaseHoldAsync(lastBidderId!, auction.CurrentBid, auction.Id, cancellationToken);
                 if (!IsReleased)
                 {
                     var errorMessage = $"Failed to release money for previous highest bidder";
@@ -93,17 +96,36 @@ internal class BidService(
             var bidDto = bid.Adapt<BidDto>();
             bidDto.AuctionEndTime = auction.EndTime;
             await transaction.CommitAsync(cancellationToken);
-            var createNotificateDto = new NotificationDto(
-                request.UserId,
-                 "Bid Placed Successfully",
-                 $"Your bid of {request.Amount} has been placed successfully on auction {auction.Title}.",
-                 false,
-                NotificationType.Auction,
-                request.AuctionId
-                );
+
+            var createNotificateDtoToBidder = new NotificationDto
+            {
+                UserId = request.UserId,
+                Title = "Bid Placed Successfully",
+                Message = $"Your bid of {request.Amount} has been placed successfully on auction {auction.Title}.",
+                IsRead = false,
+                NotificationType = NotificationType.Auction.ToString(),
+                RelatedEntityId = request.AuctionId
+            };
              _backgroundJobService.EnqueueJob<INotificationService>(
-                x => x.AddNotificationAsync(createNotificateDto));
+                x => x.AddNotificationAsync(createNotificateDtoToBidder));
             await _auctionNotificationService.NotifyNewBidAsync(bid.AuctionId, bidDto);
+            await _auctionNotificationService.AddNotification(request.UserId, createNotificateDtoToBidder);
+
+            if(!string.IsNullOrEmpty(lastBidderId) && lastBidderId != request.UserId)
+            {
+                var createNotificateDtoToLastBidder = new NotificationDto
+                {
+                    UserId = lastBidderId!,
+                    Title = "Outbid Notification",
+                    Message = $"You have been outbid on auction {auction.Title}. The new highest bid is {request.Amount}.",
+                    IsRead = false,
+                    NotificationType = NotificationType.Auction.ToString(),
+                    RelatedEntityId = request.AuctionId
+                };
+                 _backgroundJobService.EnqueueJob<INotificationService>(
+                    x => x.AddNotificationAsync(createNotificateDtoToLastBidder));
+                await _auctionNotificationService.AddNotification(lastBidderId!, createNotificateDtoToLastBidder);
+            }
             return bidDto;
         }
         catch (Exception ex)

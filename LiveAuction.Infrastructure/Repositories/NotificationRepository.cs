@@ -28,7 +28,7 @@ internal class NotificationRepository(ApplicationDbContext _context) : INotifica
                 Title = x.Title,
                 Message = x.Message,
                 IsRead = x.IsRead,
-                NotificationType = x.NotificationType,
+                NotificationType = x.NotificationType.ToString(),
                 CreatedAt = x.CreatedAt,
                 RelatedEntityId = x.RelatedEntityId
             }).ToListAsync(cancellationToken);
@@ -38,8 +38,9 @@ internal class NotificationRepository(ApplicationDbContext _context) : INotifica
     {
         var count = await _context.Notifications
             .AsNoTracking()
-            .Where(x => x.UserId == userId && !x.IsRead)
-            .CountAsync(cancellationToken);
+            .Where(x => x.UserId == userId)
+            .Take(20)
+            .CountAsync(x => !x.IsRead, cancellationToken);
         return count;
     }
     public async Task<bool> MarkAllAsRead(string userId, CancellationToken cancellationToken = default)
