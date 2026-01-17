@@ -124,7 +124,7 @@
                         else
                         {
                             <div class="d-flex gap-2">
-                                <MudNumericField @bind-Value="bidAmount"
+                                <MudNumericField T="decimal" @bind-Value="bidAmount"
                                                  Label="مبلغ المزايدة"
                                                  Variant="Variant.Outlined"
                                                  Adornment="Adornment.Start"
@@ -233,7 +233,7 @@
         await LoadData();
         await SetupSignalRConnection();
         await StartingTimer();
-
+        Console.WriteLine($"bidAmount initialized to: {bidAmount}");
     }
     private async Task StartingTimer()
     {
@@ -259,6 +259,7 @@
                 await InvokeAsync(async () =>
                 {
                     auction!.CurrentBid = bid.Amount;
+                    bidAmount = auction.CurrentBid + 10;
                     auction.EndTime = bid.AuctionEndTime;
                     auction.Bids.Add(bid);
                     StateHasChanged();

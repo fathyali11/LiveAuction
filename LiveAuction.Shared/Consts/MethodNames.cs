@@ -6,4 +6,5 @@ public class MethodNames
     public const string NewBidPlaced = nameof(NewBidPlaced);
     public const string JoinToGroup = nameof(JoinToGroup);
     public const string LeaveFromGroup = nameof(LeaveFromGroup);
+    public const string NewNotification = nameof(NewNotification);
 }

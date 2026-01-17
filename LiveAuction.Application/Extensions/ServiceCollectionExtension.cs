@@ -10,9 +10,15 @@ using LiveAuction.Application.Auctions.Queries.GetAllAuctions;
 using LiveAuction.Application.Auctions.Queries.GetAuctionById;
 using LiveAuction.Application.Bids.Commands.CreateBid;
 using LiveAuction.Application.Bids.Queries.UserBidsHistory;
+using LiveAuction.Application.Notifications.Commands.MarkAllAsRead;
+using LiveAuction.Application.Notifications.Commands.MarkAsRead;
+using LiveAuction.Application.Notifications.Queries.GetAllNotifications;
+using LiveAuction.Application.Notifications.Queries.GetCountUnRead;
 using LiveAuction.Application.Services.AuctionServices;
 using LiveAuction.Application.Services.AuthServices;
 using LiveAuction.Application.Services.BackgroundJobServices;
+using LiveAuction.Application.Services.BidServices;
+using LiveAuction.Application.Services.NotificationServices;
 using LiveAuction.Application.Services.WalletServices;
 using LiveAuction.Application.Services.WatchlistServices;
 using LiveAuction.Application.Wallets.Commands.Deposit;
@@ -45,6 +51,8 @@ public static class ServiceCollectionExtension
         services.AddScoped<IAuctionService, AuctionService>();
         services.AddScoped<IWalletService, WalletService>();
         services.AddScoped<IWatchlistService, WatchlistService>();
+        services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IBidService, BidService>();
 
         services.AddScoped<IValidator<RegisterUserCommand>, RegisterUserCommandValidator>();
         services.AddScoped<IValidator<LoginUserCommand>, LoginUserCommandValidator>();
@@ -62,7 +70,10 @@ public static class ServiceCollectionExtension
         services.AddScoped<IValidator<GetAllAuctionsQuery>, GetAllAuctionsQueryValidator>();
         services.AddScoped<IValidator<GetWatchListQuery>, GetWatchListQueryValidator>();
         services.AddScoped<IValidator<ClearWatchlistQuery>, ClearWatchlistQueryValidator>();
-
+        services.AddScoped<IValidator<GetAllNotificationsQuery>, GetAllNotificationsQueryValidator>();
+        services.AddScoped<IValidator<GetCountUnReadQuery>, GetCountUnReadQueryValidator>();
+        services.AddScoped<IValidator<MarkAllAsReadCommand>, MarkAllAsReadCommandValidator>();
+        services.AddScoped<IValidator<MarkAsReadCommand>, MarkAsReadCommandValidator>();
 
         TypeAdapterConfig.GlobalSettings.Scan(assembly);
         services.AddMapster();

@@ -18,6 +18,5 @@ internal class ApplicationUserConfiguration : IEntityTypeConfiguration<Applicati
         builder.ToTable(t =>
             t.HasCheckConstraint("CK_Users_LockedBalance", "[LockedBalance] >= 0"));
 
-
     }
 }

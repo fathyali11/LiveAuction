@@ -20,4 +20,10 @@ public class AuctionNotificationService(IHubContext<AuctionHub> _hubContext) : I
         await _hubContext.Clients.Group(auctionId.ToString())
             .SendAsync(MethodNames.NewBidPlaced, bidDto);
     }
+
+    public async Task AddNotification(string userId,NotificationDto notificationDto)
+    {
+        await _hubContext.Clients.User(userId)
+            .SendAsync(MethodNames.NewNotification, notificationDto);
+    }
 }

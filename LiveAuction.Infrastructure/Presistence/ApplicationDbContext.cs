@@ -11,6 +11,7 @@ internal class ApplicationDbContext(DbContextOptions<ApplicationDbContext> optio
     public DbSet<WatchList> WatchLists { get; set; }
     public DbSet<WatchListItem> WatchListItems { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

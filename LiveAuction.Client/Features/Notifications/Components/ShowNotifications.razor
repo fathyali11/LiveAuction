@@ -1,0 +1,203 @@
+﻿
+
+@inject INotificationsApi NotificationsApi
+@inject ITokenService TokenService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<MudMenu AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopRight" MaxHeight="400" Class="mr-4">
+    <ActivatorContent>
+        <MudBadge Content="_unreadCount" Color="Color.Error" Overlap="true" Visible="@(_unreadCount > 0)">
+            <MudIconButton Icon="@Icons.Material.Filled.Notifications" Color="Color.Inherit" />
+        </MudBadge>
+    </ActivatorContent>
+
+    <ChildContent>
+        <div class="pa-2 d-flex justify-space-between align-center border-b-2">
+            <MudText Typo="Typo.subtitle2">الإشعارات</MudText>
+            @if (_unreadCount > 0)
+            {
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" OnClick="MarkAllRead">تحديد الكل كمقروء</MudButton>
+            }
+        </div>
+
+        @if (_isLoadingNotifications)
+        {
+            <div class="d-flex justify-center pa-4"><MudProgressCircular Indeterminate="true" Size="Size.Small" /></div>
+        }
+        else if (_notifications == null || !_notifications.Any())
+        {
+            <MudMenuItem Disabled="true">لا توجد إشعارات حالياً</MudMenuItem>
+        }
+        else
+        {
+            @foreach (var note in _notifications)
+            {
+                <MudMenuItem OnClick="@(() => OnNotificationClick(note))"
+                             Class="mb-1"
+                             Style="@(note.IsRead
+                                                       ? "opacity: 0.6;" 
+                                                       : "background-color: rgba(var(--mud-palette-primary-rgb), 0.15); border-right: 4px solid var(--mud-palette-primary);")">
+
+                 <div class="d-flex gap-3 align-center" style="min-width: 250px;">
+                    <MudAvatar Size="Size.Medium" Color="@GetIconColor(note.NotificationType)" Variant="Variant.Filled">
+                        <MudIcon Icon="@GetIcon(note.NotificationType)" Size="Size.Medium" />
+                    </MudAvatar>
+
+                        <div>
+                            <MudText Typo="Typo.subtitle2" Color="@(note.IsRead? Color.Default: Color.Primary)">
+                                 @if (!note.IsRead)
+                                    {
+                                        <b>@note.Title</b>
+                                    }
+                                    else
+                                    {
+
+                                        @note.Title
+                                    }
+                            </MudText>
+
+                            <MudText Typo="Typo.caption" Class="d-block text-muted">@note.Message</MudText>
+
+                            <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-1" Style="font-size: 10px;">
+                                @GetTimeAgo(note.CreatedAt)
+                            </MudText>
+                        </div>
+                </div>
+                </MudMenuItem>
+                <MudDivider />
+            }
+        }
+    </ChildContent>
+</MudMenu>
+@code {
+    [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
+    private List<NotificationDto> _notifications = new();
+    private int _unreadCount = 0;
+    private bool _isLoadingNotifications = true;
+    private HubConnection? hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateTask;
+        if (authState.User.Identity?.IsAuthenticated == true)
+        {
+            await LoadNotificationsData();
+            await SetupSignalRConnection();
+        }
+    }
+
+    private async Task LoadNotificationsData()
+    {
+        try
+        {
+            _isLoadingNotifications = true;
+
+            var response = await NotificationsApi.GetNotificationsAsync();
+            if (response.IsSuccessStatusCode)
+            {
+                _notifications = await response.Content.ReadFromJsonAsync<List<NotificationDto>>() ?? new();
+            }
+
+            var countResponse = await NotificationsApi.GetUnreadCountAsync();
+            if (countResponse.IsSuccessStatusCode)
+            {
+                _unreadCount = await countResponse.Content.ReadFromJsonAsync<int>();
+                Console.WriteLine($"Unread notifications count: {_unreadCount}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading notifications: {ex.Message}");
+        }
+        finally
+        {
+            _isLoadingNotifications = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SetupSignalRConnection()
+    {
+        try
+        {
+            hubConnection = new HubConnectionBuilder()
+            .WithUrl("https://localhost:7293/hubs/auction", options =>
+            {
+                options.AccessTokenProvider = async () => await TokenService.GetAccessTokenAsync();
+            })
+            .WithAutomaticReconnect()
+            .Build();
+
+            hubConnection.On<NotificationDto>(MethodNames.NewNotification, (notification) =>
+            {
+                Console.WriteLine("New notification received via SignalR in main layout");
+                InvokeAsync(() =>
+                {
+                    _notifications.Insert(0, notification);
+                    _unreadCount++;
+                    StateHasChanged();
+                });
+            });
+
+
+            await hubConnection.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"SignalR Layout Error: {ex.Message}");
+        }
+    }
+
+    private async Task OnNotificationClick(NotificationDto note)
+    {
+        if (!note.IsRead)
+        {
+            note.IsRead = true;
+            _unreadCount = Math.Max(0, _unreadCount - 1);
+            await NotificationsApi.MarkAsReadAsync(note.Id);
+        }
+
+        if (note.RelatedEntityId.HasValue)
+        {
+            NavigationManager.NavigateTo($"/auctions/{note.RelatedEntityId}/details");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/wallet");
+        }
+    }
+
+    private async Task MarkAllRead()
+    {
+        foreach (var n in _notifications) n.IsRead = true;
+        _unreadCount = 0;
+        await NotificationsApi.MarkAllAsReadAsync();
+    }
+
+
+    private string GetIcon(string? type) => type switch
+    {
+        nameof(NotificationType.Wallet) => Icons.Material.Filled.AttachMoney,
+        nameof(NotificationType.Auction) => Icons.Material.Filled.Gavel,
+        _ => Icons.Material.Filled.Info
+    };
+
+    private Color GetIconColor(string? type) => type switch
+    {
+        nameof(NotificationType.Wallet) => Color.Success,
+        nameof(NotificationType.Auction) => Color.Warning,
+        _ => Color.Info
+    };
+
+    private string GetTimeAgo(DateTime date)
+    {
+        var span = DateTime.UtcNow - date;
+        if (span.TotalMinutes < 1) return "الآن";
+        if (span.TotalMinutes < 60) return $"منذ {span.TotalMinutes:0} دقيقة";
+        if (span.TotalHours < 24) return $"منذ {span.TotalHours:0} ساعة";
+        return $"منذ {span.TotalDays:0} يوم";
+    }
+
+}
