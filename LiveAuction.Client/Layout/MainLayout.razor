@@ -1,6 +1,4 @@
-﻿
-
-@inject IDialogService DialogService
+﻿@inject IDialogService DialogService
 @inject INotificationsApi NotificationsApi
 @inject ITokenService TokenService
 @inject ISnackbar Snackbar
@@ -14,20 +12,40 @@
 <MudLayout>
     <MudAppBar Elevation="1" Color="Color.Primary">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">🔨 Live Auction</MudText>
-        <MudSpacer />
+
+        <MudText Typo="Typo.h6" Class="ml-3 d-none d-sm-flex">🔨 Live Auction</MudText> <MudText Typo="Typo.subtitle1" Class="ml-2 d-flex d-sm-none">🔨 Live Auction</MudText> <MudSpacer />
 
         <AuthorizeView>
             <Authorized>
                 <ShowNotifications></ShowNotifications>
-                <MudButton Class="mr-4" OnClick="OpenDepositDialogAsync"
-                           Variant="Variant.Filled"
-                           Color="Color.Secondary"
-                           StartIcon="@Icons.Material.Filled.AddCard">
-                    شحن الرصيد
-                </MudButton>
-                <MudText Class="mr-4">👤 @context.User.Identity?.Name</MudText>
-                <MudButton Variant="Variant.Text" Color="Color.Inherit" OnClick="Logout">خروج</MudButton>
+
+                <MudHidden Breakpoint="Breakpoint.Xs">
+                    <MudButton Class="mr-4" OnClick="OpenDepositDialogAsync"
+                               Variant="Variant.Filled"
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.AddCard">
+                        شحن الرصيد
+                    </MudButton>
+                </MudHidden>
+
+                <MudHidden Breakpoint="Breakpoint.SmAndUp">
+                    <MudIconButton Icon="@Icons.Material.Filled.AddCard"
+                                   Color="Color.Secondary"
+                                   OnClick="OpenDepositDialogAsync" />
+                </MudHidden>
+
+                <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                    <MudText Class="mr-4">👤 @context.User.Identity?.Name</MudText>
+                </MudHidden>
+
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End">
+                    <MudMenuItem Disabled="true">
+                        <MudText Typo="Typo.body2">@context.User.Identity?.Name</MudText>
+                    </MudMenuItem>
+                    <MudDivider />
+                    <MudMenuItem OnClick="Logout" Icon="@Icons.Material.Filled.Logout">خروج</MudMenuItem>
+                </MudMenu>
+
             </Authorized>
             <NotAuthorized>
                 <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/login">دخول</MudButton>
@@ -36,7 +54,11 @@
         </AuthorizeView>
     </MudAppBar>
 
-    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+    <MudDrawer @bind-Open="_drawerOpen"
+               ClipMode="DrawerClipMode.Always"
+               Elevation="2"
+               Variant="@DrawerVariant"
+               OpenMiniOnHover="true">
         <MudNavMenu>
             <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">الرئيسية</MudNavLink>
 
@@ -71,14 +93,28 @@
     [Inject] AuthenticationStateProvider authenticationStateProvider { get; set; } = default!;
     [Inject] NavigationManager NavigationManager { get; set; } = default!;
 
+    [Inject] IBrowserViewportService BrowserViewportService { get; set; } = default!;
+
+
     bool _drawerOpen = true;
+
+    DrawerVariant DrawerVariant = DrawerVariant.Responsive;
+
     void DrawerToggle() => _drawerOpen = !_drawerOpen;
     public int WatchlistCount { get; set; } = 0;
 
-
-    
-
-    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var breakpoint = await BrowserViewportService.GetCurrentBreakpointAsync();
+            if (breakpoint == Breakpoint.Xs || breakpoint == Breakpoint.Sm)
+            {
+                _drawerOpen = false;
+                StateHasChanged();
+            }
+        }
+    }
 
     private async Task Logout()
     {
@@ -102,8 +138,4 @@
             StateHasChanged();
         }
     }
-
-
-   
-    
 }
