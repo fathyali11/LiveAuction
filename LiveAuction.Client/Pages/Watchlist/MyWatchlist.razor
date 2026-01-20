@@ -14,60 +14,88 @@
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mt-md-8 mb-8">
 
-    <MudText Typo="Typo.h5" Class="mb-4 d-flex d-sm-none" Color="Color.Primary">قائمتي للمراقبة</MudText>
-    <MudText Typo="Typo.h4" Class="mb-6 d-none d-sm-flex" Color="Color.Primary">قائمتي للمراقبة</MudText>
+    <div class="animate__animated animate__fadeInRight">
+        <MudText Typo="Typo.h5" Class="mb-4 d-flex d-sm-none" Color="Color.Primary">قائمتي للمراقبة</MudText>
+        <MudText Typo="Typo.h4" Class="mb-6 d-none d-sm-flex" Color="Color.Primary">قائمتي للمراقبة</MudText>
+    </div>
 
     @if (_isLoading)
     {
         <div class="d-flex justify-center mt-16">
-            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" Class="zoom-in-animation" />
         </div>
     }
     else if (_watchlistItems == null || !_watchlistItems.Any())
     {
-        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-4">
-            لا توجد عناصر في قائمتك للمراقبة حالياً. تصفح
-            <MudLink Href="/" Color="Color.Inherit">المزادات الحالية</MudLink> لإضافة عناصر.
-        </MudAlert>
+        <div class="animate__animated animate__pulse">
+            <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-4">
+                لا توجد عناصر في قائمتك للمراقبة حالياً. تصفح
+                <MudLink Href="/" Color="Color.Inherit">المزادات الحالية</MudLink> لإضافة عناصر.
+            </MudAlert>
+        </div>
     }
     else
     {
-        <div class="d-flex flex-column flex-sm-row justify-center align-center mb-6 gap-3">
+        <div class="d-flex align-center mb-6 gap-3 animate__animated animate__fadeInDown">
 
             <MudTextField @bind-Value="_searchTerm"
                           Placeholder="ابحث عن منتج..."
                           Variant="Variant.Outlined"
-                          Adornment="Adornment.End"
+                          Adornment="Adornment.Start"
                           AdornmentIcon="@Icons.Material.Filled.Search"
                           OnDebounceIntervalElapsed="OnSearch"
                           DebounceInterval="500"
-                          Class="mt-0 w-100"
-                          Style="max-width: 500px;" />
-            <MudButton Variant="Variant.Outlined"
-                       Color="Color.Error"
-                       StartIcon="@Icons.Material.Filled.DeleteSweep"
-                       OnClick="OnClearAllClicked"
-                       Class="w-100 w-sm-auto">
-                حذف القائمة بالكامل
-            </MudButton>
-        </div>
+                          Class="flex-grow-1"
+                          Style="background-color: rgba(255,255,255,0.05); border-radius: 8px;"
+                          Margin="Margin.Dense" />
 
+            <div class="animate__animated hover-shake">
+
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.DeleteSweep"
+                           OnClick="OnClearAllClicked"
+                           Class="d-none d-sm-flex py-2 px-4"
+                           Style="height: 40px; white-space: nowrap;">
+                    حذف الكل
+                </MudButton>
+
+                <MudIconButton Icon="@Icons.Material.Filled.DeleteSweep"
+                               Variant="Variant.Outlined"
+                               Color="Color.Error"
+                               OnClick="OnClearAllClicked"
+                               Class="d-flex d-sm-none"
+                               Style="border-radius: 8px; height: 40px; width: 40px;" />
+            </div>
+
+        </div>
         <MudGrid Spacing="2">
+            @{
+                int i = 0;
+            }
             @foreach (var auction in _watchlistItems)
             {
-                <MudItem xs="12" sm="6" md="4" lg="3">
-                    <AuctionCard AuctionId="@auction.AuctionId"
-                                 Title="@auction.Title"
-                                 ImageName="@auction.ImageName"
-                                 EndTime="@auction.EndTime"
-                                 CurrentBid="@auction.CurrentBid"
-                                 IsFavorite="@auction.IsInWatchList"
-                                 OnFavoriteToggled="UpdateFavoriteStatus" />
+                var delay = i * 0.1;
+                i++;
+
+                <MudItem xs="12" sm="6" md="4" lg="3"
+                         Class="animate__animated animate__fadeInUp"
+                         Style="@($"animation-delay: {delay}s; animation-duration: 0.5s;")">
+
+                    <div class="mud-hover-card" style="height: 100%; border-radius: 8px;">
+                        <AuctionCard AuctionId="@auction.AuctionId"
+                                     Title="@auction.Title"
+                                     ImageName="@auction.ImageName"
+                                     EndTime="@auction.EndTime"
+                                     CurrentBid="@auction.CurrentBid"
+                                     IsFavorite="@auction.IsInWatchList"
+                                     OnFavoriteToggled="UpdateFavoriteStatus" />
+                    </div>
                 </MudItem>
             }
         </MudGrid>
 
-        <div class="d-flex flex-column align-center mt-8">
+        <div class="d-flex flex-column align-center mt-8 animate__animated animate__zoomIn" style="animation-delay: 0.3s;">
             <MudPagination Color="Color.Primary"
                            Count="@_totalPages"
                            Selected="@_pageNumber"
@@ -85,6 +113,25 @@
     }
 
 </MudContainer>
+
+<style>
+    .mud-hover-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .mud-hover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+
+    .hover-shake:hover {
+        animation: headShake 0.5s;
+    }
+
+    .zoom-in-animation {
+        animation: zoomIn 0.4s ease-out;
+    }
+</style>
 
 @code {
     [CascadingParameter]
@@ -105,15 +152,15 @@
     protected override async Task OnInitializedAsync()
     {
         await SetupSignalRConnection();
-
         await LoadWatchlistData();
-
     }
+
     private async Task OnSearch()
     {
         _pageNumber = 1;
         await LoadWatchlistData();
     }
+
     private async Task OnPageChanged(int i)
     {
         _pageNumber = i;
@@ -123,15 +170,14 @@
 
     private async Task LoadWatchlistData()
     {
-
         try
         {
             var cacheKey = $"watchlist_data_{_pageNumber}_{_searchTerm}";
             await ManageSignalRGroups(_watchlistItems, false);
             var cacheData = await LocalStorage.GetItemAsync<PaginatedResult<WatchListItemDto>>(cacheKey);
+
             if (cacheData is not null && cacheData.Items.Any())
             {
-
                 _watchlistItems = cacheData.Items;
                 _pageNumber = cacheData.PageNumber;
                 _totalCount = cacheData.TotalCount;
@@ -142,7 +188,6 @@
                 StateHasChanged();
                 await ManageSignalRGroups(_watchlistItems, true);
             }
-
 
             _isLoading = true;
 
@@ -177,7 +222,6 @@
             if (_totalPages == 0) _totalPages = 1;
 
             await LocalStorage.SetItemAsync(cacheKey, paginatedResult);
-
             await ManageSignalRGroups(_watchlistItems, true);
         }
         catch (Exception ex)
@@ -191,8 +235,6 @@
             StateHasChanged();
         }
     }
-
-
 
     private async Task ManageSignalRGroups(List<WatchListItemDto> items, bool join)
     {
@@ -231,7 +273,6 @@
             await _hubConnection.StartAsync();
             _hubConnection.Reconnected += async (connectionId) =>
            {
-
                await ManageSignalRGroups(_watchlistItems, true);
            };
         }
@@ -251,7 +292,6 @@
             {
                 _watchlistItems.Remove(item);
                 _totalCount--;
-
 
                 if (_hubConnection?.State == HubConnectionState.Connected)
                 {
@@ -290,9 +330,7 @@
         if (currentData != null)
         {
             currentData.Items = _watchlistItems;
-
             currentData.TotalCount = _totalCount;
-
             await LocalStorage.SetItemAsync(key, currentData);
         }
     }
@@ -332,11 +370,11 @@
             }
         }
     }
+
     public async ValueTask DisposeAsync()
     {
         if (_hubConnection != null)
         {
-
             await ManageSignalRGroups(_watchlistItems, false);
             await _hubConnection.StopAsync();
             await _hubConnection.DisposeAsync();

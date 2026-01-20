@@ -1,6 +1,5 @@
 ﻿@page "/"
 
-
 @inject ISnackbar Snackbar
 @inject IAuctionsApi AuctionsApi
 @inject IWatchlistApi WatchlistApi
@@ -11,57 +10,78 @@
 
 <PageTitle>المزادات الحالية</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-8">
-    <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Primary">🔥 المزادات المشتعلة الآن</MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mt-md-8 mb-8">
+
+    <div class="animate__animated animate__fadeInRight">
+        <MudText Typo="Typo.h5" Class="mb-4 d-flex d-sm-none" Color="Color.Primary">🔥 المزادات المشتعلة الآن</MudText>
+        <MudText Typo="Typo.h4" Class="mb-6 d-none d-sm-flex" Color="Color.Primary">🔥 المزادات المشتعلة الآن</MudText>
+    </div>
 
     @if (_isLoading)
     {
         <div class="d-flex justify-center align-center" style="height: 50vh;">
-            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" Class="zoom-in-animation" />
         </div>
     }
     else if (_auctions == null || !_auctions.Any())
     {
-        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-4">
-            لا توجد مزادات نشطة حالياً. كن أول من <MudLink Href="/create-auction" Color="Color.Inherit">يفتح مزاد!</MudLink>
-        </MudAlert>
+        <div class="animate__animated animate__pulse">
+            <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-4">
+                لا توجد مزادات نشطة حالياً. كن أول من <MudLink Href="/create-auction" Color="Color.Inherit">يفتح مزاد!</MudLink>
+            </MudAlert>
+        </div>
     }
     else
     {
-        <div class="d-flex justify-center mb-6">
+        <div class="d-flex justify-center mb-8 animate__animated animate__fadeInDown">
             <MudTextField @bind-Value="_searchTerm"
                           Placeholder="ابحث عن منتج..."
                           Variant="Variant.Outlined"
-                          Adornment="Adornment.End"
+                          Adornment="Adornment.Start"
                           AdornmentIcon="@Icons.Material.Filled.Search"
                           OnDebounceIntervalElapsed="OnSearch"
                           DebounceInterval="500"
                           Class="mt-0"
-                          Style="max-width: 500px;" />
+                          Style="max-width: 600px; width: 100%; background-color: rgba(255,255,255,0.05); border-radius: 8px;"
+                          Margin="Margin.Dense" />
         </div>
-        <MudGrid>
+
+        <MudGrid Spacing="3">
+            @{
+                int i = 0;
+            }
             @foreach (var auction in _auctions)
             {
-                <MudItem xs="12" sm="6" md="4" lg="3">
-                    <AuctionCard AuctionId="@auction.Id"
-                                 Title="@auction.Title"
-                                 ImageName="@auction.ImageName"
-                                 EndTime="@auction.EndTime"
-                                 CurrentBid="@auction.CurrentBid"
-                                 IsFavorite="@auction.IsWatchListed"
-                                 OnFavoriteToggled="UpdateFavoriteStatus" />
+                var delay = i * 0.05;
+                i++;
+
+                <MudItem xs="12" sm="6" md="4" lg="3"
+                         Class="animate__animated animate__fadeInUp"
+                         Style="@($"animation-delay: {delay}s; animation-duration: 0.5s;")">
+
+                    <div class="mud-hover-card" style="height: 100%; border-radius: 12px;">
+                        <AuctionCard AuctionId="@auction.Id"
+                                     Title="@auction.Title"
+                                     ImageName="@auction.ImageName"
+                                     EndTime="@auction.EndTime"
+                                     CurrentBid="@auction.CurrentBid"
+                                     IsFavorite="@auction.IsWatchListed"
+                                     OnFavoriteToggled="UpdateFavoriteStatus" />
+                    </div>
                 </MudItem>
             }
         </MudGrid>
 
-        <div class="d-flex flex-column align-center mt-8">
+        <div class="d-flex flex-column align-center mt-10 animate__animated animate__zoomIn" style="animation-delay: 0.5s;">
             <MudPagination Color="Color.Primary"
                            Count="@_totalPages"
                            Selected="@_pageNumber"
                            SelectedChanged="OnPageChanged"
                            Variant="Variant.Outlined"
                            Shape="Shape.Rounded"
-                           Size="Size.Large" />
+                           Size="Size.Large"
+                           BoundaryCount="1"
+                           MiddleCount="3" />
 
             <MudText Typo="Typo.caption" Class="mt-2 text-muted">
                 صفحة @_pageNumber من @_totalPages
@@ -70,16 +90,30 @@
     }
 </MudContainer>
 
-    @code {
+<style>
+    .mud-hover-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .mud-hover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important;
+        }
+
+    .zoom-in-animation {
+        animation: zoomIn 0.4s ease-out;
+    }
+</style>
+
+@code {
     [CascadingParameter]
     public MainLayout mainLayout { get; set; } = default!;
 
     private List<AuctionsInHomePageDto> _auctions = new();
     private bool _isLoading = true;
 
-
     private int _pageNumber = 1;
-    private int _pageSize = 12; 
+    private int _pageSize = 12;
     private int _totalPages = 1;
     private string _searchTerm = string.Empty;
 
@@ -88,7 +122,6 @@
         await LoadAuctions();
         await LoadWatchlistCount();
     }
-
 
     private async Task OnPageChanged(int i)
     {
@@ -108,7 +141,6 @@
         {
             string cacheKey = $"home_auctions_page_{_pageNumber}";
 
-          
             var cachedResult = await LocalStorage.GetItemAsync<PaginatedResult<AuctionsInHomePageDto>>(cacheKey);
 
             if (cachedResult != null && cachedResult.Items.Any())
@@ -118,7 +150,7 @@
                 if (_totalPages == 0) _totalPages = 1;
 
                 _isLoading = false;
-                StateHasChanged(); 
+                StateHasChanged();
             }
             else
             {
@@ -139,12 +171,10 @@
 
                 if (freshResult != null)
                 {
-
                     _auctions = freshResult.Items;
                     _pageNumber = freshResult.PageNumber;
                     _totalPages = (int)Math.Ceiling((double)freshResult.TotalCount / _pageSize);
                     if (_totalPages == 0) _totalPages = 1;
-
 
                     await LocalStorage.SetItemAsync(cacheKey, freshResult);
                 }
