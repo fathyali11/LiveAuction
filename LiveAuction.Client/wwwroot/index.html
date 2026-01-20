@@ -1,22 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LiveAuction.Client</title>
+    <title>LiveAuction</title>
     <base href="/" />
-    <!--<link rel="preload" id="webassembly" />-->
+
     <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;700&display=swap" rel="stylesheet">
+
     <link href="_content/MudBlazor/MudBlazor.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="LiveAuction.Client.styles.css" rel="stylesheet" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+
     <script type="importmap"></script>
+
+    <style>
+        /* إجبار الموقع بالكامل على استخدام خط Cairo */
+        body, .mud-typography, .mud-button-label {
+            font-family: 'Cairo', 'Roboto', sans-serif !important;
+        }
+
+        /* تعديل لون دائرة التحميل لتناسب لون الموقع */
+        .loading-progress circle {
+            stroke: #594AE2; /* MudBlazor Default Primary */
+        }
+    </style>
 </head>
 
 <body>
     <div id="app">
+        <div style="position:absolute; top:45%; left:50%; transform:translate(-50%, -50%); text-align:center; font-family: 'Cairo', sans-serif;">
+            <div style="font-size: 30px; font-weight: bold; color: #594AE2; margin-bottom: 20px;">
+                🔨 Live Auction
+            </div>
+            <div style="color: #666;">جاري التحميل...</div>
+        </div>
+
         <svg class="loading-progress">
             <circle r="40%" cx="50%" cy="50%" />
             <circle r="40%" cx="50%" cy="50%" />
@@ -25,10 +49,11 @@
     </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
+        حدث خطأ غير متوقع.
+        <a href="." class="reload">إعادة تحميل</a>
         <span class="dismiss">🗙</span>
     </div>
+
     <script src="_framework/blazor.webassembly.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 </body>

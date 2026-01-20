@@ -12,146 +12,225 @@
 
 <PageTitle>محفظتي</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
-    <MudText Typo="Typo.h4" Class="mb-6">💰 محفظتي</MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mt-md-8">
+
+    <div class="animate__animated animate__fadeInRight">
+        <MudText Typo="Typo.h5" Class="mb-4 d-flex d-sm-none">💰 محفظتي</MudText>
+        <MudText Typo="Typo.h4" Class="mb-6 d-none d-sm-flex">💰 محفظتي</MudText>
+    </div>
 
     @if (_isLoadingBalance)
     {
         <div class="d-flex justify-center align-center" style="height: 150px;">
-            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" Class="zoom-in-animation" />
         </div>
     }
     else
     {
-        <MudGrid Class="mb-8">
-            <MudItem xs="12" sm="4">
-                <MudPaper Elevation="3" Class="pa-6 mud-theme-success d-flex flex-column justify-space-between" Style="height: 100%;">
-                    <div>
-                        <MudText Typo="Typo.subtitle1" Class="mb-1">الرصيد المتاح</MudText>
-                        <MudText Typo="Typo.h4">@_summary.AvailableBalance.ToString("C0")</MudText>
+        <MudGrid Class="mb-8" Spacing="3">
+
+            <MudItem xs="12" sm="4" Class="animate__animated animate__fadeInUp" Style="animation-duration: 0.5s;">
+                <MudPaper Elevation="3" Class="pa-6 mud-theme-success d-flex flex-column justify-space-between mud-hover-card"
+                          Style="height: 100%; border-radius: 12px; position: relative; overflow: hidden;">
+
+                    <MudIcon Icon="@Icons.Material.Filled.AccountBalanceWallet"
+                             Style="position: absolute; left: -15px; bottom: -15px; opacity: 0.2; font-size: 100px; z-index: 0;" />
+
+                    <div style="position: relative; z-index: 2;">
+                        <MudText Typo="Typo.subtitle1" Class="mb-1 opacity-80">الرصيد المتاح</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 700;">@($"{_summary.AvailableBalance:N0} ج.م")</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.CheckCircleOutline" Size="Size.Large" Class="align-self-end mt-2" />
+
+                    <MudIcon Icon="@Icons.Material.Filled.AttachMoney"
+                             Size="Size.Large"
+                             Color="Color.Inherit"
+                             Class="align-self-end mt-2"
+                             Style="position: relative; z-index: 2; border: 2px solid rgba(255,255,255,0.5); border-radius: 50%; padding: 4px;" />
                 </MudPaper>
             </MudItem>
 
-            <MudItem xs="12" sm="4">
-                <MudPaper Elevation="3" Class="pa-6 mud-theme-warning d-flex flex-column justify-space-between" Style="height: 100%;">
-                    <div>
-                        <MudText Typo="Typo.subtitle1" Class="mb-1">مبالغ محجوزة (في مزادات)</MudText>
-                        <MudText Typo="Typo.h4">@_summary.LockedBalance.ToString("C0")</MudText>
+            <MudItem xs="12" sm="4" Class="animate__animated animate__fadeInUp" Style="animation-delay: 0.1s; animation-duration: 0.5s;">
+                <MudPaper Elevation="3" Class="pa-6 mud-theme-warning d-flex flex-column justify-space-between mud-hover-card"
+                          Style="height: 100%; border-radius: 12px; position: relative; overflow: hidden;">
+
+                    <MudIcon Icon="@Icons.Material.Filled.MoneyOff"
+                             Style="position: absolute; left: -15px; bottom: -15px; opacity: 0.2; font-size: 100px; z-index: 0;" />
+
+                    <div style="position: relative; z-index: 2;">
+                        <MudText Typo="Typo.subtitle1" Class="mb-1 opacity-80">مبالغ محجوزة</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 700;">@($"{_summary.LockedBalance:N0} ج.م")</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.LockClock" Size="Size.Large" Class="align-self-end mt-2" />
+
+                    <MudIcon Icon="@Icons.Material.Filled.Lock"
+                             Size="Size.Large"
+                             Color="Color.Inherit"
+                             Class="align-self-end mt-2"
+                             Style="position: relative; z-index: 2; border: 2px solid rgba(255,255,255,0.5); border-radius: 50%; padding: 5px;" />
                 </MudPaper>
             </MudItem>
 
-            <MudItem xs="12" sm="4">
-                <MudPaper Elevation="3" Class="pa-6 mud-theme-primary d-flex flex-column justify-space-between" Style="height: 100%;">
-                    <div>
-                        <MudText Typo="Typo.subtitle1" Class="mb-1">إجمالي رصيد الحساب</MudText>
-                        <MudText Typo="Typo.h4">@_summary.TotalBalance.ToString("C0")</MudText>
+            <MudItem xs="12" sm="4" Class="animate__animated animate__fadeInUp" Style="animation-delay: 0.2s; animation-duration: 0.5s;">
+                <MudPaper Elevation="3" Class="pa-6 mud-theme-primary d-flex flex-column justify-space-between mud-hover-card"
+                          Style="height: 100%; border-radius: 12px; position: relative; overflow: hidden;">
+
+                    <MudIcon Icon="@Icons.Material.Filled.AccountBalance"
+                             Style="position: absolute; left: -15px; bottom: -15px; opacity: 0.2; font-size: 100px; z-index: 0;" />
+
+                    <div style="position: relative; z-index: 2;">
+                        <MudText Typo="Typo.subtitle1" Class="mb-1 opacity-80">إجمالي رصيد الحساب</MudText>
+                        <MudText Typo="Typo.h4" Style="font-weight: 700;">@($"{_summary.TotalBalance:N0} ج.م")</MudText>
                     </div>
+
                     <MudButton Variant="Variant.Filled"
                                Color="Color.Secondary"
                                StartIcon="@Icons.Material.Filled.AddCard"
-                               Class="mt-4 align-self-start"
-                               OnClick="OpenDepositDialog">
-                        شحن المحفظة
+                               Class="mt-4 align-self-start hover-shake"
+                               OnClick="OpenDepositDialog"
+                               Style="border-radius: 8px; font-weight: bold; position: relative; z-index: 2;">
+                        شحن
                     </MudButton>
                 </MudPaper>
             </MudItem>
         </MudGrid>
     }
 
-    <MudText Typo="Typo.h5" Class="mb-4 mt-8">سجل المعاملات</MudText>
-    <div class="d-flex justify-center mb-6">
+    <div class="d-flex flex-column flex-sm-row justify-space-between align-center mb-4 mt-8 gap-3 animate__animated animate__fadeIn" style="animation-delay: 0.3s;">
+        <MudText Typo="Typo.h5">سجل المعاملات</MudText>
+
         <MudTextField @bind-Value="_searchTerm"
-                      Placeholder="ابحث عن منتج..."
+                      Placeholder="ابحث في السجل..."
                       Variant="Variant.Outlined"
                       Adornment="Adornment.End"
                       AdornmentIcon="@Icons.Material.Filled.Search"
                       OnDebounceIntervalElapsed="OnSearch"
                       DebounceInterval="500"
-                      Class="mt-0"
-                      Style="max-width: 500px;" />
+                      Margin="Margin.Dense"
+                      Class="w-100 w-sm-50" />
     </div>
 
-    <MudTable ServerData="@LoadServerData"
-              @ref="_table"
-              Hover="true"
-              Breakpoint="Breakpoint.Sm"
-              Elevation="3"
-              Dense="true"
-              Striped="true">
+    <div class="animate__animated animate__zoomIn" style="animation-delay: 0.4s;">
+        <MudTable ServerData="@LoadServerData"
+                  @ref="_table"
+                  Hover="true"
+                  Breakpoint="Breakpoint.Sm"
+                  Elevation="3"
+                  Dense="true"
+                  Striped="true"
+                  Class="mud-table-responsive"
+                  Style="border-radius: 12px; overflow: hidden;">
 
-        <HeaderContent>
-            <MudTh>التاريخ</MudTh>
-            <MudTh>نوع العملية</MudTh>
-            <MudTh>المزاد</MudTh>
-            <MudTh>المبلغ</MudTh>
-        </HeaderContent>
+            <HeaderContent>
+                <MudTh>التاريخ</MudTh>
+                <MudTh>نوع العملية</MudTh>
+                <MudTh>المزاد</MudTh>
+                <MudTh>المبلغ</MudTh>
+            </HeaderContent>
 
-        <RowTemplate>
-            <MudTd DataLabel="التاريخ">
-                @context.Timestamp.ToLocalTime().ToString("dd/MM/yyyy hh:mm tt")
-            </MudTd>
+            <RowTemplate>
+                <MudTd DataLabel="التاريخ">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Class="mr-2 text-muted" />
+                        @context.Timestamp.ToLocalTime().ToString("dd/MM/yyyy hh:mm tt")
+                    </div>
+                </MudTd>
 
-            <MudTd DataLabel="نوع العملية">
-                <MudChip T="string" Size="Size.Small" Color="@GetTransactionColor(context.Type)">
-                    @context.Type
-                </MudChip>
-            </MudTd>
+                <MudTd DataLabel="نوع العملية">
+                    <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="@GetTransactionColor(context.Type)">
+                        @TranslateType(context.Type)
+                    </MudChip>
+                </MudTd>
 
-            <MudTd DataLabel="المزاد">
-                @if (!string.IsNullOrEmpty(context.AuctionName))
-                {
-                    <MudLink Href="@($"/auctions/{context.AuctionId}/details")" Underline="Underline.Hover">
-                        @context.AuctionName
-                    </MudLink>
-                }
-                else
-                {
-                    <MudText Typo="Typo.caption" Color="Color.Default">-</MudText>
-                }
-            </MudTd>
+                <MudTd DataLabel="المزاد">
+                    @if (!string.IsNullOrEmpty(context.AuctionName))
+                    {
+                        <MudLink Href="@($"/auctions/{context.AuctionId}/details")" Underline="Underline.Hover" Color="Color.Primary">
+                            @context.AuctionName
+                        </MudLink>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.caption" Color="Color.Default">-</MudText>
+                    }
+                </MudTd>
 
-            <MudTd DataLabel="المبلغ">
-                <MudText Color="@GetAmountColor(context.Type)" Style="font-weight:bold">
-                    @context.Amount.ToString("C0")
-                </MudText>
-            </MudTd>
-        </RowTemplate>
+                <MudTd DataLabel="المبلغ">
+                    <MudText Color="@GetAmountColor(context.Type)" Style="font-weight:bold; font-size: 1.1em;">
+                        @($"{context.Amount:N0} ج.م")
+                    </MudText>
+                </MudTd>
+            </RowTemplate>
 
-        <NoRecordsContent>
-            <MudAlert Severity="Severity.Info" Class="my-2">لا توجد معاملات سابقة.</MudAlert>
-        </NoRecordsContent>
+            <NoRecordsContent>
+                <MudAlert Severity="Severity.Info" Class="my-2">لا توجد معاملات سابقة.</MudAlert>
+            </NoRecordsContent>
 
-        <PagerContent>
-            <MudTablePager RowsPerPageString="عدد الصفوف:"
-                           PageSizeOptions="new int[] { 5, 10, 20, 50 }"
-                           InfoFormat="{first_item}-{last_item} من {all_items}"
-                           HorizontalAlignment="HorizontalAlignment.Center" />
-        </PagerContent>
-
-    </MudTable>
+            <PagerContent>
+                <MudTablePager RowsPerPageString="الصفوف:"
+                               InfoFormat="{first_item}-{last_item} من {all_items}"
+                               HorizontalAlignment="HorizontalAlignment.Center" />
+            </PagerContent>
+        </MudTable>
+    </div>
 
 </MudContainer>
+
+<style>
+    .mud-hover-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .mud-hover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2) !important;
+        }
+
+    .hover-shake:hover {
+        animation: headShake 0.5s;
+    }
+
+    @@media (max-width: 600px) {
+        .mud-table-responsive .mud-table-body .mud-table-row {
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            margin-bottom: 10px;
+            background-color: var(--mud-palette-surface);
+            border-radius: 8px;
+            border: 1px solid var(--mud-palette-lines-inputs);
+        }
+
+        .mud-table-responsive .mud-table-body .mud-table-cell {
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--mud-palette-lines-inputs);
+        }
+
+            .mud-table-responsive .mud-table-body .mud-table-cell:last-child {
+                border-bottom: none;
+            }
+    }
+
+    .zoom-in-animation {
+        animation: zoomIn 0.4s ease-out;
+    }
+
+    .opacity-80 {
+        opacity: 0.8;
+    }
+
+    .opacity-50 {
+        opacity: 0.5;
+    }
+</style>
 
 @code {
     private WalletSummaryResponse _summary = new();
     private bool _isLoadingBalance = true;
-
     private HubConnection? _hubConnection;
-
     private MudTable<TransactionResponse>? _table;
     private string _searchTerm = string.Empty;
 
-    private async Task OnSearch()
-    {
-        if (_table != null)
-        {
-            await _table.ReloadServerData();
-        }
-    }
+    private async Task OnSearch() { if (_table != null) await _table.ReloadServerData(); }
 
     protected override async Task OnInitializedAsync()
     {
@@ -165,98 +244,54 @@
         {
             _isLoadingBalance = true;
             var response = await WalletApi.GetWalletSummaryAsync();
-
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<WalletSummaryResponse>();
-                if (result != null)
-                {
-                    _summary = result;
-                }
+                if (result != null) _summary = result;
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading balance: {ex.Message}");
-            Snackbar.Add("فشل تحميل الرصيد", Severity.Error);
-        }
-        finally
-        {
-            _isLoadingBalance = false;
-        }
+        catch (Exception ex) { Console.WriteLine($"Error: {ex.Message}"); Snackbar.Add("فشل التحميل", Severity.Error); }
+        finally { _isLoadingBalance = false; }
     }
 
     private async Task<TableData<TransactionResponse>> LoadServerData(TableState state, CancellationToken token)
     {
         try
         {
-            var pageNumber = state.Page + 1;
-            var pageSize = state.PageSize;
-
             var responseMessage = await WalletApi.GetTransactionsAsync(new PaginatedRequest
             {
-                PageNumber = pageNumber,
-                PageSize = pageSize,
+                PageNumber = state.Page + 1,
+                PageSize = state.PageSize,
                 SearchTerm = _searchTerm?.Trim()
             });
-            if (!responseMessage.IsSuccessStatusCode)
-            {
-                return new TableData<TransactionResponse> { TotalItems = 0, Items = [] };
-            }
+            if (!responseMessage.IsSuccessStatusCode) return new TableData<TransactionResponse> { TotalItems = 0, Items = [] };
             var response = await responseMessage.Content.ReadFromJsonAsync<PaginatedResult<TransactionResponse>>();
-
-            return new TableData<TransactionResponse>
-            {
-                TotalItems = response!.TotalCount,
-                Items = response.Items
-            };
+            return new TableData<TransactionResponse> { TotalItems = response!.TotalCount, Items = response.Items };
         }
-        catch
-        {
-            return new TableData<TransactionResponse> { TotalItems = 0, Items = [] };
-        }
+        catch { return new TableData<TransactionResponse> { TotalItems = 0, Items = [] }; }
     }
-
 
     private async Task SetupSignalRConnection()
     {
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl($"{HostUrl.Current}/hubs/auction", options =>
-            {
-                options.AccessTokenProvider = async () => await TokenService.GetAccessTokenAsync();
-            })
-            .WithAutomaticReconnect()
-            .Build();
+            .WithUrl($"{HostUrl.Current}/hubs/auction", options => { options.AccessTokenProvider = async () => await TokenService.GetAccessTokenAsync(); })
+            .WithAutomaticReconnect().Build();
 
         _hubConnection.On(MethodNames.ForceRefreshWallet, async () =>
         {
-            Console.WriteLine("🔔 SignalR: Refreshing Wallet Data...");
-
             await LoadBalanceOnly();
-
-            if (_table != null)
-            {
-                await _table.ReloadServerData();
-            }
-
+            if (_table != null) await _table.ReloadServerData();
             await InvokeAsync(StateHasChanged);
         });
-
         await _hubConnection.StartAsync();
     }
-
 
     private async Task OpenDepositDialog()
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<DepositDialog>("شحن المحفظة", options);
         var result = await dialog.Result;
-
-        if (!result.Canceled)
-        {
-            await LoadBalanceOnly();
-            if (_table != null) await _table.ReloadServerData();
-        }
+        if (!result.Canceled) { await LoadBalanceOnly(); if (_table != null) await _table.ReloadServerData(); }
     }
 
     private Color GetTransactionColor(string type) => type switch
@@ -271,12 +306,17 @@
     private Color GetAmountColor(string type) =>
         (type == nameof(TransactionType.Deposit) || type == nameof(TransactionType.Release)) ? Color.Success : Color.Error;
 
+    private string TranslateType(string type) => type switch
+    {
+        nameof(TransactionType.Deposit) => "إيداع",
+        nameof(TransactionType.Release) => "فك حجز",
+        nameof(TransactionType.Hold) => "حجز مبلغ",
+        nameof(TransactionType.Purchase) => "شراء",
+        _ => type
+    };
+
     public async ValueTask DisposeAsync()
     {
-        if (_hubConnection != null)
-        {
-            await _hubConnection.StopAsync();
-            await _hubConnection.DisposeAsync();
-        }
+        if (_hubConnection != null) { await _hubConnection.StopAsync(); await _hubConnection.DisposeAsync(); }
     }
 }

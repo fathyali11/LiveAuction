@@ -9,139 +9,241 @@
 
 <PageTitle>مزايداتي</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-8">
-    <MudText Typo="Typo.h4" Class="mb-4" Color="Color.Primary"><b>💰 سجل مزايداتي</b></MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mt-md-8 mb-8">
+
+    <div class="animate__animated animate__fadeInRight">
+        <MudText Typo="Typo.h5" Class="mb-4 d-flex d-sm-none" Color="Color.Primary"><b>💰 سجل مزايداتي</b></MudText>
+        <MudText Typo="Typo.h4" Class="mb-4 d-none d-sm-flex" Color="Color.Primary"><b>💰 سجل مزايداتي</b></MudText>
+    </div>
 
     @if (isLoading)
     {
-        <MudProgressLinear Indeterminate="true" Color="Color.Primary" />
+        <div class="d-flex justify-center mt-16">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" Class="zoom-in-animation" />
+        </div>
     }
     else if (bids == null || !bids.Any())
     {
-        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-4">
-            أنت لم تشارك في أي مزادات حتى الآن. <MudLink Href="/" Color="Color.Inherit"><b>تصفح المزادات</b></MudLink>
-        </MudAlert>
+        <div class="animate__animated animate__pulse">
+            <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mt-4">
+                أنت لم تشارك في أي مزادات حتى الآن. <MudLink Href="/" Color="Color.Inherit"><b>تصفح المزادات</b></MudLink>
+            </MudAlert>
+        </div>
     }
     else
     {
-        <MudTable Items="bids" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="3" Class="rounded-lg">
-            <HeaderContent>
-                <MudTh>المنتج</MudTh>
-                <MudTh>التاريخ</MudTh>
-                <MudTh>أعلى سعر لي</MudTh>
-                <MudTh>السعر الحالي</MudTh>
-                <MudTh>الحالة</MudTh>
-                <MudTh>إجراء</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="المنتج">
-                    <div class="d-flex align-center">
-                        <img src="@GetImageUrl(context.ImageName)"
-                             alt="@context.Title"
-                             style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px;"
-                             onerror="this.src='https://via.placeholder.com/150?text=Error';" />
-                        <div>
-                            <MudText Typo="Typo.body1" Style="font-weight:bold">@context.Title</MudText>
+        <div class="animate__animated animate__fadeInUp">
+            <MudTable Items="bids"
+                      Hover="true"
+                      Breakpoint="Breakpoint.Sm"
+                      Elevation="3"
+                      Class="rounded-lg mud-table-responsive"
+                      Style="overflow: hidden;">
+
+                <HeaderContent>
+                    <MudTh>المنتج</MudTh>
+                    <MudTh>التاريخ</MudTh>
+                    <MudTh>أعلى سعر لي</MudTh>
+                    <MudTh>السعر الحالي</MudTh>
+                    <MudTh>الحالة</MudTh>
+                    <MudTh>إجراء</MudTh>
+                </HeaderContent>
+
+                <RowTemplate>
+                    <MudTd DataLabel="المنتج">
+                        <div class="d-flex align-center gap-3">
+
+                            <MudAvatar Size="Size.Medium">
+                                <MudImage Src="@GetImageUrl(context.ImageName)" Alt="@context.Title" ObjectFit="ObjectFit.Cover" />
+                            </MudAvatar>
+
+                            <div>
+                                <MudText Typo="Typo.body2" Style="font-weight:bold">@context.Title</MudText>
+                            </div>
                         </div>
-                    </div>
-                </MudTd>
+                    </MudTd>
 
-                <MudTd DataLabel="التاريخ">
-                    <MudText Typo="Typo.caption">
-                        @(context.AuctionEndTime > DateTime.UtcNow ? "ينتهي:" : "انتهى:")
-                        <br />
-                        @context.AuctionEndTime.ToLocalTime().ToString("dd/MM/yyyy hh:mm tt")
-                    </MudText>
-                </MudTd>
+                    <MudTd DataLabel="التاريخ">
+                        <MudText Typo="Typo.caption" Class="d-block">
+                            @(context.AuctionEndTime > DateTime.UtcNow ? "ينتهي:" : "انتهى:")
+                        </MudText>
+                        <MudText Typo="Typo.body2">
+                            @context.AuctionEndTime.ToLocalTime().ToString("dd/MM/yyyy hh:mm tt")
+                        </MudText>
+                    </MudTd>
 
-                <MudTd DataLabel="مزايدتي" Style="color:#1976d2; font-weight:bold;">
-                    $@context.MyHighestBid
-                </MudTd>
+                    <MudTd DataLabel="مزايدتي">
+                        <MudText Color="Color.Primary" Style="font-weight:bold;">
+                            @($"{context.MyHighestBid:N0} ج.م")
+                        </MudText>
+                    </MudTd>
 
-                <MudTd DataLabel="السعر الحالي">
-                    $@context.CurrentHighBid
-                </MudTd>
+                    <MudTd DataLabel="السعر الحالي">
+                        <MudText Color="Color.Default" Style="font-weight:bold;">
+                            @($"{context.CurrentHighBid:N0} ج.م")
+                        </MudText>
+                    </MudTd>
 
-                <MudTd DataLabel="الحالة">
-                    @switch (context.Status)
-                    {
-                        case BidStatus.Winning:
-                            <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Small">
-                                <MudIcon Icon="@Icons.Material.Filled.ThumbUp" Size="Size.Small" Class="mr-1" /> متصدر
-                            </MudChip>
-                            break;
-                        case BidStatus.Outbid:
-                            <MudChip T="string" Color="Color.Error" Variant="Variant.Filled" Size="Size.Small" Class="shaking-chip">
-                                <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Class="mr-1" /> تم تخطيك!
-                            </MudChip>
-                            break;
-                        case BidStatus.Won:
-                            <MudChip T="string" Color="Color.Success" Variant="Variant.Filled" Size="Size.Small">
-                                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small" Class="mr-1" /> مبروك كسبت
-                            </MudChip>
-                            break;
-                        case BidStatus.Lost:
-                            <MudChip T="string" Color="Color.Dark" Size="Size.Small">
-                                <MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" Class="mr-1" /> خسرت
-                            </MudChip>
-                            break;
-                    }
-                </MudTd>
+                    <MudTd DataLabel="الحالة">
+                        @switch (context.Status)
+                        {
+                            case BidStatus.Winning:
+                                <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Small">
+                                    <MudIcon Icon="@Icons.Material.Filled.ThumbUp" Size="Size.Small" Class="mr-1" /> متصدر
+                                </MudChip>
+                                break;
+                            case BidStatus.Outbid:
+                                <MudChip T="string" Color="Color.Error" Variant="Variant.Filled" Size="Size.Small" Class="shaking-chip">
+                                    <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Small" Class="mr-1" /> تم تخطيك!
+                                </MudChip>
+                                break;
+                            case BidStatus.Won:
+                                <MudChip T="string" Color="Color.Success" Variant="Variant.Filled" Size="Size.Small">
+                                    <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Small" Class="mr-1" /> مبروك كسبت
+                                </MudChip>
+                                break;
+                            case BidStatus.Lost:
+                                <MudChip T="string" Color="Color.Dark" Size="Size.Small">
+                                    <MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" Class="mr-1" /> خسرت
+                                </MudChip>
+                                break;
+                        }
+                    </MudTd>
 
-                <MudTd>
-                    @if (context.Status == BidStatus.Outbid)
-                    {
-                        <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
-                                   Href="@($"/auctions/{context.AuctionId}/details")">
-                            إلحق زايد! 🔥
-                        </MudButton>
-                    }
-                    else if (context.Status == BidStatus.Won)
-                    {
-                        <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small">
-                            ادفع الآن 💳
-                        </MudButton>
-                    }
-                    else
-                    {
-                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
-                                   Href="@($"/auctions/{context.AuctionId}/details")">
-                            التفاصيل
-                        </MudButton>
-                    }
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
+                    <MudTd DataLabel="إجراء">
+                        <div class="d-flex justify-end justify-sm-start">
+                            @if (context.Status == BidStatus.Outbid)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small"
+                                           StartIcon="@Icons.Material.Filled.Gavel"
+                                           Href="@($"/auctions/{context.AuctionId}/details")"
+                                           Class="hover-shake">
+                                    إلحق زايد!
+                                </MudButton>
+                            }
+                            else if (context.Status == BidStatus.Won)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                                           StartIcon="@Icons.Material.Filled.CreditCard">
+                                    ادفع الآن
+                                </MudButton>
+                            }
+                            else
+                            {
+                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
+                                           Href="@($"/auctions/{context.AuctionId}/details")">
+                                    التفاصيل
+                                </MudButton>
+                            }
+                        </div>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </div>
     }
 </MudContainer>
 
 <style>
-    /* حركة بسيطة عشان تلفت انتباهه لو خسران */
-    @@keyframes shake {
-        0% { transform: translate(1px, 1px) rotate(0deg); }
-        10% { transform: translate(-1px, -2px) rotate(-1deg); }
-        20% { transform: translate(-3px, 0px) rotate(1deg); }
-        30% { transform: translate(3px, 2px) rotate(0deg); }
-        40% { transform: translate(1px, -1px) rotate(1deg); }
-        50% { transform: translate(-1px, 2px) rotate(-1deg); }
-        60% { transform: translate(-3px, 1px) rotate(0deg); }
-        70% { transform: translate(3px, 1px) rotate(-1deg); }
-        80% { transform: translate(-1px, -1px) rotate(1deg); }
-        90% { transform: translate(1px, 2px) rotate(0deg); }
-        100% { transform: translate(1px, -2px) rotate(-1deg); }
+    @@media (max-width: 600px) {
+        .mud-table-responsive .mud-table-head {
+            display: none;
+        }
+        .mud-table-responsive .mud-table-body .mud-table-row {
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            margin-bottom: 16px;
+            background-color: var(--mud-palette-surface);
+            border-radius: 12px;
+            border: 1px solid var(--mud-palette-lines-inputs);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .mud-table-responsive .mud-table-body .mud-table-cell {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--mud-palette-lines-inputs);
+            text-align: right;
+        }
+            
+            .mud-table-responsive .mud-table-body .mud-table-cell:last-child {
+                border-bottom: none;
+                padding-top: 16px;
+                justify-content: center;  
+            }
+            .mud-table-responsive .mud-table-body .mud-table-cell::before {
+                content: attr(data-label);
+                font-weight: bold;
+                color: var(--mud-palette-text-secondary);
+                margin-left: 16px; 
+            }
     }
-    .shaking-chip:hover {
-        animation: shake 0.5s;
-        animation-iteration-count: infinite;
+
+    @@keyframes shake {
+        0% {
+            transform: translate(1px, 1px) rotate(0deg);
+        }
+
+        10% {
+            transform: translate(-1px, -2px) rotate(-1deg);
+        }
+
+        20% {
+            transform: translate(-3px, 0px) rotate(1deg);
+        }
+
+        30% {
+            transform: translate(3px, 2px) rotate(0deg);
+        }
+
+        40% {
+            transform: translate(1px, -1px) rotate(1deg);
+        }
+
+        50% {
+            transform: translate(-1px, 2px) rotate(-1deg);
+        }
+
+        60% {
+            transform: translate(-3px, 1px) rotate(0deg);
+        }
+
+        70% {
+            transform: translate(3px, 1px) rotate(-1deg);
+        }
+
+        80% {
+            transform: translate(-1px, -1px) rotate(1deg);
+        }
+
+        90% {
+            transform: translate(1px, 2px) rotate(0deg);
+        }
+
+        100% {
+            transform: translate(1px, -2px) rotate(-1deg);
+        }
+    }
+
+    .shaking-chip {
+        animation: shake 2s infinite; 
+    }
+
+    .hover-shake:hover {
+        animation: headShake 0.5s;
+    }
+
+    .zoom-in-animation {
+        animation: zoomIn 0.4s ease-out;
     }
 </style>
 
-    @code {
+@code {
     private List<UserBidDto>? bids;
     private HubConnection hubConnection = default!;
     private bool isLoading = true;
     private readonly string LocalImagePath = $"{HostUrl.Current}/images/";
-
 
     protected override async Task OnInitializedAsync()
     {
@@ -157,7 +259,7 @@
             hubConnection.On<BidDto>(MethodNames.NewBidPlaced, async bid =>
             {
                 var userBid = bids?.FirstOrDefault(b => b.AuctionId == bid.AuctionId);
-                if(userBid is not null)
+                if (userBid is not null)
                 {
                     await InvokeAsync(() =>
                     {
@@ -165,7 +267,7 @@
                         {
                             userBid.CurrentHighBid = bid.Amount;
                             userBid.Status = BidStatus.Outbid;
-                            Snackbar.Add($"لقد تم تخطي مزايدتك على المزاد '{userBid.Title}'. السعر الحالي هو ${bid.Amount}.", Severity.Warning);
+                            Snackbar.Add($"لقد تم تخطي مزايدتك على المزاد '{userBid.Title}'. السعر الحالي هو {bid.Amount:N0} ج.م", Severity.Warning);
                             StateHasChanged();
                         }
                     });
@@ -178,14 +280,12 @@
             {
                 if (hubConnection.State == HubConnectionState.Connected)
                 {
-                    foreach(var bid in bids)
+                    foreach (var bid in bids)
                     {
                         await hubConnection.SendAsync(MethodNames.JoinToGroup, bid.AuctionId.ToString());
                     }
                 }
             }
-
-
         }
         catch (Exception ex)
         {
@@ -208,13 +308,10 @@
     {
         if (hubConnection != null)
         {
-            if (hubConnection.State == HubConnectionState.Connected)
+            if (hubConnection.State == HubConnectionState.Connected && bids is not null)
             {
-                if (bids is not null)
-                {
-                    foreach (var auction in bids)
-                        await hubConnection.InvokeAsync(MethodNames.LeaveFromGroup, auction!.BidId.ToString());
-                }
+                foreach (var auction in bids)
+                    await hubConnection.InvokeAsync(MethodNames.LeaveFromGroup, auction.AuctionId.ToString()); // تأكد من استخدام AuctionId الصحيح
             }
             await hubConnection.StopAsync();
             await hubConnection.DisposeAsync();

@@ -1,107 +1,172 @@
-﻿@inject IDialogService DialogService
+﻿@inherits LayoutComponentBase
+
+@inject IDialogService DialogService
 @inject INotificationsApi NotificationsApi
 @inject ITokenService TokenService
 @inject ISnackbar Snackbar
-@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject IBrowserViewportService BrowserViewportService
 
 <MudThemeProvider IsDarkMode="true" />
 <MudDialogProvider />
-<MudSnackbarProvider />
+<MudSnackbarProvider AnchorOrigin="Anchor.BottomLeft" />
 <MudPopoverProvider />
+<MudRTLProvider RightToLeft="true">
 
-<MudLayout>
-    <MudAppBar Elevation="1" Color="Color.Primary">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+    <MudLayout>
+        <MudAppBar Elevation="2" Style="background: linear-gradient(90deg, var(--mud-palette-primary) 0%, var(--mud-palette-primary-darken) 100%);">
 
-        <MudText Typo="Typo.h6" Class="ml-3 d-none d-sm-flex">🔨 Live Auction</MudText> <MudText Typo="Typo.subtitle1" Class="ml-2 d-flex d-sm-none">🔨 Live Auction</MudText> <MudSpacer />
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
 
-        <AuthorizeView>
-            <Authorized>
-                <ShowNotifications></ShowNotifications>
+            <div class="d-flex align-center ml-3 animate__animated animate__fadeInRight">
+                <MudIcon Icon="@Icons.Material.Filled.Gavel" Size="Size.Large" Class="mr-2" />
+                <MudText Typo="Typo.h6" Style="font-weight: 700; letter-spacing: 1px;">Live Auction</MudText>
+            </div>
 
-                <MudHidden Breakpoint="Breakpoint.Xs">
-                    <MudButton Class="mr-4" OnClick="OpenDepositDialogAsync"
-                               Variant="Variant.Filled"
-                               Color="Color.Secondary"
-                               StartIcon="@Icons.Material.Filled.AddCard">
-                        شحن الرصيد
-                    </MudButton>
-                </MudHidden>
-
-                <MudHidden Breakpoint="Breakpoint.SmAndUp">
-                    <MudIconButton Icon="@Icons.Material.Filled.AddCard"
-                                   Color="Color.Secondary"
-                                   OnClick="OpenDepositDialogAsync" />
-                </MudHidden>
-
-                <MudHidden Breakpoint="Breakpoint.SmAndDown">
-                    <MudText Class="mr-4">👤 @context.User.Identity?.Name</MudText>
-                </MudHidden>
-
-                <MudMenu Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End">
-                    <MudMenuItem Disabled="true">
-                        <MudText Typo="Typo.body2">@context.User.Identity?.Name</MudText>
-                    </MudMenuItem>
-                    <MudDivider />
-                    <MudMenuItem OnClick="Logout" Icon="@Icons.Material.Filled.Logout">خروج</MudMenuItem>
-                </MudMenu>
-
-            </Authorized>
-            <NotAuthorized>
-                <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/login">دخول</MudButton>
-                <MudButton Variant="Variant.Outlined" Color="Color.Inherit" Class="ml-2" Href="/register">حساب جديد</MudButton>
-            </NotAuthorized>
-        </AuthorizeView>
-    </MudAppBar>
-
-    <MudDrawer @bind-Open="_drawerOpen"
-               ClipMode="DrawerClipMode.Always"
-               Elevation="2"
-               Variant="@DrawerVariant"
-               OpenMiniOnHover="true">
-        <MudNavMenu>
-            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">الرئيسية</MudNavLink>
+            <MudSpacer />
 
             <AuthorizeView>
                 <Authorized>
-                    <MudNavLink Href="/auctions/create" Icon="@Icons.Material.Filled.AddCircle">إضافة مزاد</MudNavLink>
-                    <MudNavLink Href="/my-bids" Icon="@Icons.Material.Filled.History">سجل مزايداتي</MudNavLink>
-                    <MudNavLink Href="/wallet" Icon="@Icons.Material.Filled.AddCard">محفظتي</MudNavLink>
-                    <MudNavLink Href="/watchlist" Icon="@Icons.Material.Filled.Favorite">
-                        قائمة المراقبة
-                        @if (WatchlistCount > 0)
-                        {
-                            <MudBadge Class="ml-2" Color="Color.Secondary" Content="@WatchlistCount" />
-                        }
-                    </MudNavLink>
+                    <ShowNotifications />
+
+                    <MudHidden Breakpoint="Breakpoint.Xs">
+                        <div class="animate__animated hover-pulse">
+                            <MudButton Class="mr-4 ml-2"
+                                       OnClick="OpenDepositDialogAsync"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Secondary"
+                                       StartIcon="@Icons.Material.Filled.AddCard"
+                                       Style="border-radius: 20px; font-weight: bold;">
+                                شحن الرصيد
+                            </MudButton>
+                        </div>
+                    </MudHidden>
+
+                    <MudHidden Breakpoint="Breakpoint.SmAndUp">
+                        <MudIconButton Icon="@Icons.Material.Filled.AddCard"
+                                       Color="Color.Secondary"
+                                       OnClick="OpenDepositDialogAsync"
+                                       Class="animate__animated animate__pulse infinite-pulse" />
+                    </MudHidden>
+
+                    <MudMenu AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopRight" LockScroll="true">
+                        <ActivatorContent>
+                            <MudChip T="string" Variant="Variant.Text" Color="Color.Inherit" Class="d-none d-sm-flex cursor-pointer">
+                                <MudAvatar Color="Color.Secondary" Size="Size.Small" Class="mr-2">@context.User.Identity?.Name?.FirstOrDefault().ToString().ToUpper()</MudAvatar>
+                                @context.User.Identity?.Name
+                            </MudChip>
+                            <MudAvatar Color="Color.Secondary" Size="Size.Medium" Class="d-flex d-sm-none cursor-pointer">
+                                @context.User.Identity?.Name?.FirstOrDefault().ToString().ToUpper()
+                            </MudAvatar>
+                        </ActivatorContent>
+                        <ChildContent>
+                            <div class="pa-4 d-flex flex-column align-center">
+                                <MudAvatar Color="Color.Secondary" Size="Size.Large" Class="mb-2">
+                                    @context.User.Identity?.Name?.FirstOrDefault().ToString().ToUpper()
+                                </MudAvatar>
+                                <MudText Typo="Typo.body1" Align="Align.Center">@context.User.Identity?.Name</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">عضو نشط</MudText>
+                            </div>
+                            <MudDivider />
+                            <MudMenuItem Href="/wallet" Icon="@Icons.Material.Filled.AccountBalanceWallet">المحفظة</MudMenuItem>
+                            <MudMenuItem Href="/my-bids" Icon="@Icons.Material.Filled.History">سجل المزايدات</MudMenuItem>
+                            <MudDivider />
+                            <MudMenuItem OnClick="Logout" Icon="@Icons.Material.Filled.Logout" IconColor="Color.Error">تسجيل خروج</MudMenuItem>
+                        </ChildContent>
+                    </MudMenu>
+
                 </Authorized>
+                <NotAuthorized>
+                    <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/login">دخول</MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="ml-2" Href="/register" Style="border-radius: 20px;">حساب جديد</MudButton>
+                </NotAuthorized>
             </AuthorizeView>
+        </MudAppBar>
 
-        </MudNavMenu>
-    </MudDrawer>
+        <MudDrawer @bind-Open="_drawerOpen"
+                   ClipMode="DrawerClipMode.Always"
+                   Elevation="2"
+                   Variant="@DrawerVariant"
+                   OpenMiniOnHover="true"
+                   Anchor="Anchor.Right">
+            <MudNavMenu Class="mt-4">
+                <MudText Typo="Typo.subtitle2" Color="Color.Default" Class="px-4 mb-2 mt-2">القائمة الرئيسية</MudText>
 
-    <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-4">
-            <CascadingValue Value="this">
-                @Body
-            </CascadingValue>
-        </MudContainer>
-    </MudMainContent>
-</MudLayout>
+                <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">الرئيسية</MudNavLink>
+
+                <AuthorizeView>
+                    <Authorized>
+                        <MudNavLink Href="/auctions/create" Icon="@Icons.Material.Filled.AddCircleOutline">إضافة مزاد</MudNavLink>
+                        <MudNavLink Href="/my-bids" Icon="@Icons.Material.Filled.Gavel">سجل مزايداتي</MudNavLink>
+
+                        <MudNavLink Href="/wallet" Icon="@Icons.Material.Filled.AccountBalanceWallet">
+                            محفظتي
+                        </MudNavLink>
+
+                        <MudNavLink Href="/watchlist" Icon="@Icons.Material.Filled.FavoriteBorder">
+                            قائمة المراقبة
+                            @if (WatchlistCount > 0)
+                            {
+                                <MudChip T="string" Color="Color.Error" Size="Size.Small" Class="ml-2" Style="height: 20px;">@WatchlistCount</MudChip>
+                            }
+                        </MudNavLink>
+                    </Authorized>
+                </AuthorizeView>
+            </MudNavMenu>
+
+            <div class="d-flex justify-center mt-auto mb-4">
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Style="opacity: 0.5;">v1.0.0</MudText>
+            </div>
+        </MudDrawer>
+
+        <MudMainContent>
+            <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mb-4 page-transition">
+                <CascadingValue Value="this">
+                    @Body
+                </CascadingValue>
+            </MudContainer>
+        </MudMainContent>
+    </MudLayout>
+
+</MudRTLProvider>
+
+<style>
+    .page-transition {
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .infinite-pulse {
+        animation: pulse 2s infinite;
+    }
+
+    .hover-pulse:hover {
+        animation: pulse 1s;
+    }
+
+    body, .mud-typography {
+        font-family: 'Cairo', 'Roboto', sans-serif !important;
+    }
+</style>
 
 @code {
-    [Inject] AuthenticationStateProvider authenticationStateProvider { get; set; } = default!;
-    [Inject] NavigationManager NavigationManager { get; set; } = default!;
-
-    [Inject] IBrowserViewportService BrowserViewportService { get; set; } = default!;
-
-
     bool _drawerOpen = true;
-
     DrawerVariant DrawerVariant = DrawerVariant.Responsive;
+    public int WatchlistCount { get; set; } = 0;
 
     void DrawerToggle() => _drawerOpen = !_drawerOpen;
-    public int WatchlistCount { get; set; } = 0;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -118,8 +183,11 @@
 
     private async Task Logout()
     {
-        await ((CustomAuthStateProvider)authenticationStateProvider).MarkUserAsLoggedOut();
-        NavigationManager.NavigateTo("/");
+        if (AuthenticationStateProvider is CustomAuthStateProvider customProvider)
+        {
+            await customProvider.MarkUserAsLoggedOut();
+            NavigationManager.NavigateTo("/");
+        }
     }
 
     public void UpdateWatchlistCount(int count)
@@ -132,10 +200,6 @@
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
         var dialog = await DialogService.ShowAsync<DepositDialog>("شحن المحفظة", options);
-        var result = await dialog.Result;
-        if (!result.Canceled)
-        {
-            StateHasChanged();
-        }
+        await dialog.Result;
     }
 }
