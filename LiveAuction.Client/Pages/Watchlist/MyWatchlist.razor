@@ -1,6 +1,7 @@
 ﻿@page "/watchlist"
 
 
+
 @attribute [Authorize]
 
 @inject ISnackbar Snackbar
@@ -207,7 +208,7 @@
         try
         {
             _hubConnection = new HubConnectionBuilder()
-                .WithUrl("https://localhost:7293/hubs/auction")
+                .WithUrl($"{HostUrl.Current}/hubs/auction")
                 .WithAutomaticReconnect()
                 .Build();
 

@@ -1,6 +1,7 @@
 using Blazored.LocalStorage;
 using LiveAuction.Client;
 using LiveAuction.Client.Auth;
+using LiveAuction.Client.Consts;
 using LiveAuction.Client.Features.Auctions.Services;
 using LiveAuction.Client.Features.Bids.Services;
 using LiveAuction.Client.Features.Notifications.Services;
@@ -21,26 +22,26 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped<HttpInterceptorService>();
 
 builder.Services.AddRefitClient<IAuctionsApi>()
-    .ConfigureHttpClient(c => c.BaseAddress = new Uri(("https://localhost:7293")))
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(($"{HostUrl.Current}")))
     .AddHttpMessageHandler<HttpInterceptorService>();
 
 builder.Services.AddRefitClient<IAuthApi>()
-    .ConfigureHttpClient(c => c.BaseAddress = new Uri(("https://localhost:7293")));
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(($"{HostUrl.Current}")));
 
 builder.Services.AddRefitClient<IWatchlistApi>()
-    .ConfigureHttpClient(c => c.BaseAddress = new Uri(("https://localhost:7293")))
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(($"{HostUrl.Current}")))
     .AddHttpMessageHandler<HttpInterceptorService>();
 
 builder.Services.AddRefitClient<IBidsApi>()
-    .ConfigureHttpClient(c => c.BaseAddress = new Uri(("https://localhost:7293")))
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(($"{HostUrl.Current}")))
     .AddHttpMessageHandler<HttpInterceptorService>();
 
 builder.Services.AddRefitClient<IWalletApi>()
-    .ConfigureHttpClient(c => c.BaseAddress = new Uri(("https://localhost:7293")))
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(($"{HostUrl.Current}")))
     .AddHttpMessageHandler<HttpInterceptorService>();
 
 builder.Services.AddRefitClient<INotificationsApi>()
-    .ConfigureHttpClient(c => c.BaseAddress = new Uri(("https://localhost:7293")))
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(($"{HostUrl.Current}")))
     .AddHttpMessageHandler<HttpInterceptorService>();
 
 

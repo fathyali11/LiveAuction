@@ -140,7 +140,7 @@
     private List<UserBidDto>? bids;
     private HubConnection hubConnection = default!;
     private bool isLoading = true;
-    private const string LocalImagePath = "https://localhost:7293/images/"; 
+    private const string LocalImagePath = $"{HostUrl.Current}/images/";
 
 
     protected override async Task OnInitializedAsync()
@@ -150,7 +150,7 @@
             bids = await BidsApi.GetUserHistoryAsync();
 
             hubConnection = new HubConnectionBuilder()
-            .WithUrl("https://localhost:7293/hubs/auction")
+            .WithUrl($"{HostUrl.Current}/hubs/auction")
             .WithAutomaticReconnect()
             .Build();
 

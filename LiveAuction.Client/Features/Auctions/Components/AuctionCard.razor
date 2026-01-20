@@ -53,7 +53,7 @@
     [Parameter] public EventCallback<(int AuctionId, bool IsFavorite)> OnFavoriteToggled { get; set; }
     private Timer _timer;
 
-    private const string LocalImagePath = "https://localhost:7293/images/";
+    private const string LocalImagePath = $"{HostUrl.Current}/images/";
     protected override async Task OnInitializedAsync()
     {
         _timer = new Timer(1000);

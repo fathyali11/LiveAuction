@@ -221,7 +221,7 @@
     private async Task SetupSignalRConnection()
     {
         _hubConnection = new HubConnectionBuilder()
-            .WithUrl("https://localhost:7293/hubs/auction", options =>
+            .WithUrl($"{HostUrl.Current}/hubs/auction", options =>
             {
                 options.AccessTokenProvider = async () => await TokenService.GetAccessTokenAsync();
             })
