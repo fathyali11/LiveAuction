@@ -1,13 +1,15 @@
-﻿
-
-@inject INotificationsApi NotificationsApi
+﻿@inject INotificationsApi NotificationsApi
 @inject ITokenService TokenService
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 
 <MudMenu AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopRight" MaxHeight="400" Class="mr-4">
     <ActivatorContent>
-        <MudBadge Content="_unreadCount" Color="Color.Error" Overlap="true" Visible="@(_unreadCount > 0)">
+        <MudBadge Content="_unreadCount"
+                  Color="Color.Error"
+                  Overlap="true"
+                  Visible="@(_unreadCount > 0)"
+                  Class="custom-badge-mobile">
             <MudIconButton Icon="@Icons.Material.Filled.Notifications" Color="Color.Inherit" />
         </MudBadge>
     </ActivatorContent>
@@ -36,25 +38,24 @@
                 <MudMenuItem OnClick="@(() => OnNotificationClick(note))"
                              Class="mb-1"
                              Style="@(note.IsRead
-                                                       ? "opacity: 0.6;" 
-                                                       : "background-color: rgba(var(--mud-palette-primary-rgb), 0.15); border-right: 4px solid var(--mud-palette-primary);")">
+               ? "opacity: 0.6;"
+               : "background-color: rgba(var(--mud-palette-primary-rgb), 0.15); border-right: 4px solid var(--mud-palette-primary);")">
 
-                 <div class="d-flex gap-3 align-center" style="min-width: 250px;">
-                    <MudAvatar Size="Size.Medium" Color="@GetIconColor(note.NotificationType)" Variant="Variant.Filled">
-                        <MudIcon Icon="@GetIcon(note.NotificationType)" Size="Size.Medium" />
-                    </MudAvatar>
+            <div class="d-flex gap-3 align-center" style="min-width: 250px;">
+                <MudAvatar Size="Size.Medium" Color="@GetIconColor(note.NotificationType)" Variant="Variant.Filled">
+                    <MudIcon Icon="@GetIcon(note.NotificationType)" Size="Size.Medium" />
+                </MudAvatar>
 
                         <div>
                             <MudText Typo="Typo.subtitle2" Color="@(note.IsRead? Color.Default: Color.Primary)">
-                                 @if (!note.IsRead)
-                                    {
-                                        <b>@note.Title</b>
-                                    }
-                                    else
-                                    {
-
-                                        @note.Title
-                                    }
+                        @if (!note.IsRead)
+                                {
+                                    <b>@note.Title</b>
+                                }
+                                else
+                                {
+                                    @note.Title
+                                }
                             </MudText>
 
                             <MudText Typo="Typo.caption" Class="d-block text-muted">@note.Message</MudText>
@@ -63,13 +64,22 @@
                                 @GetTimeAgo(note.CreatedAt)
                             </MudText>
                         </div>
-                </div>
+                    </div>
                 </MudMenuItem>
                 <MudDivider />
             }
         }
     </ChildContent>
 </MudMenu>
+
+<style>
+    .custom-badge-mobile .mud-badge {
+        top: 12px !important;
+        right: 10px !important;
+        z-index: 10;
+    }
+</style>
+
 @code {
     [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
 
@@ -104,7 +114,6 @@
             if (countResponse.IsSuccessStatusCode)
             {
                 _unreadCount = await countResponse.Content.ReadFromJsonAsync<int>();
-                Console.WriteLine($"Unread notifications count: {_unreadCount}");
             }
         }
         catch (Exception ex)
@@ -132,7 +141,6 @@
 
             hubConnection.On<NotificationDto>(MethodNames.NewNotification, (notification) =>
             {
-                Console.WriteLine("New notification received via SignalR in main layout");
                 InvokeAsync(() =>
                 {
                     _notifications.Insert(0, notification);
@@ -199,5 +207,4 @@
         if (span.TotalHours < 24) return $"منذ {span.TotalHours:0} ساعة";
         return $"منذ {span.TotalDays:0} يوم";
     }
-
 }

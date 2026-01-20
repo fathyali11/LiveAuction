@@ -1,7 +1,5 @@
 ﻿@page "/watchlist"
 
-
-
 @attribute [Authorize]
 
 @inject ISnackbar Snackbar
@@ -12,11 +10,12 @@
 @inject IDialogService DialogService
 @implements IAsyncDisposable
 
-
 <PageTitle>قائمتي للمراقبة</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-8">
-    <MudText Typo="Typo.h4" Class="mb-6" Color="Color.Primary">قائمتي للمراقبة</MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4 mt-md-8 mb-8">
+
+    <MudText Typo="Typo.h5" Class="mb-4 d-flex d-sm-none" Color="Color.Primary">قائمتي للمراقبة</MudText>
+    <MudText Typo="Typo.h4" Class="mb-6 d-none d-sm-flex" Color="Color.Primary">قائمتي للمراقبة</MudText>
 
     @if (_isLoading)
     {
@@ -33,7 +32,8 @@
     }
     else
     {
-        <div class="d-flex justify-center mb-6">
+        <div class="d-flex flex-column flex-sm-row justify-center align-center mb-6 gap-3">
+
             <MudTextField @bind-Value="_searchTerm"
                           Placeholder="ابحث عن منتج..."
                           Variant="Variant.Outlined"
@@ -41,17 +41,18 @@
                           AdornmentIcon="@Icons.Material.Filled.Search"
                           OnDebounceIntervalElapsed="OnSearch"
                           DebounceInterval="500"
-                          Class="mt-0"
+                          Class="mt-0 w-100"
                           Style="max-width: 500px;" />
-
             <MudButton Variant="Variant.Outlined"
                        Color="Color.Error"
                        StartIcon="@Icons.Material.Filled.DeleteSweep"
-                       OnClick="OnClearAllClicked">
+                       OnClick="OnClearAllClicked"
+                       Class="w-100 w-sm-auto">
                 حذف القائمة بالكامل
             </MudButton>
         </div>
-        <MudGrid>
+
+        <MudGrid Spacing="2">
             @foreach (var auction in _watchlistItems)
             {
                 <MudItem xs="12" sm="6" md="4" lg="3">
@@ -73,7 +74,9 @@
                            SelectedChanged="OnPageChanged"
                            Variant="Variant.Outlined"
                            Shape="Shape.Rounded"
-                           Size="Size.Large" />
+                           Size="Size.Medium"
+                           BoundaryCount="1"
+                           MiddleCount="3" />
 
             <MudText Typo="Typo.caption" Class="mt-2 text-muted">
                 صفحة @_pageNumber من @_totalPages
@@ -104,7 +107,7 @@
         await SetupSignalRConnection();
 
         await LoadWatchlistData();
-        
+
     }
     private async Task OnSearch()
     {
@@ -126,7 +129,7 @@
             var cacheKey = $"watchlist_data_{_pageNumber}_{_searchTerm}";
             await ManageSignalRGroups(_watchlistItems, false);
             var cacheData = await LocalStorage.GetItemAsync<PaginatedResult<WatchListItemDto>>(cacheKey);
-            if(cacheData is not null &&cacheData.Items.Any())
+            if (cacheData is not null && cacheData.Items.Any())
             {
 
                 _watchlistItems = cacheData.Items;
@@ -151,7 +154,7 @@
                 SearchTerm = _searchTerm
             };
             var responseMessage = await WatchlistApi.GetWatchlistAsync(paginatedRequest);
-            if(!responseMessage.IsSuccessStatusCode)
+            if (!responseMessage.IsSuccessStatusCode)
             {
                 Snackbar.Add("حدث خطأ أثناء تحميل القائمة.", Severity.Error);
                 return;
@@ -175,7 +178,7 @@
 
             await LocalStorage.SetItemAsync(cacheKey, paginatedResult);
 
-            await ManageSignalRGroups(_watchlistItems, true); 
+            await ManageSignalRGroups(_watchlistItems, true);
         }
         catch (Exception ex)
         {
