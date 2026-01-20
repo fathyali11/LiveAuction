@@ -46,7 +46,12 @@
         }
         else
         {
-            Snackbar.Add("حدث خطأ، تأكد من البيانات", Severity.Error);
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            if(string.IsNullOrWhiteSpace(errorMessage))
+            {
+                errorMessage = "حدث خطأ أثناء التسجيل. حاول مرة أخرى.";
+            }
+            Snackbar.Add(errorMessage!, Severity.Error);
         }
         _processing = false;
     }
