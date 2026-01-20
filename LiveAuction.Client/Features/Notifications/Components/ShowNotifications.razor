@@ -3,64 +3,77 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 
-<MudMenu AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopRight" MaxHeight="400" Class="mr-4">
+<MudMenu AnchorOrigin="Origin.BottomCenter"
+         TransformOrigin="Origin.TopCenter"
+         MaxHeight="400"
+         Class="mr-2"
+         PopoverClass="notification-menu-popover">
+
     <ActivatorContent>
         <MudBadge Content="_unreadCount"
                   Color="Color.Error"
                   Overlap="true"
                   Visible="@(_unreadCount > 0)"
-                  Class="custom-badge-mobile">
+                  Class="badge-positioning">
             <MudIconButton Icon="@Icons.Material.Filled.Notifications" Color="Color.Inherit" />
         </MudBadge>
     </ActivatorContent>
 
     <ChildContent>
-        <div class="pa-2 d-flex justify-space-between align-center border-b-2">
-            <MudText Typo="Typo.subtitle2">الإشعارات</MudText>
+        <div class="pa-3 d-flex justify-space-between align-center border-b-2" style="background-color: var(--mud-palette-background-grey);">
+            <div class="d-flex align-center gap-2">
+                <MudIcon Icon="@Icons.Material.Filled.NotificationsActive" Size="Size.Small" Color="Color.Primary" />
+                <MudText Typo="Typo.subtitle2" Style="font-weight:bold">الإشعارات</MudText>
+            </div>
             @if (_unreadCount > 0)
             {
-                <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" OnClick="MarkAllRead">تحديد الكل كمقروء</MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" OnClick="MarkAllRead">تحديد الكل</MudButton>
             }
         </div>
 
         @if (_isLoadingNotifications)
         {
-            <div class="d-flex justify-center pa-4"><MudProgressCircular Indeterminate="true" Size="Size.Small" /></div>
+            <div class="d-flex justify-center pa-4">
+                <MudProgressCircular Indeterminate="true" Size="Size.Small" Color="Color.Primary" />
+            </div>
         }
         else if (_notifications == null || !_notifications.Any())
         {
-            <MudMenuItem Disabled="true">لا توجد إشعارات حالياً</MudMenuItem>
+            <div class="d-flex flex-column align-center justify-center pa-6">
+                <MudIcon Icon="@Icons.Material.Outlined.NotificationsOff" Size="Size.Large" Style="opacity: 0.5; margin-bottom: 8px;" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Style="opacity: 0.7;">لا يوجد جديد</MudText>
+            </div>
         }
         else
         {
+            int i = 0;
             @foreach (var note in _notifications)
             {
+                var delay = i * 0.05; i++;
+
                 <MudMenuItem OnClick="@(() => OnNotificationClick(note))"
-                             Class="mb-1"
-                             Style="@(note.IsRead
-               ? "opacity: 0.6;"
-               : "background-color: rgba(var(--mud-palette-primary-rgb), 0.15); border-right: 4px solid var(--mud-palette-primary);")">
+                             Class="mb-1 animate__animated animate__fadeIn"
+                             Style="@($"animation-delay: {delay}s; " + (note.IsRead ? "opacity: 0.8;" : "background-color: rgba(var(--mud-palette-primary-rgb), 0.08); border-right: 3px solid var(--mud-palette-primary);"))">
 
-            <div class="d-flex gap-3 align-center" style="min-width: 250px;">
-                <MudAvatar Size="Size.Medium" Color="@GetIconColor(note.NotificationType)" Variant="Variant.Filled">
-                    <MudIcon Icon="@GetIcon(note.NotificationType)" Size="Size.Medium" />
-                </MudAvatar>
+                    <div class="d-flex gap-3 align-start" style="min-width: 280px;">
+                        <MudAvatar Size="Size.Medium" Color="@GetIconColor(note.NotificationType)" Variant="Variant.Filled" Class="mt-1">
+                            <MudIcon Icon="@GetIcon(note.NotificationType)" Size="Size.Small" />
+                        </MudAvatar>
 
-                        <div>
-                            <MudText Typo="Typo.subtitle2" Color="@(note.IsRead? Color.Default: Color.Primary)">
-                        @if (!note.IsRead)
-                                {
-                                    <b>@note.Title</b>
-                                }
-                                else
-                                {
+                        <div class="d-flex flex-column" style="width: 100%; white-space: normal;">
+                            <div class="d-flex justify-space-between align-center">
+                                <MudText Typo="Typo.subtitle2" Color="@(note.IsRead? Color.Default: Color.Primary)" Style="font-weight: 700; font-size: 0.9rem;">
                                     @note.Title
+                                </MudText>
+                                @if (!note.IsRead)
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Color="Color.Primary" Style="font-size: 8px;" />
                                 }
-                            </MudText>
+                            </div>
 
-                            <MudText Typo="Typo.caption" Class="d-block text-muted">@note.Message</MudText>
+                            <MudText Typo="Typo.body2" Class="my-1 text-muted" Style="line-height: 1.4; font-size: 0.85rem;">@note.Message</MudText>
 
-                            <MudText Typo="Typo.caption" Color="Color.Default" Class="mt-1" Style="font-size: 10px;">
+                            <MudText Typo="Typo.caption" Color="Color.Default" Style="opacity: 0.6; font-size: 10px;">
                                 @GetTimeAgo(note.CreatedAt)
                             </MudText>
                         </div>
@@ -73,10 +86,45 @@
 </MudMenu>
 
 <style>
-    .custom-badge-mobile .mud-badge {
-        top: 12px !important;
-        right: 10px !important;
-        z-index: 10;
+    .badge-positioning .mud-badge {
+        top: 8px !important;  
+        right: 6px !important; 
+        border: 2px solid var(--mud-palette-appbar-background); 
+    }
+
+        .badge-positioning .mud-badge:not(:empty) {
+            animation: pulse-badge 2s infinite;
+        }
+
+    .notification-menu-popover {
+        width: 360px;
+        max-width: 100vw;
+    }
+
+    @@media (max-width: 600px) {
+        .notification-menu-popover {
+            position: fixed !important;
+            top: 65px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: 95% !important;
+            max-width: 95% !important;
+            margin: 0 auto !important;
+        }
+    }
+
+    @@keyframes pulse-badge {
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+
+        100% {
+            transform: scale(1);
+        }
     }
 </style>
 
@@ -103,7 +151,6 @@
         try
         {
             _isLoadingNotifications = true;
-
             var response = await NotificationsApi.GetNotificationsAsync();
             if (response.IsSuccessStatusCode)
             {
@@ -118,7 +165,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading notifications: {ex.Message}");
+            Console.WriteLine($"Error: {ex.Message}");
         }
         finally
         {
@@ -146,15 +193,20 @@
                     _notifications.Insert(0, notification);
                     _unreadCount++;
                     StateHasChanged();
+
+                    Snackbar.Add(notification.Title, Severity.Info, config =>
+                    {
+                        config.Icon = GetIcon(notification.NotificationType);
+                        config.HideTransitionDuration = 200;
+                    });
                 });
             });
-
 
             await hubConnection.StartAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"SignalR Layout Error: {ex.Message}");
+            Console.WriteLine($"SignalR Error: {ex.Message}");
         }
     }
 
@@ -168,13 +220,9 @@
         }
 
         if (note.RelatedEntityId.HasValue)
-        {
             NavigationManager.NavigateTo($"/auctions/{note.RelatedEntityId}/details");
-        }
         else
-        {
             NavigationManager.NavigateTo("/wallet");
-        }
     }
 
     private async Task MarkAllRead()
@@ -184,12 +232,11 @@
         await NotificationsApi.MarkAllAsReadAsync();
     }
 
-
     private string GetIcon(string? type) => type switch
     {
         nameof(NotificationType.Wallet) => Icons.Material.Filled.AttachMoney,
         nameof(NotificationType.Auction) => Icons.Material.Filled.Gavel,
-        _ => Icons.Material.Filled.Info
+        _ => Icons.Material.Filled.Notifications
     };
 
     private Color GetIconColor(string? type) => type switch
@@ -203,8 +250,8 @@
     {
         var span = DateTime.UtcNow - date;
         if (span.TotalMinutes < 1) return "الآن";
-        if (span.TotalMinutes < 60) return $"منذ {span.TotalMinutes:0} دقيقة";
-        if (span.TotalHours < 24) return $"منذ {span.TotalHours:0} ساعة";
-        return $"منذ {span.TotalDays:0} يوم";
+        if (span.TotalMinutes < 60) return $"منذ {span.TotalMinutes:0} د";
+        if (span.TotalHours < 24) return $"منذ {span.TotalHours:0} س";
+        return $"منذ {span.TotalDays:0} ي";
     }
 }
