@@ -14,6 +14,6 @@ public interface INotificationsApi
     [Post("/api/notifications/mark-as-read/{id}")]
     Task<HttpResponseMessage> MarkAsReadAsync(int id);
 
-    [Post("/api/notifications/read-all")]
+    [Post("/api/notifications/mark-all-as-read")]
     Task<HttpResponseMessage> MarkAllAsReadAsync();
 }
