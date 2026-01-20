@@ -1,8 +1,9 @@
 ﻿namespace LiveAuction.Client.Consts;
 
-public class HostUrl
+public static class HostUrl
 {
-    public const string Development = "https://localhost:7233";
-    public const string Production = "https://liveauction.runasp.net";
-    public const string Current= Production;
+    public static readonly string Development = "https://localhost:7233";
+    public static readonly string Production = "https://liveauction.runasp.net";
+
+    public static string Current => Production;
 }

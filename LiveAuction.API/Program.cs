@@ -14,17 +14,24 @@ builder.Services.AddApplicationServices(builder.Configuration);
 
 var app = builder.Build();
 await app.Services.SeedAsync();
+
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseStaticFiles();
-app.UseBlazorFrameworkFiles();
-app.UseHangfireDashboard("/jobs");
+
 app.UseExceptionHandler();
-app.MapStaticAssets();
 app.UseHttpsRedirection();
 app.UseCors("AllowBlazorClient");
+
+app.UseBlazorFrameworkFiles();
+app.MapStaticAssets();        
+app.UseStaticFiles();         
+
+app.UseRouting();
 app.UseAuthorization();
+app.UseHangfireDashboard("/jobs");
+
 app.MapHub<AuctionHub>("/hubs/auction");
 app.MapControllers();
 app.MapFallbackToFile("index.html");
+
 app.Run();

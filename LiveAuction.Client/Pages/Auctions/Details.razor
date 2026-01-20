@@ -225,7 +225,7 @@
     private HubConnection hubConnection=default!;
     private Timer _timer;
 
-    private const string LocalImagePath = $"{HostUrl.Current}/images/";
+    private readonly string LocalImagePath = $"{HostUrl.Current}/images/";
 
 
     protected override async Task OnInitializedAsync()

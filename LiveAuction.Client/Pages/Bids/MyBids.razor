@@ -140,7 +140,7 @@
     private List<UserBidDto>? bids;
     private HubConnection hubConnection = default!;
     private bool isLoading = true;
-    private const string LocalImagePath = $"{HostUrl.Current}/images/";
+    private readonly string LocalImagePath = $"{HostUrl.Current}/images/";
 
 
     protected override async Task OnInitializedAsync()

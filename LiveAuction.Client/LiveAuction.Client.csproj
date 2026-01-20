@@ -1,11 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+	  <TargetFramework>net10.0</TargetFramework>
+	  <BlazorWebAssemblyEnableStaticWebAssetsFingerprinting>false</BlazorWebAssemblyEnableStaticWebAssetsFingerprinting>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    
 	  <InvariantGlobalization>true</InvariantGlobalization>
+	  <BlazorEnableCompression>false</BlazorEnableCompression>
+	  <BrotliCompression>false</BrotliCompression>
   </PropertyGroup>
 
   <ItemGroup>
