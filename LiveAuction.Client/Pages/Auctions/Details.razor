@@ -257,7 +257,6 @@
                     auction.EndTime = bid.AuctionEndTime;
                     auction.Bids.Add(bid);
                     StateHasChanged();
-                    Snackbar.Add($"مزايدة جديدة من {bid.Bidder} بـ ${bid.Amount}", Severity.Info);
                 });
             });
             Console.WriteLine("Hub connection will be created.");
@@ -341,6 +340,10 @@
                     return;
                 }
                 Snackbar.Add($"فشل: {error}", Severity.Error);
+            }
+            else
+            {
+                Snackbar.Add("تم تقديم المزايدة بنجاح! 🎉", Severity.Success);
             }
         }
         catch (Exception ex)
