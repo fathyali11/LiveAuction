@@ -193,12 +193,15 @@
                     _notifications.Insert(0, notification);
                     _unreadCount++;
                     StateHasChanged();
-
-                    Snackbar.Add(notification.Title, Severity.Info, config =>
+                    if (!string.Equals(notification.Title, "Deposit Successful"))
                     {
-                        config.Icon = GetIcon(notification.NotificationType);
-                        config.HideTransitionDuration = 200;
-                    });
+                        Snackbar.Add(notification.Title, Severity.Info, config =>
+                        {
+                            config.Icon = GetIcon(notification.NotificationType);
+                            config.HideTransitionDuration = 200;
+                        });
+                    }
+                    
                 });
             });
 

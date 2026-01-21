@@ -31,7 +31,7 @@ internal class RegisterUserCommandHandler(UserManager<ApplicationUser>_userManag
         if (existingUser != null)
         {
             _logger.LogWarning("User with email {Email} already exists", request.Email);
-            return new Error(ErrorCodes.Duplicate, "User with this email already exists.");
+            return new Error(ErrorCodes.Duplicate, "هذا البريد الإلكتروني مستخدم بالفعل.");
         }
         var user=request.Adapt<ApplicationUser>();
         using (var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
@@ -41,7 +41,7 @@ internal class RegisterUserCommandHandler(UserManager<ApplicationUser>_userManag
             {
                 var firstError = createResult.Errors.First();
                 _logger.LogError("Failed to create user: {Error}", firstError.Description);
-                return new Error(ErrorCodes.InternalServerError, firstError.Description);
+                return new Error(ErrorCodes.InternalServerError, "حدث خطأ.");
             }
             _logger.LogInformation("User with email {Email} created successfully", request.Email);
             var addToRoleResult = await _userManager.AddToRoleAsync(user, UserRoles.Customer);
@@ -49,7 +49,7 @@ internal class RegisterUserCommandHandler(UserManager<ApplicationUser>_userManag
             {
                 var firstError = addToRoleResult.Errors.First();
                 _logger.LogError("Failed to assign role to user: {Error}", firstError.Description);
-                return new Error(ErrorCodes.InternalServerError, firstError.Description);
+                return new Error(ErrorCodes.InternalServerError, "حدث خطأ.");
             }
             transaction.Complete();
         }
