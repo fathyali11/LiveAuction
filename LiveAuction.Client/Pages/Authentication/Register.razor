@@ -1,5 +1,6 @@
 ﻿@page "/register"
 @using LiveAuction.Client.Features.Users.Services
+@using System.ComponentModel.DataAnnotations
 
 @inject IAuthApi AuthApi
 @inject NavigationManager NavManager
@@ -12,47 +13,88 @@
     <MudCard Elevation="4" Class="pa-4">
         <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-4">🚀 انضم للمزاد</MudText>
 
-        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
-            <DataAnnotationsValidator />
-            <MudTextField Label="الاسم الكامل" @bind-Value="model.FullName" For="@(() => model.FullName)" Variant="Variant.Outlined" Class="mb-3" />
-            <MudTextField Label="الإيميل" @bind-Value="model.Email" For="@(() => model.Email)" Variant="Variant.Outlined" Class="mb-3" />
-            <MudTextField Label="الباسورد" @bind-Value="model.Password" For="@(() => model.Password)" Variant="Variant.Outlined" InputType="InputType.Password" Class="mb-3" />
+        <MudForm @ref="form" @bind-IsValid="@success">
 
-            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Disabled="_processing">
+            <MudTextField Label="الاسم الكامل"
+                          @bind-Value="model.FullName"
+                          For="@(() => model.FullName)"
+                          Variant="Variant.Outlined"
+                          Class="mb-3"
+                          Immediate="true" /> <MudTextField Label="الإيميل"
+                                                            @bind-Value="model.Email"
+                                                            For="@(() => model.Email)"
+                                                            Variant="Variant.Outlined"
+                                                            Class="mb-3"
+                                                            Immediate="true" />
+
+            <MudTextField Label="الباسورد"
+                          @bind-Value="model.Password"
+                          For="@(() => model.Password)"
+                          Variant="Variant.Outlined"
+                          InputType="InputType.Password"
+                          Class="mb-3"
+                          Immediate="true" />
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       FullWidth="true"
+                       Disabled="@(!success || _processing)"
+                       OnClick="Submit">
                 @(_processing ? "جاري التسجيل..." : "تسجيل حساب")
             </MudButton>
-        </EditForm>
+        </MudForm>
 
         <MudLink Href="/login" Class="d-flex justify-center mt-3">لديك حساب بالفعل؟</MudLink>
     </MudCard>
 </MudContainer>
 
 @code {
+    MudForm form = default!;
+    bool success;
     private RegisterRequest model = new();
     private bool _processing = false;
 
-    private async Task OnValidSubmit()
+    private async Task Submit()
     {
-        _processing = true;
-        var response = await AuthApi.RegisterAsync(model);
+        await form.Validate();
 
-        if (response.IsSuccessStatusCode)
+        if (form.IsValid)
         {
-            Snackbar.Add("تم التسجيل! سجل دخول الآن", Severity.Success);
-            var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
-
-            await (AuthStateProvider as CustomAuthStateProvider)?.MarkUserAsAuthenticated(authResponse!.Token, authResponse.RefreshToken)!;
-            NavManager.NavigateTo("/");
-        }
-        else
-        {
-            var errorMessage = await response.Content.ReadAsStringAsync();
-            if(string.IsNullOrWhiteSpace(errorMessage))
+            _processing = true;
+            try
             {
-                errorMessage = "حدث خطأ أثناء التسجيل. حاول مرة أخرى.";
+                var response = await AuthApi.RegisterAsync(model);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    Snackbar.Add("تم التسجيل بنجاح! جاري الدخول...", Severity.Success);
+
+                    var authResponse = await response.Content.ReadFromJsonAsync<AuthResponse>();
+
+                    if (AuthStateProvider is CustomAuthStateProvider customAuthState)
+                    {
+                        await customAuthState.MarkUserAsAuthenticated(authResponse!.Token, authResponse.RefreshToken);
+                    }
+
+                    NavManager.NavigateTo("/");
+                }
+                else
+                {
+                    var errorMsg = await response.Content.ReadAsStringAsync();
+                    if (string.IsNullOrWhiteSpace(errorMsg)) errorMsg = "حدث خطأ غير متوقع.";
+
+                    Snackbar.Add(errorMsg, Severity.Error);
+                }
             }
-            Snackbar.Add(errorMessage!, Severity.Error);
+            catch (Exception ex)
+            {
+                Snackbar.Add("فشل الاتصال بالسيرفر.", Severity.Error);
+                Console.WriteLine(ex.Message);
+            }
+            finally
+            {
+                _processing = false;
+            }
         }
-        _processing = false;
     }
 }

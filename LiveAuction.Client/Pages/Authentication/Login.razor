@@ -1,5 +1,6 @@
 ﻿@page "/login"
 @using LiveAuction.Client.Features.Users.Services
+@using System.ComponentModel.DataAnnotations
 
 @inject IAuthApi AuthApi
 @inject AuthenticationStateProvider AuthStateProvider
@@ -19,8 +20,7 @@
         </MudCardHeader>
 
         <MudCardContent>
-            <EditForm Model="@model" OnValidSubmit="DoLogin">
-                <DataAnnotationsValidator />
+            <MudForm @ref="form" @bind-IsValid="@success">
 
                 <MudTextField Label="الإيميل"
                               @bind-Value="model.Email"
@@ -28,23 +28,23 @@
                               Variant="Variant.Outlined"
                               Adornment="Adornment.Start"
                               AdornmentIcon="@Icons.Material.Filled.Email"
-                              Class="mb-4" />
+                              Class="mb-4"
+                              Immediate="true" /> <MudTextField Label="الباسورد"
+                                                                @bind-Value="model.Password"
+                                                                For="@(() => model.Password)"
+                                                                Variant="Variant.Outlined"
+                                                                InputType="InputType.Password"
+                                                                Adornment="Adornment.Start"
+                                                                AdornmentIcon="@Icons.Material.Filled.Lock"
+                                                                Class="mb-4"
+                                                                Immediate="true" />
 
-                <MudTextField Label="الباسورد"
-                              @bind-Value="model.Password"
-                              For="@(() => model.Password)"
-                              Variant="Variant.Outlined"
-                              InputType="InputType.Password"
-                              Adornment="Adornment.Start"
-                              AdornmentIcon="@Icons.Material.Filled.Lock"
-                              Class="mb-4" />
-
-                <MudButton ButtonType="ButtonType.Submit"
-                           Variant="Variant.Filled"
+                <MudButton Variant="Variant.Filled"
                            Color="Color.Primary"
                            FullWidth="true"
                            Size="Size.Large"
-                           Disabled="_processing"
+                           Disabled="@(!success || _processing)"
+                           OnClick="Submit"
                            Class="mt-2">
                     @if (_processing)
                     {
@@ -57,7 +57,7 @@
                     }
                 </MudButton>
 
-            </EditForm>
+            </MudForm>
         </MudCardContent>
 
         <MudCardActions Class="d-flex justify-center pb-4">
@@ -68,8 +68,20 @@
 </MudContainer>
 
 @code {
+    MudForm form = default!;
+    bool success;
     private LoginRequest model = new();
     private bool _processing = false;
+
+    private async Task Submit()
+    {
+        await form.Validate();
+
+        if (form.IsValid)
+        {
+            await DoLogin();
+        }
+    }
 
     private async Task DoLogin()
     {
@@ -82,20 +94,35 @@
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<AuthResponse>();
-                await ((CustomAuthStateProvider)AuthStateProvider).MarkUserAsAuthenticated(result!.Token,result.RefreshToken);
+
+                if (AuthStateProvider is CustomAuthStateProvider customAuthState)
+                {
+                    await customAuthState.MarkUserAsAuthenticated(result!.Token, result.RefreshToken);
+                }
+
                 Snackbar.Add("نورت يا غالي! 🚀", Severity.Success);
                 NavManager.NavigateTo("/");
             }
             else
             {
-                Snackbar.Add("الإيميل أو الباسورد غير صحيح", Severity.Error);
+                var errorMsg = await response.Content.ReadAsStringAsync();
+
+                if (string.IsNullOrWhiteSpace(errorMsg))
+                {
+                    errorMsg = "الإيميل أو الباسورد غير صحيح";
+                }
+
+                Snackbar.Add(errorMsg, Severity.Error);
             }
         }
         catch (Exception ex)
         {
+            Console.WriteLine(ex.Message);
             Snackbar.Add("حدث خطأ في الاتصال بالسيرفر", Severity.Error);
         }
-
-        _processing = false;
+        finally
+        {
+            _processing = false;
+        }
     }
 }
