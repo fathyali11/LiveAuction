@@ -43,12 +43,6 @@
                             @if (currentUserName == auction.Seller)
                             {
                                 <div>
-                                    <MudTooltip Text="تعديل البيانات">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                                       Color="Color.Warning"
-                                                       Disabled="@(auction.Bids.Any() ||AuctionStatus.Closed.ToString() == GetAuctionStatus())"
-                                                       Href="@($"/auctions/edit/{auction.Id}")" />
-                                    </MudTooltip>
 
                                     <MudTooltip Text="@(auction.Bids.Any() ? "لا يمكن حذف مزاد نشط أو يحتوي علي مزايدات" : "حذف المزاد")">
                                         <MudIconButton Icon="@Icons.Material.Filled.Delete"

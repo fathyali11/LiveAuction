@@ -1,6 +1,5 @@
 using LiveAuction.Application.Auctions.Commands.CreateAuction;
 using LiveAuction.Application.Auctions.Commands.DeleteAuction;
-using LiveAuction.Application.Auctions.Commands.UpdateAuction;
 using LiveAuction.Application.Auctions.Queries.GetAllAuctions;
 using LiveAuction.Application.Auctions.Queries.GetAuctionById;
 using LiveAuction.Domain.Consts;
@@ -64,29 +63,7 @@ public class AuctionsController(IMediator _mediator) : ControllerBase
             auctionDto => CreatedAtAction(nameof(GetById), new { id = auctionDto.Id }, auctionDto));
     }
 
-    [Authorize]
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, [FromBody] UpdateAuctionRequest request, CancellationToken cancellationToken)
-    {
-        var command = new UpdateAuctionCommand(
-            id,
-            request.Title,
-            request.Description,
-            User.FindFirstValue(ClaimTypes.NameIdentifier)!,
-            request.ImageUrl);
 
-        var result = await _mediator.Send(command, cancellationToken);
-
-        return result.Match<IActionResult>(
-            error => error.Code switch
-            {
-                ErrorCodes.NotFoundError => NotFound(error.Message),
-                ErrorCodes.ValidationError => BadRequest(error.Message),
-                ErrorCodes.UnauthorizedError => StatusCode(401,error.Message),
-                _ => BadRequest(error.Message)
-            },
-            auctionDto => Ok(auctionDto));
-    }
     [Authorize]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
