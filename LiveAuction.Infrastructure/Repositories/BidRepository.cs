@@ -23,45 +23,58 @@ internal class BidRepository(ApplicationDbContext _context) : IBidRepository
             .OrderByDescending(x => x.BidTime)
             .ToListAsync(cancellationToken);
 
-    public async Task<List<UserBidDto>> GetUserBidsHistoryAsync(string userId,CancellationToken cancellationToken)
+    public async Task<List<UserBidDto>> GetUserBidsHistoryAsync(string userId, CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
 
-        var bids = await _context.Bids
+        var userBidsData = await _context.Bids
             .AsNoTracking()
-            .Include(b => b.Auction)
             .Where(b => b.BidderId == userId)
-            .ToListAsync(cancellationToken);
-
-        var userBids = bids
-            .GroupBy(x => x.AuctionId)
-            .Select(group =>
+            .GroupBy(b => b.AuctionId)  
+            .Select(g => new
             {
-                var auction = group.First().Auction;
-                var myHighestBid = group.Max(b => b.Amount);
-                var currentAuctionBid = auction.CurrentBid;
-                string status;
-                if (now > auction.EndTime)
-                    status = myHighestBid >= currentAuctionBid ? BidStatus.Won.ToString() : BidStatus.Lost.ToString();
-                else
-                    status = myHighestBid >= currentAuctionBid ? BidStatus.Winning.ToString() : BidStatus.Outbid.ToString();
+                Auction = g.First().Auction,
 
-                return new UserBidDto
-                {
-                    BidId = group.First().Id,
-                    AuctionId = auction.Id,
-                    Title = auction.Title,
-                    ImageName = auction.ImageName,
-                    MyHighestBid = myHighestBid,
-                    CurrentHighBid = currentAuctionBid,
-                    AuctionEndTime = auction.EndTime,
-                    Status = status
-                };
-            });
-        return userBids.ToList();
+                MyHighestBid = g.Max(b => b.Amount),
+
+                LatestBidId = g.OrderByDescending(b => b.Amount).First().Id
+            })
+            .ToListAsync(cancellationToken);  
+
+        var result = userBidsData.Select(item =>
+        {
+            var auction = item.Auction;
+            var myHighestBid = item.MyHighestBid;
+            var currentAuctionBid = auction.CurrentBid;
+
+            string status;
+
+            if (now > auction.EndTime)
+            {
+                status = myHighestBid >= currentAuctionBid ? BidStatus.Won : BidStatus.Lost;
+            }
+            else
+            {
+                status = myHighestBid >= currentAuctionBid ? BidStatus.Winning : BidStatus.Outbid;
+            }
+
+            return new UserBidDto
+            {
+                BidId = item.LatestBidId,
+                AuctionId = auction.Id,
+                Title = auction.Title,
+                ImageName = auction.ImageName,
+                MyHighestBid = myHighestBid,
+                CurrentHighBid = currentAuctionBid,
+                AuctionEndTime = auction.EndTime,
+                Status = status 
+            };
+        }).ToList();
+
+        return result;
     }
 
-   
+
 
     public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
         => await _context.Database.BeginTransactionAsync(cancellationToken);
