@@ -11,7 +11,7 @@ public interface INotificationsApi
     [Get("/api/notifications/unread/count")]
     Task<HttpResponseMessage> GetUnreadCountAsync();
 
-    [Post("/api/notifications/mark-as-read/{id}")]
+    [Put("/api/notifications/mark-as-read/{id}")]
     Task<HttpResponseMessage> MarkAsReadAsync(int id);
 
     [Put("/api/notifications/mark-all-as-read")]
