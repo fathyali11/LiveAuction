@@ -105,24 +105,22 @@ internal class AuctionService(IBackgroundJobService _backgroundJobService,
                 var notificationWinner = new NotificationDto
                 {
                     UserId = winnerIdToNotify!,
-                    Title = "Auction Won!",
-                    Message = $"Congratulations! You have won the auction for '{auction.Title}' with a bid of {auction.Bids.Max(b => b.Amount):C}.",
+                    Title = "مبروك! لقد فزت بالمزاد 🏆",
+                    Message = $"تهانينا! لقد فزت بالمزاد على '{auction.Title}' بأعلى سعر {auction.Bids.Max(b => b.Amount):N0} ج.م.",
                     IsRead = false,
                     NotificationType = NotificationType.Auction.ToString(),
                     RelatedEntityId = auction.Id,
                     CreatedAt = DateTime.UtcNow
-
                 };
                 var notificationSeller = new NotificationDto
                 {
                     UserId = sellerIdToNotify!,
-                    Title = "Auction Ended!",
-                    Message = $"Your auction for '{auction.Title}' has ended. The winning bid was {auction.Bids.Max(b => b.Amount):C}.",
+                    Title = "انتهى المزاد بنجاح 💰",
+                    Message = $"لقد انتهى مزادك على '{auction.Title}'. وصل أعلى سعر للمزايدة إلى {auction.Bids.Max(b => b.Amount):N0} ج.م.",
                     IsRead = false,
                     NotificationType = NotificationType.Auction.ToString(),
                     RelatedEntityId = auction.Id,
                     CreatedAt = DateTime.UtcNow
-
                 };
                 _backgroundJobService.EnqueueJob<INotificationService>(
                 x => x.AddNotificationAsync(notificationWinner, cancellationToken)

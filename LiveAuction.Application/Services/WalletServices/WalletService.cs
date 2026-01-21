@@ -55,13 +55,12 @@ internal class WalletService(IWalletRepository _walletRepository,
         {
             Id = transaction.Id,
             UserId = userId,
-            Title = "Deposit Successful",
-            Message = $"Your deposit of {amount:C} was successful.",
+            Title = "تم الإيداع بنجاح 💳",
+            Message = $"تم إضافة مبلغ {amount:N0} ج.م إلى محفظتك بنجاح.",
             IsRead = false,
             NotificationType = NotificationType.Wallet.ToString(),
             RelatedEntityId = null,
             CreatedAt = transaction.CreateAt
-
         };
         _backgroundJobService.EnqueueJob<INotificationService>(
             x=>x.AddNotificationAsync(notificationDto, cancellationToken)

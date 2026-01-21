@@ -193,12 +193,16 @@
                     _notifications.Insert(0, notification);
                     _unreadCount++;
                     StateHasChanged();
-                    if (!string.Equals(notification.Title, "Deposit Successful"))
+                    if (!notification.Title.Contains("Deposit Successful") && !notification.Title.Contains("تم الإيداع"))
                     {
-                        Snackbar.Add(notification.Title, Severity.Info, config =>
+                        var severity = GetSeverity(notification);
+
+                        Snackbar.Add(notification.Title, severity, config =>
                         {
                             config.Icon = GetIcon(notification.NotificationType);
                             config.HideTransitionDuration = 200;
+                
+                            if (severity == Severity.Success) config.VisibleStateDuration = 5000;
                         });
                     }
                     
@@ -256,5 +260,23 @@
         if (span.TotalMinutes < 60) return $"منذ {span.TotalMinutes:0} د";
         if (span.TotalHours < 24) return $"منذ {span.TotalHours:0} س";
         return $"منذ {span.TotalDays:0} ي";
+    }
+    private Severity GetSeverity(NotificationDto note)
+    {
+        if (note.NotificationType == nameof(NotificationType.Wallet) ||
+            note.Title.Contains("مبروك") ||
+            note.Title.Contains("نجاح") ||
+            note.Title.Contains("Success") ||
+            note.Title.Contains("Won"))
+        {
+            return Severity.Success;
+        }
+
+        if (note.Title.Contains("انتهى") || note.Title.Contains("Ended"))
+        {
+            return Severity.Info;  
+        }
+
+        return Severity.Info;
     }
 }

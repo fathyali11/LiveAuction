@@ -100,13 +100,13 @@ internal class BidService(
             var createNotificateDtoToBidder = new NotificationDto
             {
                 UserId = request.UserId,
-                Title = "Bid Placed Successfully",
-                Message = $"Your bid of {request.Amount} has been placed successfully on auction {auction.Title}.",
+                Title = "تمت المزايدة بنجاح ✅",
+                Message = $"تم تسجيل مزايدتك بقيمة {request.Amount:N0} ج.م على المزاد '{auction.Title}' بنجاح.",
                 IsRead = false,
                 NotificationType = NotificationType.Auction.ToString(),
                 RelatedEntityId = request.AuctionId
             };
-             _backgroundJobService.EnqueueJob<INotificationService>(
+            _backgroundJobService.EnqueueJob<INotificationService>(
                 x => x.AddNotificationAsync(createNotificateDtoToBidder));
             await _auctionNotificationService.NotifyNewBidAsync(bid.AuctionId, bidDto);
             await _auctionNotificationService.AddNotification(request.UserId, createNotificateDtoToBidder);
@@ -116,13 +116,13 @@ internal class BidService(
                 var createNotificateDtoToLastBidder = new NotificationDto
                 {
                     UserId = lastBidderId!,
-                    Title = "Outbid Notification",
-                    Message = $"You have been outbid on auction {auction.Title}. The new highest bid is {request.Amount}.",
+                    Title = "عاجل: تم تخطي مزايدتك ⚠️",
+                    Message = $"قام شخص آخر بتقديم عرض أعلى منك على '{auction.Title}'. السعر الحالي أصبح {request.Amount:N0} ج.م. سارع بالمزايدة الآن لاستعادة الصدارة!",
                     IsRead = false,
                     NotificationType = NotificationType.Auction.ToString(),
                     RelatedEntityId = request.AuctionId
                 };
-                 _backgroundJobService.EnqueueJob<INotificationService>(
+                _backgroundJobService.EnqueueJob<INotificationService>(
                     x => x.AddNotificationAsync(createNotificateDtoToLastBidder));
                 await _auctionNotificationService.AddNotification(lastBidderId!, createNotificateDtoToLastBidder);
             }
