@@ -8,6 +8,10 @@ internal class WatchListItemConfiguration : IEntityTypeConfiguration<WatchListIt
 {
     public void Configure(EntityTypeBuilder<WatchListItem> builder)
     {
+        builder.Property(a => a.CurrentBid)
+            .IsRequired()
+            .HasColumnType("decimal(18,2)");
+
         builder.ToTable(t =>
             t.HasCheckConstraint("CK_WatchListItems_WatchListId", "[WatchListId] > 0"));
     }

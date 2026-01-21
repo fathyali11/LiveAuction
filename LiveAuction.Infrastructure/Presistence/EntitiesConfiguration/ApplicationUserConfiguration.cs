@@ -11,6 +11,13 @@ internal class ApplicationUserConfiguration : IEntityTypeConfiguration<Applicati
         builder.Property(x => x.FullName)
             .IsRequired()
             .HasMaxLength(100);
+        builder.Property(x => x.TotalBalance)
+            .IsRequired()
+            .HasColumnType("decimal(18,2)");
+
+        builder.Property(x => x.LockedBalance)
+            .IsRequired()
+            .HasColumnType("decimal(18,2)");
 
         builder.ToTable(t =>
             t.HasCheckConstraint("CK_Users_TotalBalance", "[TotalBalance] >= 0"));

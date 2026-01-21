@@ -22,7 +22,7 @@ internal class BidConfiguration : IEntityTypeConfiguration<Bid>
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(b => b.Bidder)
-            .WithMany()
+            .WithMany(b=>b.Bids)
             .HasForeignKey(b => b.BidderId)
             .OnDelete(DeleteBehavior.Restrict);
 
