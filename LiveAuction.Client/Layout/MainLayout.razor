@@ -78,8 +78,17 @@
 
                 </Authorized>
                 <NotAuthorized>
-                    <MudButton Variant="Variant.Text" Color="Color.Inherit" Href="/login">دخول</MudButton>
-                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" Class="ml-2" Href="/register" Style="border-radius: 20px;">حساب جديد</MudButton>
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Inherit"
+                               Size="Size.Small"
+                               Href="/login">دخول</MudButton>
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Secondary"
+                               Size="Size.Small"
+                               Class="ml-2 my-4 align-self-center px-2"
+                               Href="/register"
+                               Style="border-radius: 20px; font-size: 0.8rem;">حساب جديد</MudButton>
                 </NotAuthorized>
             </AuthorizeView>
         </MudAppBar>
