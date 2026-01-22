@@ -113,7 +113,7 @@
 
             content.Add(fileContent, "Image", Path.ChangeExtension(_selectedFile.Name, ".jpg"));
 
-
+            model.StartTime = DateTime.UtcNow;
 
             content.Add(new StringContent(model.Title), "Title");
             content.Add(new StringContent(model.Description), "Description");
