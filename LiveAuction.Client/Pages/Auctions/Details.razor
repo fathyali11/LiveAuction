@@ -359,7 +359,7 @@
 
     private async Task ConfirmDelete()
     {
-        var result = await DialogService.ShowMessageBox(
+        var result = await DialogService.ShowMessageBoxAsync(
             "تأكيد الحذف",
             "هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء!",
             yesText: "حذف", cancelText: "إلغاء");

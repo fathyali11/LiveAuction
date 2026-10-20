@@ -51,7 +51,7 @@
                     </MudHidden>
 
                     <MudMenu AnchorOrigin="Origin.BottomLeft" TransformOrigin="Origin.TopRight" LockScroll="true">
-                        <ActivatorContent>
+                        <ActivatorContent Context="menuCtx">
                             <MudChip T="string" Variant="Variant.Text" Color="Color.Inherit" Class="d-none d-sm-flex cursor-pointer">
                                 <MudAvatar Color="Color.Secondary" Size="Size.Small" Class="mr-2">@context.User.Identity?.Name?.FirstOrDefault().ToString().ToUpper()</MudAvatar>
                                 @context.User.Identity?.Name
