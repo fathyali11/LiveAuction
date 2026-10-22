@@ -27,7 +27,9 @@ app.MapStaticAssets();
 app.UseStaticFiles();         
 
 app.UseRouting();
+app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 app.UseHangfireDashboard("/jobs");
 
 app.MapHub<AuctionHub>("/hubs/auction");

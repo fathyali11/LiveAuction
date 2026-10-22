@@ -24,11 +24,14 @@ internal class AuctionRepository(ApplicationDbContext _context) : IAuctionReposi
         paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 1 : paginatedRequest.PageNumber;
         paginatedRequest.PageSize = paginatedRequest.PageSize <= 0 ? 10 : paginatedRequest.PageSize;
 
+        var now = DateTime.UtcNow;
+
         var query = _context.Auctions
             .AsNoTracking()
             .Where(a =>
                 a.Status == AuctionStatus.Open &&
-                a.EndTime > DateTime.UtcNow);
+                a.StartTime <= now &&
+                a.EndTime > now);
 
         if (!string.IsNullOrWhiteSpace(paginatedRequest.SearchTerm))
         {

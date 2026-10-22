@@ -20,9 +20,6 @@ public class CreateAuctionRequest
     [Required(ErrorMessage = "سعر البداية مطلوب")]
     [Range(0.01, double.MaxValue, ErrorMessage = "سعر البداية يجب أن يكون أكبر من صفر")]
     public decimal StartingBid { get; set; }
-    [Required(ErrorMessage = "اسم البائع مطلوب")]
-
-    public string Seller { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "مدة المزاد مطلوبة")]
     [Range(1, 10080, ErrorMessage = "مدة المزاد يجب أن تكون بين 1 دقيقة وأسبوع (10080 دقيقة)")]

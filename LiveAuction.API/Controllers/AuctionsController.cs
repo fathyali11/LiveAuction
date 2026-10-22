@@ -7,6 +7,7 @@ using LiveAuction.Shared.DTOs;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace LiveAuction.API.Controllers;
@@ -38,6 +39,9 @@ public class AuctionsController(IMediator _mediator) : ControllerBase
             auctionDto => Ok(auctionDto));
     }
 
+    [EnableRateLimiting("create-auction")]
+    [RequestSizeLimit(6 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
     [Authorize]
     [HttpPost]
     public async Task<IActionResult> Create([FromForm] CreateAuctionRequest request, CancellationToken cancellationToken)
@@ -48,17 +52,17 @@ public class AuctionsController(IMediator _mediator) : ControllerBase
             request.Image,
             request.StartTime,
             request.StartingBid,
-            request.DurationInMinutes,
-            User.FindFirstValue(ClaimTypes.NameIdentifier)!,
-            request.Seller);
+            request.DurationInMinutes);
 
         var result = await _mediator.Send(command, cancellationToken);
 
         return result.Match<IActionResult>(
             error => error.Code switch
             {
-                ErrorCodes.ValidationError => BadRequest(error.Message),
-                _ => BadRequest(error.Message)
+                ErrorCodes.ValidationError => BadRequest(new { message = error.Message }),
+                ErrorCodes.UnauthorizedError => Unauthorized(new { message = error.Message }),
+                ErrorCodes.NotFoundError => NotFound(new { message = error.Message }),
+                _ => StatusCode(StatusCodes.Status500InternalServerError, new { message = error.Message })
             },
             auctionDto => CreatedAtAction(nameof(GetById), new { id = auctionDto.Id }, auctionDto));
     }
@@ -74,8 +78,11 @@ public class AuctionsController(IMediator _mediator) : ControllerBase
         return result.Match<IActionResult>(
             error => error.Code switch
             {
-                ErrorCodes.NotFoundError => NotFound(error.Message),
-                _ => BadRequest(error.Message)
+                ErrorCodes.NotFoundError => NotFound(new { message = error.Message }),
+                ErrorCodes.UnauthorizedError => Unauthorized(new { message = error.Message }),
+                ErrorCodes.ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
+                ErrorCodes.InternalServerError => StatusCode(StatusCodes.Status500InternalServerError, new { message = error.Message }),
+                _ => BadRequest(new { message = error.Message })
             },
             success => NoContent());
     }

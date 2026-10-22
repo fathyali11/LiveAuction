@@ -51,6 +51,14 @@ internal class BidService(
                 return new Error(ErrorCodes.NotFoundError, errorMessage);
             }
 
+            var now = DateTime.UtcNow;
+            if (auction.Status != AuctionStatus.Open || now < auction.StartTime || now >= auction.EndTime)
+            {
+                var errorMessage = $"Auction with Id {request.AuctionId} is not open for bidding.";
+                _logger.LogWarning(errorMessage);
+                return new Error(ErrorCodes.ValidationError, "المزاد غير مفتوح للمزايدة حالياً.");
+            }
+
             if (request.Amount <= auction.CurrentBid)
             {
                 var errorMessage = $"Bid amount must be higher than the current bid of {auction.CurrentBid}.";
@@ -82,7 +90,10 @@ internal class BidService(
             if (auction.EndTime - DateTime.UtcNow <= TimeSpan.FromMinutes(5))
             {
                 auction.EndTime = auction.EndTime.AddMinutes(1);
-                _backgroundJobService.DeleteScheduledJob(auction.JobId);
+                if (!string.IsNullOrWhiteSpace(auction.JobId))
+                {
+                    _backgroundJobService.DeleteScheduledJob(auction.JobId);
+                }
                 auction.JobId = await _auctionService.ScheduleAuction(auction, cancellationToken);
                 _logger.LogInformation("AuctionId: {AuctionId} end time extended to {EndTime}", auction.Id, auction.EndTime);
             }

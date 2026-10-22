@@ -17,7 +17,6 @@ public class AuctionMappings : IRegister
             .Map(dest => dest.EndTime, src => src.StartTime.AddMinutes(src.DurationInMinutes))
             .Map(dest => dest.StartingBid, src => src.StartingBid)
             .Map(dest => dest.CurrentBid, src => src.StartingBid)
-            .Map(dest => dest.CreatedById, src => src.CreatedById)
             .Map(dest => dest.Status, _=> AuctionStatus.Open);
 
 

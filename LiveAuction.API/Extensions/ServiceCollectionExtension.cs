@@ -1,4 +1,6 @@
-﻿using LiveAuction.API.Exceptions;
+﻿using System.Security.Claims;
+using System.Threading.RateLimiting;
+using LiveAuction.API.Exceptions;
 using LiveAuction.API.Services;
 using LiveAuction.Application.Interfaces;
 using Serilog;
@@ -31,7 +33,27 @@ public static class ServiceCollectionExtension
         });
         builder.Services.AddControllers();
         builder.Services.AddSignalR();
+        builder.Services.AddHttpContextAccessor();
         builder.Services.AddScoped<IAuctionNotificationService, AuctionNotificationService>();
+        builder.Services.AddScoped<IUserService, UserService>();
+
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.AddPolicy("create-auction", context =>
+            {
+                var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var partitionKey = userId ?? context.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+
+                return RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: partitionKey,
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromMinutes(1)
+                    });
+            });
+        });
         return builder;
     }
 }

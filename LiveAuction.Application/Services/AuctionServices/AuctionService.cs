@@ -6,7 +6,6 @@ using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
 using LiveAuction.Shared.DTOs;
 using LiveAuction.Shared.Enums;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LiveAuction.Application.Services.AuctionServices;
@@ -19,7 +18,7 @@ internal class AuctionService(IBackgroundJobService _backgroundJobService,
     public async Task<PaginatedResult<AuctionsInHomePageDto>> GetAllActiveAuctionsAsync(string? userId, PaginatedRequest paginatedRequest, CancellationToken cancellationToken)
     {
         paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 1 : paginatedRequest.PageNumber;
-        paginatedRequest.PageNumber = paginatedRequest.PageNumber <= 0 ? 8 : paginatedRequest.PageNumber;
+        paginatedRequest.PageSize = paginatedRequest.PageSize <= 0 ? 8 : paginatedRequest.PageSize;
         var (auctions , count) = await _auctionRepository.GetAllActiveAndItsCountAsync(userId,paginatedRequest, cancellationToken);
         return new PaginatedResult<AuctionsInHomePageDto>
         {
@@ -29,36 +28,30 @@ internal class AuctionService(IBackgroundJobService _backgroundJobService,
             PageSize = paginatedRequest.PageSize
         };
     }
-    public async Task<string> SaveImageAsync(IFormFile image, CancellationToken cancellationToken)
-    {
-        var imageName = $"{Guid.NewGuid()}{Path.GetExtension(image.FileName)}";
-        var imageFolder = Path.Combine("wwwroot", "images");
-        if (!Directory.Exists(imageFolder))
-        {
-            Directory.CreateDirectory(imageFolder);
-        }
-        var imagePath = Path.Combine(imageFolder, imageName);
-        using var stream = new FileStream(imagePath, FileMode.Create);
-        await image.CopyToAsync(stream, cancellationToken);
 
-        return imageName;
-    }
-    public async Task DeleteImageAsync(string imageName, CancellationToken cancellationToken)
+    public Task<string> ScheduleAuction(Auction auction, CancellationToken cancellationToken)
     {
-        var imagePath = Path.Combine("wwwroot", "images", imageName);
-        if (File.Exists(imagePath))
-        {
-            await Task.Run(() => File.Delete(imagePath), cancellationToken);
-        }
-    }
+        var delay = auction.EndTime - DateTime.UtcNow;
 
-    public async Task<string> ScheduleAuction(Auction auction,CancellationToken cancellationToken)
-    {
+        // Never schedule in the past: if the auction already ended (or ends within
+        // the next few seconds), give the transaction enough time to commit before
+        // the worker tries to read the auction.
+        if (delay < TimeSpan.FromSeconds(10))
+        {
+            delay = TimeSpan.FromSeconds(10);
+        }
+
         var jobId = _backgroundJobService.ScheduleJob<IAuctionService>(
             repo => repo.TerminateAuctionAsync(auction.Id, cancellationToken),
-            auction.EndTime - DateTime.UtcNow
-            );
-        return jobId;
+            delay);
+
+        return Task.FromResult(jobId);
+    }
+
+    public Task CancelScheduledAuction(string jobId, CancellationToken cancellationToken)
+    {
+        _backgroundJobService.DeleteScheduledJob(jobId);
+        return Task.CompletedTask;
     }
     
     public async Task TerminateAuctionAsync(int auctionId, CancellationToken cancellationToken)

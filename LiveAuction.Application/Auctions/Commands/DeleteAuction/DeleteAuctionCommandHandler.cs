@@ -1,3 +1,4 @@
+Ôªøusing LiveAuction.Application.Interfaces;
 using LiveAuction.Application.Services.AuctionServices;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Repositories;
@@ -10,34 +11,61 @@ namespace LiveAuction.Application.Auctions.Commands.DeleteAuction;
 internal class DeleteAuctionCommandHandler(
     IAuctionRepository _auctionRepository,
     ILogger<DeleteAuctionCommandHandler> _logger,
+    IFileService _fileService,
     IAuctionService _auctionService) : IRequestHandler<DeleteAuctionCommand, OneOf<Error, bool>>
 {
     public async Task<OneOf<Error, bool>> Handle(DeleteAuctionCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Handling DeleteAuctionCommand for ID: {Id}", request.Id);
+        _logger.LogDebug("Handling DeleteAuctionCommand for ID: {Id}", request.Id);
 
         var auction = await _auctionRepository.GetByIdWithBidsAsync(request.Id, cancellationToken);
-        
-        if (auction == null)
+
+        if (auction is null)
         {
             _logger.LogWarning("Auction not found with ID: {Id}", request.Id);
-            return new Error(ErrorCodes.NotFoundError, "«·„“«œ €Ì— „ÊÃÊœ");
+            return new Error(ErrorCodes.NotFoundError, "ÿßŸÑŸÖÿ≤ÿßÿØ ÿ∫Ÿäÿ± ŸÖŸàÿ¨ŸàÿØ.");
         }
 
-        if (auction.Bids.Any())
+        if (auction.Bids.Count != 0)
         {
-            _logger.LogWarning("Cannot delete auction with ID: {Id} - Auction has {BidCount} existing bids", 
+            _logger.LogWarning("Cannot delete auction with ID: {Id} - Auction has {BidCount} existing bids",
                 request.Id, auction.Bids.Count);
-            return new Error(ErrorCodes.ForbiddenError, "·« Ì„ﬂ‰ Õ–› „“«œ ÌÕ ÊÌ ⁄·Ï „“«Ìœ« . «·„“«œ ﬁœ Ã„⁄ √„Ê«·«.");
+            return new Error(ErrorCodes.ForbiddenError, "ŸÑÿß ŸäŸÖŸÉŸÜ ÿ≠ÿ∞ŸÅ ÿßŸÑŸÖÿ≤ÿßÿØ ŸÑŸàÿ¨ŸàÿØ ŸÖÿ≤ÿßŸäÿØÿßÿ™ ÿπŸÑŸäŸá.");
         }
-        if(!string.Equals(auction.CreatedById, request.SellerId, StringComparison.OrdinalIgnoreCase))
+
+        if (!string.Equals(auction.CreatedById, request.SellerId, StringComparison.OrdinalIgnoreCase))
         {
-            _logger.LogWarning("Unauthorized delete attempt on auction ID: {Id} by Seller ID: {SellerId}", 
+            _logger.LogWarning("Unauthorized delete attempt on auction ID: {Id} by Seller ID: {SellerId}",
                 request.Id, request.SellerId);
-            return new Error(ErrorCodes.UnauthorizedError, "€Ì— „”„ÊÕ ·ﬂ »Õ–› Â–« «·„“«œ ·√‰Â ·Ì” „·ﬂﬂ! ??û??");
+            return new Error(ErrorCodes.ForbiddenError, "ŸÑŸäÿ≥ ŸÑÿØŸäŸÉ ÿµŸÑÿßÿ≠Ÿäÿ© ŸÑÿ≠ÿ∞ŸÅ Ÿáÿ∞ÿß ÿßŸÑŸÖÿ≤ÿßÿØ.");
         }
-        await _auctionService.DeleteImageAsync(auction.ImageName, cancellationToken);
+
         await _auctionRepository.DeleteAsync(request.Id, cancellationToken);
+
+        try
+        {
+            await _fileService.DeleteFileAsync(auction.ImageName, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete image {ImageName} for auction ID: {Id}",
+                auction.ImageName, request.Id);
+        }
+
+        if (!string.IsNullOrWhiteSpace(auction.JobId))
+        {
+            try
+            {
+                await _auctionService.CancelScheduledAuction(auction.JobId, CancellationToken.None);
+                _logger.LogInformation("Scheduled job deleted successfully for auction ID: {Id}, Job ID: {JobId}",
+                    request.Id, auction.JobId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to delete scheduled job {JobId} for auction ID: {Id}",
+                    auction.JobId, request.Id);
+            }
+        }
 
         _logger.LogInformation("Auction deleted successfully: {Id}", request.Id);
 

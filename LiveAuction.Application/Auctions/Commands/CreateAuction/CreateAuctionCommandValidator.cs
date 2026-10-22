@@ -1,4 +1,5 @@
-using FluentValidation;
+Ôªøusing FluentValidation;
+using LiveAuction.Application.Common.Validation;
 
 namespace LiveAuction.Application.Auctions.Commands.CreateAuction;
 
@@ -7,40 +8,35 @@ internal class CreateAuctionCommandValidator : AbstractValidator<CreateAuctionCo
     public CreateAuctionCommandValidator()
     {
         RuleFor(x => x.Title)
-            .NotEmpty().WithMessage("⁄‰Ê«‰ «·„“«œ „ÿ·Ê»")
-            .MaximumLength(200).WithMessage("⁄‰Ê«‰ «·„“«œ ÌÃ» √‰ ÌﬂÊ‰ √ﬁ· „‰ 200 Õ—›");
+            .NotEmpty().WithMessage("ÿπŸÜŸàÿßŸÜ ÿßŸÑŸÖÿ≤ÿßÿØ ŸÖÿ∑ŸÑŸàÿ®")
+            .MaximumLength(200).WithMessage("ÿπŸÜŸàÿßŸÜ ÿßŸÑŸÖÿ≤ÿßÿØ Ÿäÿ¨ÿ® ÿ£ŸÜ ŸäŸÉŸàŸÜ ÿ£ŸÇŸÑ ŸÖŸÜ 200 ÿ≠ÿ±ŸÅ");
 
         RuleFor(x => x.Description)
-            .NotEmpty().WithMessage("Ê’› «·„“«œ „ÿ·Ê»")
-            .MaximumLength(1000).WithMessage("Ê’› «·„“«œ ÌÃ» √‰ ÌﬂÊ‰ √ﬁ· „‰ 1000 Õ—›");
+            .NotEmpty().WithMessage("ŸàÿµŸÅ ÿßŸÑŸÖÿ≤ÿßÿØ ŸÖÿ∑ŸÑŸàÿ®")
+            .MaximumLength(1000).WithMessage("ŸàÿµŸÅ ÿßŸÑŸÖÿ≤ÿßÿØ Ÿäÿ¨ÿ® ÿ£ŸÜ ŸäŸÉŸàŸÜ ÿ£ŸÇŸÑ ŸÖŸÜ 1000 ÿ≠ÿ±ŸÅ");
 
         RuleFor(x => x.Image)
-            .NotNull().WithMessage("’Ê—… «·„“«œ „ÿ·Ê»…")
-            .ChildRules(image =>
-            {
-                image.RuleFor(i => i.Length)
-                    .GreaterThan(0).WithMessage("’Ê—… «·„“«œ ·« Ì„ﬂ‰ √‰  ﬂÊ‰ ›«—€…")
-                    .LessThanOrEqualTo(5 * 1024 * 1024).WithMessage("ÕÃ„ ’Ê—… «·„“«œ ÌÃ» √‰ ÌﬂÊ‰ √ﬁ· „‰ 5 „ÌÃ«»«Ì ");
-                image.RuleFor(i => i.ContentType)
-                    .Must(contentType => contentType == "image/jpeg" || contentType == "image/png")
-                    .WithMessage("‰Ê⁄ ’Ê—… «·„“«œ ÌÃ» √‰ ÌﬂÊ‰ JPEG √Ê PNG");
-            });
+            .Cascade(CascadeMode.Stop)
+            .NotNull().WithMessage("ÿµŸàÿ±ÿ© ÿßŸÑŸÖÿ≤ÿßÿØ ŸÖÿ∑ŸÑŸàÿ®ÿ©")
+            .Must(ImageFileValidation.HasAllowedSize)
+                .WithMessage($"ÿ≠ÿ¨ŸÖ ÿµŸàÿ±ÿ© ÿßŸÑŸÖÿ≤ÿßÿØ Ÿäÿ¨ÿ® ÿ£ŸÜ ŸäŸÉŸàŸÜ ÿ£ŸÇŸÑ ŸÖŸÜ {ImageFileValidation.MaxFileSizeInBytes / (1024 * 1024)} ŸÖŸäÿ¨ÿßÿ®ÿßŸäÿ™")
+            .Must(ImageFileValidation.HasAllowedExtension)
+                .WithMessage("ÿßŸÖÿ™ÿØÿßÿØ ÿµŸàÿ±ÿ© ÿßŸÑŸÖÿ≤ÿßÿØ Ÿäÿ¨ÿ® ÿ£ŸÜ ŸäŸÉŸàŸÜ JPG ÿ£Ÿà JPEG ÿ£Ÿà PNG")
+            .Must(ImageFileValidation.HasAllowedContentType)
+                .WithMessage("ŸÜŸàÿπ ÿµŸàÿ±ÿ© ÿßŸÑŸÖÿ≤ÿßÿØ Ÿäÿ¨ÿ® ÿ£ŸÜ ŸäŸÉŸàŸÜ JPEG ÿ£Ÿà PNG")
+            .Must(ImageFileValidation.HasValidSignature)
+                .WithMessage("ŸÖÿ≠ÿ™ŸàŸâ ÿµŸàÿ±ÿ© ÿßŸÑŸÖÿ≤ÿßÿØ ÿ∫Ÿäÿ± ÿµÿßŸÑÿ≠");
 
         RuleFor(x => x.StartTime)
             .Must(startTime => startTime >= DateTime.UtcNow.AddMinutes(-2))
-            .WithMessage("Êﬁ  »œ¡ «·„“«œ ÌÃ» √‰ ÌﬂÊ‰ «·¬‰ √Ê ›Ì «·„” ﬁ»·");
+            .WithMessage("ŸàŸÇÿ™ ÿ®ÿØÿ° ÿßŸÑŸÖÿ≤ÿßÿØ Ÿäÿ¨ÿ® ÿ£ŸÜ ŸäŸÉŸàŸÜ ÿßŸÑÿ¢ŸÜ ÿ£Ÿà ŸÅŸä ÿßŸÑŸÖÿ≥ÿ™ŸÇÿ®ŸÑ");
 
         RuleFor(x => x.StartingBid)
-            .GreaterThan(0).WithMessage("”⁄— «·»œ«Ì… ÌÃ» √‰ ÌﬂÊ‰ √ﬂ»— „‰ ’›—");
+            .GreaterThan(0).WithMessage("ÿ≥ÿπÿ± ÿßŸÑÿ®ÿØÿßŸäÿ© Ÿäÿ¨ÿ® ÿ£ŸÜ ŸäŸÉŸàŸÜ ÿ£ŸÉÿ®ÿ± ŸÖŸÜ ÿµŸÅÿ±");
 
         RuleFor(x => x.DurationInMinutes)
-            .GreaterThan(0).WithMessage("„œ… «·„“«œ ÌÃ» √‰  ﬂÊ‰ √ﬂ»— „‰ ’›—")
-            .LessThanOrEqualTo(10080).WithMessage("„œ… «·„“«œ ÌÃ» √‰  ﬂÊ‰ √ﬁ· „‰ √”»Ê⁄");
+            .GreaterThan(0).WithMessage("ŸÖÿØÿ© ÿßŸÑŸÖÿ≤ÿßÿØ Ÿäÿ¨ÿ® ÿ£ŸÜ ÿ™ŸÉŸàŸÜ ÿ£ŸÉÿ®ÿ± ŸÖŸÜ ÿµŸÅÿ±")
+            .LessThanOrEqualTo(10080).WithMessage("ŸÖÿØÿ© ÿßŸÑŸÖÿ≤ÿßÿØ Ÿäÿ¨ÿ® ÿ£ŸÜ ÿ™ŸÉŸàŸÜ ÿ£ŸÇŸÑ ŸÖŸÜ ÿ£ÿ≥ÿ®Ÿàÿπ");
 
-        RuleFor(x => x.CreatedById)
-            .NotEmpty().WithMessage("„⁄—› «·„” Œœ„ „ÿ·Ê»");
-
-        RuleFor(x => x.CreatedByName)
-            .NotEmpty().WithMessage("«”„ «·„” Œœ„ „ÿ·Ê»");
     }
 }

@@ -12,7 +12,5 @@ public record CreateAuctionCommand(
     IFormFile Image,
     DateTime StartTime,
     decimal StartingBid,
-    int DurationInMinutes,
-    string CreatedById,
-    string CreatedByName
+    int DurationInMinutes
 ) : IRequest<OneOf<Error, AuctionDto>>;
