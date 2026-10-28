@@ -189,10 +189,11 @@ The Blazor client can also run on its own dev server:
 dotnet run --project LiveAuction.Client
 ```
 
-This profile runs at https://localhost:7085. The client's API base URL is defined in
-`LiveAuction.Client/Consts/HostUrl.cs`; `Current` is hardcoded to `Production` in the repository, so point it at
-`Development` (`https://localhost:7293`) when testing against a locally running API. The API CORS policy
-already allows `https://localhost:7085`.
+The client's API base URL is set at startup: it defaults to the page origin (when the API hosts the client) and is
+overridden by `ApiBaseUrl` in `LiveAuction.Client/wwwroot/appsettings.Development.json` when the client runs on its
+own dev server. The repository value points at the API's `http` profile (`http://localhost:5245`). If you use the
+`https` profiles instead, change it to `https://localhost:7293` and add the matching client origin to the API CORS
+policy. The API CORS policy already allows `http://localhost:5270` and `https://localhost:7085`.
 
 ## Project Structure
 

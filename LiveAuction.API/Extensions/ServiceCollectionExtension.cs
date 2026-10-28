@@ -26,7 +26,9 @@ public static class ServiceCollectionExtension
         {
             options.AddPolicy("AllowBlazorClient",
                 policy => policy
-                    .WithOrigins("https://localhost:7085")
+                    .WithOrigins(
+                        "https://localhost:7085", // client https profile
+                        "http://localhost:5270")  // client http profile
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials()); 

@@ -19,11 +19,12 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-#if DEBUG
-HostUrl.Current = "https://localhost:7085";
-#else
-HostUrl.Current = builder.HostEnvironment.BaseAddress.TrimEnd('/');
-#endif
+// Same origin by default (the API hosts the client). When the client runs on its
+// own dev server, wwwroot/appsettings.Development.json overrides it with the API URL.
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
+HostUrl.Current = string.IsNullOrWhiteSpace(apiBaseUrl)
+    ? builder.HostEnvironment.BaseAddress.TrimEnd('/')
+    : apiBaseUrl.TrimEnd('/');
 
 builder.Services.AddScoped<HttpInterceptorService>();
 
