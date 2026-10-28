@@ -27,26 +27,26 @@ HostUrl.Current = builder.HostEnvironment.BaseAddress.TrimEnd('/');
 
 builder.Services.AddScoped<HttpInterceptorService>();
 
-builder.Services.AddRefitClient<IAuctionsApi>()
+builder.Services.AddRefitGeneratedClient<IAuctionsApi>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(($"{HostUrl.Current}")))
     .AddHttpMessageHandler<HttpInterceptorService>();
 
-builder.Services.AddRefitClient<IAuthApi>()
+builder.Services.AddRefitGeneratedClient<IAuthApi>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(($"{HostUrl.Current}")));
 
-builder.Services.AddRefitClient<IWatchlistApi>()
+builder.Services.AddRefitGeneratedClient<IWatchlistApi>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(($"{HostUrl.Current}")))
     .AddHttpMessageHandler<HttpInterceptorService>();
 
-builder.Services.AddRefitClient<IBidsApi>()
+builder.Services.AddRefitGeneratedClient<IBidsApi>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(($"{HostUrl.Current}")))
     .AddHttpMessageHandler<HttpInterceptorService>();
 
-builder.Services.AddRefitClient<IWalletApi>()
+builder.Services.AddRefitGeneratedClient<IWalletApi>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(($"{HostUrl.Current}")))
     .AddHttpMessageHandler<HttpInterceptorService>();
 
-builder.Services.AddRefitClient<INotificationsApi>()
+builder.Services.AddRefitGeneratedClient<INotificationsApi>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(($"{HostUrl.Current}")))
     .AddHttpMessageHandler<HttpInterceptorService>();
 
