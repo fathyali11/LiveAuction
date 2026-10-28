@@ -1,4 +1,5 @@
-﻿using LiveAuction.Domain.Consts;
+﻿using LiveAuction.Application.Services;
+using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -8,7 +9,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace LiveAuction.Application.Services.AuthServices;
+namespace LiveAuction.Infrastructure.Services;
 
 internal class AuthService(IOptions<JwtSettings> options) : IAuthService
 {

@@ -14,6 +14,11 @@ internal class NotificationRepository(ApplicationDbContext _context) : INotifica
         await _context.Notifications.AddAsync(notification, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task AddRangeAsync(IEnumerable<Notification> notifications, CancellationToken cancellationToken = default)
+    {
+        await _context.Notifications.AddRangeAsync(notifications, cancellationToken);
+    }
     public async Task<List<NotificationDto>> GetUserNotificationsAsync(string userId, CancellationToken cancellationToken = default)
     {
         var notifications = await _context.Notifications

@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 using LiveAuction.Application.Interfaces;
-using LiveAuction.Application.Services.AuctionServices;
+using LiveAuction.Application.Services;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
@@ -71,7 +71,7 @@ internal class CreateAuctionCommandHandler(
 
             await _auctionRepository.AddAsync(auction, cancellationToken);
 
-            jobId = await _auctionService.ScheduleAuction(auction, cancellationToken);
+            jobId = await _auctionService.ScheduleAuction(auction.Id, auction.EndTime, cancellationToken);
             auction.JobId = jobId;
 
             await _auctionRepository.SaveChangesAsync(cancellationToken);

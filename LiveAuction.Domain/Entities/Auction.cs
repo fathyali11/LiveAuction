@@ -11,12 +11,15 @@ public class Auction
 
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
-
+    public DateTime UpdatedAt { get; set; }= DateTime.UtcNow;
     public decimal StartingBid { get; set; }
     public decimal CurrentBid { get; set; }
     public string ?CurrentBidderId { get; set; }
 
     public string JobId { get; set; }= string.Empty;
+
+    /// <summary>Number of automatic anti-sniping extensions already applied.</summary>
+    public int ExtensionCount { get; set; }
 
 
     public string CreatedById { get; set; }= string.Empty;

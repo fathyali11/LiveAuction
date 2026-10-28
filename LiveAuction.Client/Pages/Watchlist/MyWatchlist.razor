@@ -8,6 +8,7 @@
 @inject IJSRuntime JSRuntime
 @inject ILocalStorageService LocalStorage
 @inject IDialogService DialogService
+@inject ITokenService TokenService
 @implements IAsyncDisposable
 
 <PageTitle>قائمتي للمراقبة</PageTitle>
@@ -253,7 +254,8 @@
         try
         {
             _hubConnection = new HubConnectionBuilder()
-                .WithUrl($"{HostUrl.Current}/hubs/auction")
+                .WithUrl($"{HostUrl.Current}/hubs/auction",
+                    options => options.AccessTokenProvider = async () => await TokenService.GetAccessTokenAsync())
                 .WithAutomaticReconnect()
                 .Build();
 

@@ -19,6 +19,9 @@ internal class ApplicationUserConfiguration : IEntityTypeConfiguration<Applicati
             .IsRequired()
             .HasColumnType("decimal(18,2)");
 
+        builder.ToTable(t=>
+        t.HasCheckConstraint("CK_Users_LockedBalanceLessThanOrEqualToTotalBalance", "[LockedBalance] <= [TotalBalance]"));
+
         builder.ToTable(t =>
             t.HasCheckConstraint("CK_Users_TotalBalance", "[TotalBalance] >= 0"));
 

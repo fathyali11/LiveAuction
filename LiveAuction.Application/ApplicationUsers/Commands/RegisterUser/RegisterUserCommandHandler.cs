@@ -8,7 +8,7 @@ using LiveAuction.Domain.Entities;
 using OneOf;
 using System.Transactions;
 using LiveAuction.Shared.DTOs;
-using LiveAuction.Application.Services.AuthServices;
+using LiveAuction.Application.Services;
 
 namespace LiveAuction.Application.ApplicationUsers.Commands.RegisterUser;
 

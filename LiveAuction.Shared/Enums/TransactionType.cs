@@ -5,5 +5,6 @@ public enum TransactionType
     Deposit,
     Hold,
     Release,
-    Purchase
+    Purchase,
+    Sale
 }

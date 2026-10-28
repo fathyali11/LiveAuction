@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using LiveAuction.Application.Services.AuthServices;
+using LiveAuction.Application.Services;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;

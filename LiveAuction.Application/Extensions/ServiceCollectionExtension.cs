@@ -13,13 +13,6 @@ using LiveAuction.Application.Notifications.Commands.MarkAllAsRead;
 using LiveAuction.Application.Notifications.Commands.MarkAsRead;
 using LiveAuction.Application.Notifications.Queries.GetAllNotifications;
 using LiveAuction.Application.Notifications.Queries.GetCountUnRead;
-using LiveAuction.Application.Services.AuctionServices;
-using LiveAuction.Application.Services.AuthServices;
-using LiveAuction.Application.Services.BackgroundJobServices;
-using LiveAuction.Application.Services.BidServices;
-using LiveAuction.Application.Services.NotificationServices;
-using LiveAuction.Application.Services.WalletServices;
-using LiveAuction.Application.Services.WatchlistServices;
 using LiveAuction.Application.Wallets.Commands.Deposit;
 using LiveAuction.Application.Wallets.Queries.GetTransactions;
 using LiveAuction.Application.Wallets.Queries.GetWalletSummary;
@@ -44,14 +37,6 @@ public static class ServiceCollectionExtension
         var assembly = Assembly.GetExecutingAssembly();
 
         services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
-
-        services.AddScoped<IBackgroundJobService, BackgroundJobService>();
-        services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<IAuctionService, AuctionService>();
-        services.AddScoped<IWalletService, WalletService>();
-        services.AddScoped<IWatchlistService, WatchlistService>();
-        services.AddScoped<INotificationService, NotificationService>();
-        services.AddScoped<IBidService, BidService>();
 
         services.AddScoped<IValidator<RegisterUserCommand>, RegisterUserCommandValidator>();
         services.AddScoped<IValidator<LoginUserCommand>, LoginUserCommandValidator>();

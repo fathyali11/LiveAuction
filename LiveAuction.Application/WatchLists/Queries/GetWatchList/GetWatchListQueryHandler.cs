@@ -1,5 +1,5 @@
 using FluentValidation;
-using LiveAuction.Application.Services.WatchlistServices;
+using LiveAuction.Application.Services;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Repositories;
 using LiveAuction.Shared.DTOs;

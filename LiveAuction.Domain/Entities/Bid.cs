@@ -3,6 +3,7 @@
 public class Bid
 {
     public int Id { get; set; }
+    public string? IdempotencyKey { get; set; }
     public decimal Amount { get; set; }
     public int AuctionId { get; set; }
     public string BidderId { get; set; }= string.Empty;

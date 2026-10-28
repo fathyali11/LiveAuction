@@ -1,5 +1,5 @@
 ﻿using LiveAuction.Application.Interfaces;
-using LiveAuction.Application.Services.AuctionServices;
+using LiveAuction.Application.Services;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Repositories;
 using MediatR;

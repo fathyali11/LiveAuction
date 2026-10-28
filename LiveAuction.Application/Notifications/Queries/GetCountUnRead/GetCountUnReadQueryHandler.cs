@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using LiveAuction.Application.Services.NotificationServices;
+using LiveAuction.Application.Services;
 using LiveAuction.Domain.Consts;
 using MediatR;
 using Microsoft.Extensions.Logging;

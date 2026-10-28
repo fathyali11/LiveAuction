@@ -1,8 +1,8 @@
 ﻿using LiveAuction.Shared.DTOs;
 
-namespace LiveAuction.Application.Services.NotificationServices;
+namespace LiveAuction.Application.Services;
 
-internal interface INotificationService
+public interface INotificationService
 {
     Task AddNotificationAsync(NotificationDto createNotificationDto, CancellationToken cancellationToken = default);
     Task<List<NotificationDto>> GetUserNotificationsAsync(string userId, CancellationToken cancellationToken = default);

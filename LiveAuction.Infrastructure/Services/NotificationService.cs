@@ -1,4 +1,5 @@
-﻿using LiveAuction.Domain.Entities;
+﻿using LiveAuction.Application.Services;
+using LiveAuction.Domain.Entities;
 using LiveAuction.Domain.Repositories;
 using LiveAuction.Shared.DTOs;
 using LiveAuction.Shared.Enums;
@@ -7,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace LiveAuction.Application.Services.NotificationServices;
+namespace LiveAuction.Infrastructure.Services;
 
 internal class NotificationService(IServiceProvider _serviceProvider,
     INotificationRepository notificationRepository) : INotificationService

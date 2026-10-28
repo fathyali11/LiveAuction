@@ -7,15 +7,14 @@ using LiveAuction.Domain.Entities;
 using OneOf;
 using LiveAuction.Shared.DTOs;
 using LiveAuction.Domain.Repositories;
-using LiveAuction.Application.Services.AuthServices;
+using LiveAuction.Application.Services;
 
 namespace LiveAuction.Application.ApplicationUsers.Commands.LoginUser;
 
 internal class LoginUserCommandHandler(UserManager<ApplicationUser> _userManager,
     ILogger<LoginUserCommandHandler> _logger,
     IAuthService _authService,
-    IValidator<LoginUserCommand> _validator,
-    IRefreshTokenRepository _refreshTokenRepository) : IRequestHandler<LoginUserCommand, OneOf<Error, AuthResponse>>
+    IValidator<LoginUserCommand> _validator) : IRequestHandler<LoginUserCommand, OneOf<Error, AuthResponse>>
 {
     public async Task<OneOf<Error, AuthResponse>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
     {

@@ -1,4 +1,5 @@
 ﻿using LiveAuction.Application.Notifications.Commands.MarkAllAsRead;
+using LiveAuction.Application.Notifications.Commands.MarkAsRead;
 using LiveAuction.Application.Notifications.Queries.GetAllNotifications;
 using LiveAuction.Application.Notifications.Queries.GetCountUnRead;
 using LiveAuction.Domain.Consts;
@@ -61,7 +62,7 @@ public class NotificationsController(IMediator _mediator):ControllerBase
     public async Task<IActionResult> MarkAsRead([FromRoute] int notificationId,CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var command = new MarkAllAsReadCommand(userId);
+        var command = new MarkAsReadCommand(userId, notificationId);
         var result = await _mediator.Send(command, cancellationToken);
         return result.Match<IActionResult>(
             error => error.Code switch

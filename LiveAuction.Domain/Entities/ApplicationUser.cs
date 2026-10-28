@@ -8,6 +8,7 @@ public class ApplicationUser:IdentityUser
     public decimal TotalBalance { get; set; }
     public decimal LockedBalance { get; set; }
     public decimal AvailableBalance => TotalBalance - LockedBalance;
+    public DateTime UpdatedAt { get; set; }= DateTime.UtcNow;
     public WatchList WatchList { get; set; } = null!;
     public ICollection<Bid> Bids { get; set;} = [];
     public ICollection<RefreshToken> RefreshTokens { get; set;} = [];

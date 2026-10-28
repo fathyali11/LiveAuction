@@ -41,6 +41,11 @@ internal class AuctionConfiguration : IEntityTypeConfiguration<Auction>
         builder.Property(a => a.CreatedById)
             .IsRequired();
 
+        builder.Property(a => a.ExtensionCount)
+            .HasDefaultValue(0);
+
+        builder.HasIndex(a => new { a.Status, a.StartTime, a.EndTime });
+
         builder.HasMany(a => a.Bids)
             .WithOne(b => b.Auction)
             .HasForeignKey(b => b.AuctionId)

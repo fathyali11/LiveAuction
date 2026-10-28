@@ -7,6 +7,7 @@ public static class ErrorCodes
     public const string UnauthorizedError = "UnauthorizedError";
     public const string ForbiddenError = "ForbiddenError";
     public const string InternalServerError = "InternalServerError";
+    public const string Conflict = "Conflict";
     public const string Duplicate = "Duplicate";
     public const string None = "None";
 }

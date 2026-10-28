@@ -50,7 +50,23 @@ public static class ServiceCollectionExtension
                     factory: _ => new FixedWindowRateLimiterOptions
                     {
                         PermitLimit = 5,
-                        Window = TimeSpan.FromMinutes(1)
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0
+                    });
+            });
+
+            options.AddPolicy("place-bid", context =>
+            {
+                var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var partitionKey = userId ?? context.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
+
+                return RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: $"bid:{partitionKey}",
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 10,
+                        Window = TimeSpan.FromSeconds(10),
+                        QueueLimit = 0
                     });
             });
         });

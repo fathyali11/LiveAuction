@@ -4,6 +4,7 @@ using LiveAuction.Domain.Consts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace LiveAuction.API.Controllers;
@@ -11,35 +12,43 @@ namespace LiveAuction.API.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 [Authorize]
-public class BidsController(IMediator mediator):ControllerBase
+public class BidsController(IMediator mediator) : ControllerBase
 {
+    [EnableRateLimiting("place-bid")]
     [HttpPost("")]
-    public async Task<IActionResult> Create([FromBody] CreateBidCommand command)
+    public async Task<IActionResult> Create([FromBody] CreateBidCommand command, CancellationToken cancellationToken)
     {
-        command.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var result = await mediator.Send(command);
+        var result = await mediator.Send(command, cancellationToken);
+
         return result.Match<IActionResult>(
             error => error.Code switch
             {
-                ErrorCodes.NotFoundError => NotFound(error.Message),
-                ErrorCodes.ValidationError => BadRequest(error.Message),
-                _ => StatusCode(500, error.Message)
+                ErrorCodes.ValidationError => BadRequest(new { message = error.Message }),
+                ErrorCodes.UnauthorizedError => Unauthorized(new { message = error.Message }),
+                ErrorCodes.ForbiddenError => StatusCode(StatusCodes.Status403Forbidden, new { message = error.Message }),
+                ErrorCodes.NotFoundError => NotFound(new { message = error.Message }),
+                ErrorCodes.Conflict => Conflict(new { message = error.Message }),
+                ErrorCodes.Duplicate => Conflict(new { message = error.Message }),
+                _ => StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "An unexpected error occurred." })
             },
-            bidDto => CreatedAtAction(nameof(Create), new { id = bidDto.Id }, bidDto));
+            bidDto => Created($"/api/bids/{bidDto.Id}", bidDto));
     }
 
     [HttpGet("user-history")]
-    public async Task<IActionResult> GetUserBidsHistory()
+    public async Task<IActionResult> GetUserBidsHistory(CancellationToken cancellationToken)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var query = new UserBidsHistoryQuery(userId);
-        var result = await mediator.Send(query);
+        var result = await mediator.Send(query, cancellationToken);
+
         return result.Match<IActionResult>(
             error => error.Code switch
             {
-                ErrorCodes.NotFoundError => NotFound(error.Message),
-                ErrorCodes.ValidationError => BadRequest(error.Message),
-                _ => StatusCode(500, "An unexpected error occurred.")
+                ErrorCodes.NotFoundError => NotFound(new { message = error.Message }),
+                ErrorCodes.ValidationError => BadRequest(new { message = error.Message }),
+                _ => StatusCode(StatusCodes.Status500InternalServerError,
+                    new { message = "An unexpected error occurred." })
             },
             userBids => Ok(userBids));
     }

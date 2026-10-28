@@ -1,10 +1,11 @@
-﻿using LiveAuction.Domain.Repositories;
+﻿using LiveAuction.Application.Services;
+using LiveAuction.Domain.Repositories;
 using LiveAuction.Shared.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace LiveAuction.Application.Services.WatchlistServices;
+namespace LiveAuction.Infrastructure.Services;
 
 internal class WatchlistService(IWatchListRepository _watchListRepository): IWatchlistService
 {

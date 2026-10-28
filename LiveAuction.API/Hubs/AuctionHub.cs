@@ -1,17 +1,34 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using LiveAuction.API.Hubs;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 
 namespace LiveAuction.API.Hubs;
 
-public class AuctionHub(ILogger<AuctionHub> _logger):Hub
+[Authorize]
+public class AuctionHub(ILogger<AuctionHub> _logger) : Hub
 {
     public async Task JoinToGroup(string auctionId)
     {
-        _logger.LogInformation("User joined to group {AuctionId}", auctionId);
-        await Groups.AddToGroupAsync(Context.ConnectionId, auctionId);
+        if (!int.TryParse(auctionId, out var parsedAuctionId) || parsedAuctionId <= 0)
+        {
+            _logger.LogWarning("Rejected an invalid auction group id: {AuctionId}.", auctionId);
+            return;
+        }
+
+        var groupName = parsedAuctionId.ToString();
+        _logger.LogInformation("User joined auction group {AuctionId}.", parsedAuctionId);
+        await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
     }
+
     public async Task LeaveFromGroup(string auctionId)
     {
-        _logger.LogInformation("User left from group {AuctionId}", auctionId);
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, auctionId);
+        if (!int.TryParse(auctionId, out var parsedAuctionId) || parsedAuctionId <= 0)
+        {
+            return;
+        }
+
+        var groupName = parsedAuctionId.ToString();
+        _logger.LogInformation("User left auction group {AuctionId}.", parsedAuctionId);
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
     }
 }

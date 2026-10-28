@@ -22,6 +22,9 @@ internal class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
             .HasForeignKey(a => a.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Supports net-hold calculations and wallet history for one auction.
+        builder.HasIndex(a => new { a.UserId, a.AuctionId, a.TransactionType });
 
+        builder.HasIndex(a => new { a.UserId, a.CreateAt });
     }
 }

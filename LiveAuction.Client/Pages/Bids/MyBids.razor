@@ -5,6 +5,7 @@
 @inject IBidsApi BidsApi
 @inject HttpClient Http
 @inject ISnackbar Snackbar
+@inject ITokenService TokenService
 @implements IAsyncDisposable
 
 <PageTitle>مزايداتي</PageTitle>
@@ -252,7 +253,8 @@
             bids = await BidsApi.GetUserHistoryAsync();
 
             hubConnection = new HubConnectionBuilder()
-            .WithUrl($"{HostUrl.Current}/hubs/auction")
+            .WithUrl($"{HostUrl.Current}/hubs/auction",
+                options => options.AccessTokenProvider = async () => await TokenService.GetAccessTokenAsync())
             .WithAutomaticReconnect()
             .Build();
 

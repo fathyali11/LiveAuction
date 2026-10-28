@@ -6,11 +6,8 @@ using System.Text.Json.Serialization;
 
 namespace LiveAuction.Application.Bids.Commands.CreateBid;
 
-public class CreateBidCommand : IRequest<OneOf<Error, BidDto>>
-{
-    public int AuctionId { get; set; }
-    public decimal Amount { get; set; }
-
-    [JsonIgnore]
-    public string UserId { get; set; } = string.Empty;
-}
+public record CreateBidCommand(
+    int AuctionId,
+    decimal Amount,
+    string? IdempotencyKey=null)
+ : IRequest<OneOf<Error, BidDto>>;

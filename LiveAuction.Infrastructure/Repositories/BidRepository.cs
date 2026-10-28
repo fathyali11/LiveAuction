@@ -12,8 +12,9 @@ internal class BidRepository(ApplicationDbContext _context) : IBidRepository
 {
     public async Task AddAsync(Bid bid,CancellationToken cancellationToken)
     {
+        // The caller owns the unit of work (auction update, wallet ledger, notifications and bid
+        // must all be committed together), so this deliberately does not save.
         await _context.Bids.AddAsync(bid,cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<List<Bid>> GetHistoryAsync(int auctionId,CancellationToken cancellationToken)
@@ -74,7 +75,29 @@ internal class BidRepository(ApplicationDbContext _context) : IBidRepository
         return result;
     }
 
+    public async Task<BidDto?> GetByIdempotencyKeyAsync(
+        string userId,
+        int auctionId,
+        string idempotencyKey,
+        CancellationToken cancellationToken)
+        => await _context.Bids
+            .AsNoTracking()
+            .Where(b => b.BidderId == userId &&
+                        b.AuctionId == auctionId &&
+                        b.IdempotencyKey == idempotencyKey)
+            .Select(b => new BidDto
+            {
+                Id = b.Id,
+                AuctionId = b.AuctionId,
+                Amount = b.Amount,
+                AuctionEndTime = b.Auction.EndTime,
+                Bidder = b.Bidder.FullName,
+                TimePlaced = b.BidTime
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
+    public async Task SaveChangesAsync(CancellationToken cancellationToken)
+        => await _context.SaveChangesAsync(cancellationToken);
 
     public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
         => await _context.Database.BeginTransactionAsync(cancellationToken);
