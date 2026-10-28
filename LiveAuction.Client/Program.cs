@@ -19,6 +19,12 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+#if DEBUG
+HostUrl.Current = "https://localhost:7085";
+#else
+HostUrl.Current = builder.HostEnvironment.BaseAddress.TrimEnd('/');
+#endif
+
 builder.Services.AddScoped<HttpInterceptorService>();
 
 builder.Services.AddRefitClient<IAuctionsApi>()

@@ -178,7 +178,7 @@ namespace LiveAuction.Infrastructure.Migrations
 
                     b.HasIndex("Status", "StartTime", "EndTime");
 
-                    b.ToTable("Auctions", null, t =>
+                    b.ToTable("Auctions", t =>
                         {
                             t.HasCheckConstraint("CK_Auctions_CurrentBid", "[CurrentBid] > 0");
 
@@ -219,7 +219,7 @@ namespace LiveAuction.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("[IdempotencyKey] IS NOT NULL");
 
-                    b.ToTable("Bids", null, t =>
+                    b.ToTable("Bids", t =>
                         {
                             t.HasCheckConstraint("CK_Bids_AuctionId", "[AuctionId] > 0");
                         });
@@ -263,7 +263,7 @@ namespace LiveAuction.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("LiveAuction.Domain.Entities.RefreshToken", b =>
@@ -296,7 +296,7 @@ namespace LiveAuction.Infrastructure.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("LiveAuction.Domain.Entities.Transaction", b =>
@@ -331,7 +331,7 @@ namespace LiveAuction.Infrastructure.Migrations
 
                     b.HasIndex("UserId", "AuctionId", "TransactionType");
 
-                    b.ToTable("Transactions", (string)null);
+                    b.ToTable("Transactions");
                 });
 
             modelBuilder.Entity("LiveAuction.Domain.Entities.WatchList", b =>
@@ -354,7 +354,7 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.HasIndex("Id", "UserId")
                         .IsUnique();
 
-                    b.ToTable("WatchLists", (string)null);
+                    b.ToTable("WatchLists");
                 });
 
             modelBuilder.Entity("LiveAuction.Domain.Entities.WatchListItem", b =>
@@ -389,7 +389,7 @@ namespace LiveAuction.Infrastructure.Migrations
 
                     b.HasIndex("WatchListId");
 
-                    b.ToTable("WatchListItems", null, t =>
+                    b.ToTable("WatchListItems", t =>
                         {
                             t.HasCheckConstraint("CK_WatchListItems_WatchListId", "[WatchListId] > 0");
                         });

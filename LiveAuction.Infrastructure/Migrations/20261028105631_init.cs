@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace LiveAuction.Infrastructure.Migrations
 {
     /// <inheritdoc />
@@ -30,7 +32,10 @@ namespace LiveAuction.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    TotalBalance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    LockedBalance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -49,6 +54,9 @@ namespace LiveAuction.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                    table.CheckConstraint("CK_Users_LockedBalance", "[LockedBalance] >= 0");
+                    table.CheckConstraint("CK_Users_LockedBalanceLessThanOrEqualToTotalBalance", "[LockedBalance] <= [TotalBalance]");
+                    table.CheckConstraint("CK_Users_TotalBalance", "[TotalBalance] >= 0");
                 });
 
             migrationBuilder.CreateTable(
@@ -165,11 +173,15 @@ namespace LiveAuction.Infrastructure.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ImageName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     StartTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     StartingBid = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    CurrentBid = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    CurrentBid = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    CurrentBidderId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    JobId = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    ExtensionCount = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
                     CreatedById = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     WinnerId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Status = table.Column<int>(type: "int", nullable: false)
@@ -177,12 +189,19 @@ namespace LiveAuction.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Auctions", x => x.Id);
+                    table.CheckConstraint("CK_Auctions_CurrentBid", "[CurrentBid] > 0");
+                    table.CheckConstraint("CK_Auctions_StartingBid", "[StartingBid] > 0");
                     table.ForeignKey(
                         name: "FK_Auctions_AspNetUsers_CreatedById",
                         column: x => x.CreatedById,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Auctions_AspNetUsers_CurrentBidderId",
+                        column: x => x.CurrentBidderId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Auctions_AspNetUsers_WinnerId",
                         column: x => x.WinnerId,
@@ -191,25 +210,88 @@ namespace LiveAuction.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Notifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false),
+                    NotificationType = table.Column<int>(type: "int", nullable: false),
+                    RelatedEntityId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notifications_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RefreshTokens",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Token = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RevokedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RefreshTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_RefreshTokens_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WatchLists",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WatchLists", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_WatchLists_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Bids",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
+                    IdempotencyKey = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     AuctionId = table.Column<int>(type: "int", nullable: false),
                     BidderId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    BidTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    BidTime = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Bids", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Bids_AspNetUsers_ApplicationUserId",
-                        column: x => x.ApplicationUserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                    table.CheckConstraint("CK_Bids_AuctionId", "[AuctionId] > 0");
                     table.ForeignKey(
                         name: "FK_Bids_AspNetUsers_BidderId",
                         column: x => x.BidderId,
@@ -222,6 +304,68 @@ namespace LiveAuction.Infrastructure.Migrations
                         principalTable: "Auctions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Transactions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    TransactionType = table.Column<int>(type: "int", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    CreateAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    AuctionId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Transactions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Transactions_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Transactions_Auctions_AuctionId",
+                        column: x => x.AuctionId,
+                        principalTable: "Auctions",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WatchListItems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    WatchListId = table.Column<int>(type: "int", nullable: false),
+                    AuctionId = table.Column<int>(type: "int", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CurrentBid = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    EndTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ImageName = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WatchListItems", x => x.Id);
+                    table.CheckConstraint("CK_WatchListItems_WatchListId", "[WatchListId] > 0");
+                    table.ForeignKey(
+                        name: "FK_WatchListItems_WatchLists_WatchListId",
+                        column: x => x.WatchListId,
+                        principalTable: "WatchLists",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "AspNetRoles",
+                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
+                values: new object[,]
+                {
+                    { "19cd9391-a0d0-44ea-bf4f-502e26af9d86", "29cd9391-a0d0-44ea-bf4f-502e26af9d86", "Customer", "CUSTOMER" },
+                    { "48ba6ac8-5656-4496-a2e9-bfb5401f22bd", "28ba6ac8-5656-4496-a2e9-bfb5401f22bd", "Admin", "ADMIN" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -269,24 +413,73 @@ namespace LiveAuction.Infrastructure.Migrations
                 column: "CreatedById");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Auctions_CurrentBidderId",
+                table: "Auctions",
+                column: "CurrentBidderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Auctions_Status_StartTime_EndTime",
+                table: "Auctions",
+                columns: new[] { "Status", "StartTime", "EndTime" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Auctions_WinnerId",
                 table: "Auctions",
                 column: "WinnerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bids_ApplicationUserId",
+                name: "IX_Bids_AuctionId_BidTime",
                 table: "Bids",
+                columns: new[] { "AuctionId", "BidTime" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Bids_BidderId_AuctionId_IdempotencyKey",
+                table: "Bids",
+                columns: new[] { "BidderId", "AuctionId", "IdempotencyKey" },
+                unique: true,
+                filter: "[IdempotencyKey] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_UserId",
+                table: "Notifications",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RefreshTokens_ApplicationUserId",
+                table: "RefreshTokens",
                 column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bids_AuctionId",
-                table: "Bids",
+                name: "IX_Transactions_AuctionId",
+                table: "Transactions",
                 column: "AuctionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bids_BidderId",
-                table: "Bids",
-                column: "BidderId");
+                name: "IX_Transactions_UserId_AuctionId_TransactionType",
+                table: "Transactions",
+                columns: new[] { "UserId", "AuctionId", "TransactionType" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Transactions_UserId_CreateAt",
+                table: "Transactions",
+                columns: new[] { "UserId", "CreateAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WatchListItems_WatchListId",
+                table: "WatchListItems",
+                column: "WatchListId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WatchLists_Id_UserId",
+                table: "WatchLists",
+                columns: new[] { "Id", "UserId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WatchLists_UserId",
+                table: "WatchLists",
+                column: "UserId",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -311,10 +504,25 @@ namespace LiveAuction.Infrastructure.Migrations
                 name: "Bids");
 
             migrationBuilder.DropTable(
+                name: "Notifications");
+
+            migrationBuilder.DropTable(
+                name: "RefreshTokens");
+
+            migrationBuilder.DropTable(
+                name: "Transactions");
+
+            migrationBuilder.DropTable(
+                name: "WatchListItems");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
                 name: "Auctions");
+
+            migrationBuilder.DropTable(
+                name: "WatchLists");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

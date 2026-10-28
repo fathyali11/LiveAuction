@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LiveAuction.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260105014844_MakeCurrentBidNotNull")]
-    partial class MakeCurrentBidNotNull
+    [Migration("20261028105631_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.1")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -84,6 +84,9 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -101,6 +104,8 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.ToTable("AspNetUsers", null, t =>
                         {
                             t.HasCheckConstraint("CK_Users_LockedBalance", "[LockedBalance] >= 0");
+
+                            t.HasCheckConstraint("CK_Users_LockedBalanceLessThanOrEqualToTotalBalance", "[LockedBalance] <= [TotalBalance]");
 
                             t.HasCheckConstraint("CK_Users_TotalBalance", "[TotalBalance] >= 0");
                         });
@@ -132,6 +137,11 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("ExtensionCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
                     b.Property<string>("ImageName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -155,6 +165,9 @@ namespace LiveAuction.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("WinnerId")
                         .HasColumnType("nvarchar(450)");
 
@@ -165,6 +178,8 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.HasIndex("CurrentBidderId");
 
                     b.HasIndex("WinnerId");
+
+                    b.HasIndex("Status", "StartTime", "EndTime");
 
                     b.ToTable("Auctions", t =>
                         {
@@ -185,9 +200,6 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("ApplicationUserId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<int>("AuctionId")
                         .HasColumnType("int");
 
@@ -198,18 +210,63 @@ namespace LiveAuction.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("IdempotencyKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ApplicationUserId");
+                    b.HasIndex("AuctionId", "BidTime");
 
-                    b.HasIndex("AuctionId");
-
-                    b.HasIndex("BidderId");
+                    b.HasIndex("BidderId", "AuctionId", "IdempotencyKey")
+                        .IsUnique()
+                        .HasFilter("[IdempotencyKey] IS NOT NULL");
 
                     b.ToTable("Bids", t =>
                         {
                             t.HasCheckConstraint("CK_Bids_AuctionId", "[AuctionId] > 0");
                         });
+                });
+
+            modelBuilder.Entity("LiveAuction.Domain.Entities.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("NotificationType")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RelatedEntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("LiveAuction.Domain.Entities.RefreshToken", b =>
@@ -273,7 +330,9 @@ namespace LiveAuction.Infrastructure.Migrations
 
                     b.HasIndex("AuctionId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "CreateAt");
+
+                    b.HasIndex("UserId", "AuctionId", "TransactionType");
 
                     b.ToTable("Transactions");
                 });
@@ -513,10 +572,6 @@ namespace LiveAuction.Infrastructure.Migrations
 
             modelBuilder.Entity("LiveAuction.Domain.Entities.Bid", b =>
                 {
-                    b.HasOne("LiveAuction.Domain.Entities.ApplicationUser", null)
-                        .WithMany("Bids")
-                        .HasForeignKey("ApplicationUserId");
-
                     b.HasOne("LiveAuction.Domain.Entities.Auction", "Auction")
                         .WithMany("Bids")
                         .HasForeignKey("AuctionId")
@@ -524,7 +579,7 @@ namespace LiveAuction.Infrastructure.Migrations
                         .IsRequired();
 
                     b.HasOne("LiveAuction.Domain.Entities.ApplicationUser", "Bidder")
-                        .WithMany()
+                        .WithMany("Bids")
                         .HasForeignKey("BidderId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -532,6 +587,17 @@ namespace LiveAuction.Infrastructure.Migrations
                     b.Navigation("Auction");
 
                     b.Navigation("Bidder");
+                });
+
+            modelBuilder.Entity("LiveAuction.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("LiveAuction.Domain.Entities.ApplicationUser", "User")
+                        .WithMany("Notifications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("LiveAuction.Domain.Entities.RefreshToken", b =>
@@ -638,6 +704,8 @@ namespace LiveAuction.Infrastructure.Migrations
             modelBuilder.Entity("LiveAuction.Domain.Entities.ApplicationUser", b =>
                 {
                     b.Navigation("Bids");
+
+                    b.Navigation("Notifications");
 
                     b.Navigation("RefreshTokens");
 

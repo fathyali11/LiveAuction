@@ -2,8 +2,6 @@
 
 public static class HostUrl
 {
-    public static readonly string Development = "https://localhost:7293";
-    public static readonly string Production = "https://liveauction.runasp.net";
-
-    public static string Current => Production;
+    // Set at startup: local API in Debug builds, current site origin in Release builds.
+    public static string Current { get; set; } = string.Empty;
 }
