@@ -1,24 +1,6 @@
 ﻿using FluentValidation;
 using Hangfire;
-using LiveAuction.Application.ApplicationUsers.Commands.LoginUser;
-using LiveAuction.Application.ApplicationUsers.Commands.RefreshToken;
-using LiveAuction.Application.ApplicationUsers.Commands.RegisterUser;
-using LiveAuction.Application.Auctions.Commands.CreateAuction;
-using LiveAuction.Application.Auctions.Commands.DeleteAuction;
-using LiveAuction.Application.Auctions.Queries.GetAllAuctions;
-using LiveAuction.Application.Auctions.Queries.GetAuctionById;
-using LiveAuction.Application.Bids.Commands.CreateBid;
-using LiveAuction.Application.Bids.Queries.UserBidsHistory;
-using LiveAuction.Application.Notifications.Commands.MarkAllAsRead;
-using LiveAuction.Application.Notifications.Commands.MarkAsRead;
-using LiveAuction.Application.Notifications.Queries.GetAllNotifications;
-using LiveAuction.Application.Notifications.Queries.GetCountUnRead;
-using LiveAuction.Application.Wallets.Commands.Deposit;
-using LiveAuction.Application.Wallets.Queries.GetTransactions;
-using LiveAuction.Application.Wallets.Queries.GetWalletSummary;
-using LiveAuction.Application.WatchLists.Commands.ClearWatchlist;
-using LiveAuction.Application.WatchLists.Commands.ToggleWatchListItem;
-using LiveAuction.Application.WatchLists.Queries.GetWatchList;
+using LiveAuction.Application.Behaviors;
 using LiveAuction.Domain.Consts;
 using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -36,27 +18,15 @@ public static class ServiceCollectionExtension
     {
         var assembly = Assembly.GetExecutingAssembly();
 
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(assembly);
+            cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+        });
 
-        services.AddScoped<IValidator<RegisterUserCommand>, RegisterUserCommandValidator>();
-        services.AddScoped<IValidator<LoginUserCommand>, LoginUserCommandValidator>();
-        services.AddScoped<IValidator<CreateAuctionCommand>, CreateAuctionCommandValidator>();
-        services.AddScoped<IValidator<DeleteAuctionCommand>, DeleteAuctionCommandValidator>();
-        services.AddScoped<IValidator<GetAuctionByIdQuery>, GetAuctionByIdQueryValidator>();
-        services.AddScoped<IValidator<CreateBidCommand>, CreateBidCommandValidator>();
-        services.AddScoped<IValidator<RefreshTokenCommand>, RefreshTokenCommandValidator>();
-        services.AddScoped<IValidator<UserBidsHistoryQuery>, UserBidsHistoryQueryValidator>();
-        services.AddScoped<IValidator<ToggleWatchListItemCommand>, ToggleWatchListItemCommandValidator>();
-        services.AddScoped<IValidator<DepositCommand>, DepositCommandValidator>();
-        services.AddScoped<IValidator<GetWalletSummaryQuery>, GetWalletSummaryQueryValidator>();
-        services.AddScoped<IValidator<GetTransactionsQuery>, GetTransactionsQueryValidator>();
-        services.AddScoped<IValidator<GetAllAuctionsQuery>, GetAllAuctionsQueryValidator>();
-        services.AddScoped<IValidator<GetWatchListQuery>, GetWatchListQueryValidator>();
-        services.AddScoped<IValidator<ClearWatchlistQuery>, ClearWatchlistQueryValidator>();
-        services.AddScoped<IValidator<GetAllNotificationsQuery>, GetAllNotificationsQueryValidator>();
-        services.AddScoped<IValidator<GetCountUnReadQuery>, GetCountUnReadQueryValidator>();
-        services.AddScoped<IValidator<MarkAllAsReadCommand>, MarkAllAsReadCommandValidator>();
-        services.AddScoped<IValidator<MarkAsReadCommand>, MarkAsReadCommandValidator>();
+        // Registers every AbstractValidator<T> in this assembly as IValidator<T>.
+        // includeInternalTypes is required because our validators are declared internal.
+        services.AddValidatorsFromAssembly(assembly, includeInternalTypes: true);
 
         TypeAdapterConfig.GlobalSettings.Scan(assembly);
         services.AddMapster();

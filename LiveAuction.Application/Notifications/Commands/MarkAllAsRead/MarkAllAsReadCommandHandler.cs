@@ -1,4 +1,3 @@
-﻿using FluentValidation;
 using LiveAuction.Application.Services;
 using LiveAuction.Domain.Consts;
 using MediatR;
@@ -12,20 +11,12 @@ namespace LiveAuction.Application.Notifications.Commands.MarkAllAsRead;
 
 internal class MarkAllAsReadCommandHandler(
     INotificationService _notificationService,
-    ILogger<MarkAllAsReadCommandHandler> _logger,
-    IValidator<MarkAllAsReadCommand> _validator
+    ILogger<MarkAllAsReadCommandHandler> _logger
     ) : IRequestHandler<MarkAllAsReadCommand, OneOf<Error, bool>>
 {
     public async Task<OneOf<Error, bool>> Handle(MarkAllAsReadCommand request, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Handling MarkAllAsReadCommand for UserId: {UserId}", request.UserId);
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            var errorMessage = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-            _logger.LogWarning("Validation failed for MarkAllAsReadCommand: {ErrorMessage}", errorMessage);
-            return new Error(ErrorCodes.ValidationError, errorMessage);
-        }
         var isUpdated = await _notificationService.MarkAllAsRead(request.UserId, cancellationToken);
         if(!isUpdated)
         {

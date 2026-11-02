@@ -1,4 +1,3 @@
-﻿using FluentValidation;
 using LiveAuction.Application.Interfaces;
 using LiveAuction.Application.Services;
 using LiveAuction.Domain.Consts;
@@ -15,7 +14,6 @@ namespace LiveAuction.Application.Bids.Commands.CreateBid;
 
 internal class CreateBidCommandHandler(
     ILogger<CreateBidCommandHandler> _logger,
-    IValidator<CreateBidCommand> _validator,
     IBidService _bidService,
     IUserService _userService
     ) : IRequestHandler<CreateBidCommand, OneOf<Error, BidDto>>
@@ -30,13 +28,6 @@ internal class CreateBidCommandHandler(
         }
         _logger.LogInformation("Handling CreateBidCommand for AuctionId: {AuctionId}, UserId: {UserId}, Amount: {Amount}",
             request.AuctionId, currentUserId, request.Amount);
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            var errorMessage = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-            _logger.LogWarning("Validation failed for CreateBidCommand: {Errors}", errorMessage);
-            return new Error(ErrorCodes.ValidationError, errorMessage);
-        }
         
         return await _bidService.AddBidAsync(request, cancellationToken);
     }

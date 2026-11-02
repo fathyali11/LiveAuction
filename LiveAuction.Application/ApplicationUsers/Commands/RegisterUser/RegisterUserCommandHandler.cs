@@ -1,4 +1,3 @@
-﻿using FluentValidation;
 using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -15,20 +14,12 @@ namespace LiveAuction.Application.ApplicationUsers.Commands.RegisterUser;
 
 internal class RegisterUserCommandHandler(UserManager<ApplicationUser>_userManager,
     ILogger<RegisterUserCommandHandler> _logger,
-    IValidator<RegisterUserCommand> _validator,
     IAuthService _authService,
     IRefreshTokenService _refreshTokenService) : IRequestHandler<RegisterUserCommand, OneOf<Error, AuthResponse>>
 {
     public async Task<OneOf<Error, AuthResponse>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Handling RegisterUserCommand for email: {Email}", request.Email);
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            var firstError = validationResult.Errors.First();
-            _logger.LogWarning("Validation failed for RegisterUserCommand: {Error}", firstError.ErrorMessage);
-            return new Error(ErrorCodes.ValidationError, firstError.ErrorMessage);
-        }
         var existingUser = await _userManager.FindByEmailAsync(request.Email);
         if (existingUser != null)
         {

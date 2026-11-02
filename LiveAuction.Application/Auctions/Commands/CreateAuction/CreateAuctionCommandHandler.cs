@@ -1,4 +1,3 @@
-﻿using FluentValidation;
 using LiveAuction.Application.Interfaces;
 using LiveAuction.Application.Services;
 using LiveAuction.Domain.Consts;
@@ -17,7 +16,6 @@ namespace LiveAuction.Application.Auctions.Commands.CreateAuction;
 internal class CreateAuctionCommandHandler(
     IAuctionRepository _auctionRepository,
     ILogger<CreateAuctionCommandHandler> _logger,
-    IValidator<CreateAuctionCommand> _validator,
     UserManager<ApplicationUser> _userManager,
     IFileService _fileService,
     IUserService _userService,
@@ -26,14 +24,6 @@ internal class CreateAuctionCommandHandler(
     public async Task<OneOf<Error, AuctionDto>> Handle(CreateAuctionCommand request, CancellationToken cancellationToken)
     {
         _logger.LogDebug("Handling CreateAuctionCommand for: {Title}", request.Title);
-
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            var firstError = validationResult.Errors.First();
-            _logger.LogWarning("Validation failed for CreateAuctionCommand: {Error}", firstError.ErrorMessage);
-            return new Error(ErrorCodes.ValidationError, firstError.ErrorMessage);
-        }
 
         var currentUserId = _userService.GetCurrentUserId();
         if (string.IsNullOrWhiteSpace(currentUserId))

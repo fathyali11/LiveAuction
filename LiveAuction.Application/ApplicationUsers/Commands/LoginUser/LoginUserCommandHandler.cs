@@ -1,4 +1,3 @@
-﻿using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -14,21 +13,13 @@ namespace LiveAuction.Application.ApplicationUsers.Commands.LoginUser;
 internal class LoginUserCommandHandler(UserManager<ApplicationUser> _userManager,
     ILogger<LoginUserCommandHandler> _logger,
     IAuthService _authService,
-    IRefreshTokenService _refreshTokenService,
-    IValidator<LoginUserCommand> _validator) : IRequestHandler<LoginUserCommand, OneOf<Error, AuthResponse>>
+    IRefreshTokenService _refreshTokenService) : IRequestHandler<LoginUserCommand, OneOf<Error, AuthResponse>>
 {
      private const string InvalidCredentialsMessage = "بيانات الدخول غير صحيحة.";
 
     public async Task<OneOf<Error, AuthResponse>> Handle(LoginUserCommand request, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Handling LoginUserCommand for email: {Email}", request.Email);
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            var firstError = validationResult.Errors.First();
-            _logger.LogWarning("Validation failed for LoginUserCommand: {Error}", firstError.ErrorMessage);
-            return new Error(ErrorCodes.ValidationError, firstError.ErrorMessage);
-        }
         var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
         {

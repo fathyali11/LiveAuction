@@ -1,4 +1,3 @@
-﻿using FluentValidation;
 using LiveAuction.Application.Services;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
@@ -13,7 +12,6 @@ namespace LiveAuction.Application.ApplicationUsers.Commands.RefreshToken;
 
 internal class RefreshTokenCommandHandler(
     UserManager<ApplicationUser> _userManager,
-    IValidator<RefreshTokenCommand> _validator,
     ILogger<RefreshTokenCommandHandler> _logger,
     IAuthService _authService,
     IRefreshTokenService _refreshTokenService) : IRequestHandler<RefreshTokenCommand, OneOf<Error, AuthResponse>>
@@ -23,13 +21,6 @@ internal class RefreshTokenCommandHandler(
     public async Task<OneOf<Error, AuthResponse>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Handling RefreshTokenCommand.");
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            var firstError = validationResult.Errors.First();
-            _logger.LogWarning("Validation failed for RefreshTokenCommand: {Error}", firstError.ErrorMessage);
-            return new Error(ErrorCodes.ValidationError, firstError.ErrorMessage);
-        }
         var userId = await _authService.GetUserIdFrom(request.Token, cancellationToken);
         if(userId is null)
         {

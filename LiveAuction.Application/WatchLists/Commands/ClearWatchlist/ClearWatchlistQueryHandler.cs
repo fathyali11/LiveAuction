@@ -1,4 +1,3 @@
-﻿using FluentValidation;
 using LiveAuction.Application.Services;
 using LiveAuction.Domain.Consts;
 using MediatR;
@@ -8,20 +7,12 @@ namespace LiveAuction.Application.WatchLists.Commands.ClearWatchlist;
 
 internal class ClearWatchlistQueryHandler(
     IWatchlistService _watchlistService,
-    ILogger<ClearWatchlistQueryHandler> _logger,
-    IValidator<ClearWatchlistQuery> _validator
+    ILogger<ClearWatchlistQueryHandler> _logger
     ) : IRequestHandler<ClearWatchlistQuery, Error>
 {
     public async Task<Error> Handle(ClearWatchlistQuery request, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Handling ClearWatchlistQuery for UserId: {UserId}", request.UserId);
-        var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (!validationResult.IsValid)
-        {
-            var errorMessage = string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage));
-            _logger.LogWarning("Validation failed for ClearWatchlistQuery: {Errors}", errorMessage);
-            return new Error(ErrorCodes.ValidationError, errorMessage);
-        }
         var isCleared = await _watchlistService.ClearWatchlistAsync(request.UserId, cancellationToken);
         if (!isCleared)
         {
