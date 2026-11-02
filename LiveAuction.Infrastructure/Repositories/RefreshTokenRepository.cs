@@ -7,11 +7,10 @@ namespace LiveAuction.Infrastructure.Repositories;
 
 internal class RefreshTokenRepository(ApplicationDbContext _context): IRefreshTokenRepository
 {
-    public async Task<RefreshToken?> IsActiveAsync(string token, CancellationToken cancellationToken = default)
+    public async Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default)
     {
-        var tokens = await _context.RefreshTokens
+        return await _context.RefreshTokens
             .FirstOrDefaultAsync(x=>x.Token==token,cancellationToken);
-        return tokens;
     }
     public async Task UpdateAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default)
     {
@@ -23,5 +22,23 @@ internal class RefreshTokenRepository(ApplicationDbContext _context): IRefreshTo
         await _context.RefreshTokens
             .Where(x=>x.ApplicationUserId==userId)
             .ExecuteDeleteAsync(cancellationToken);
+    }
+    public async Task RemoveInactiveAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        await _context.RefreshTokens
+            .Where(x => x.ApplicationUserId == userId && (x.RevokedAt != null || x.ExpiresAt <= now))
+            .ExecuteDeleteAsync(cancellationToken);
+    }
+    public async Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken = default)
+    {
+        await _context.RefreshTokens.AddAsync(refreshToken,cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+    public async Task RotateAsync(RefreshToken currentToken, RefreshToken newToken, CancellationToken cancellationToken = default)
+    {
+        currentToken.RevokedAt = DateTime.UtcNow;
+        await _context.RefreshTokens.AddAsync(newToken, cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

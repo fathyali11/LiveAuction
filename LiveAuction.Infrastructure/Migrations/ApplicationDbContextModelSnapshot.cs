@@ -46,6 +46,9 @@ namespace LiveAuction.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
                     b.Property<decimal>("LockedBalance")
                         .HasColumnType("decimal(18,2)");
 

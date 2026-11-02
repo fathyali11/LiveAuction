@@ -1,6 +1,8 @@
 ﻿using LiveAuction.Application.Services;
 using LiveAuction.Domain.Consts;
 using LiveAuction.Domain.Entities;
+using LiveAuction.Infrastructure.Presistence;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -8,12 +10,18 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace LiveAuction.Infrastructure.Services;
 
-internal class AuthService(IOptions<JwtSettings> options) : IAuthService
+internal class AuthService(IOptions<JwtSettings> options, ApplicationDbContext context) : IAuthService
 {
     private readonly JwtSettings _jwtSettings = options.Value;
+
+    public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        return await context.Database.BeginTransactionAsync(cancellationToken);
+    }
     public async Task<CreatedTokenDto> GenerateJwtTokenAsync(ApplicationUser user, IList<string> roles, CancellationToken cancellationToken = default)
     {
         var claims = new List<Claim>

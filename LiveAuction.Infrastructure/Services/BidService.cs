@@ -81,10 +81,10 @@ internal class BidService(
             return new Error(ErrorCodes.NotFoundError, "User not found.");
         }
 
-        if (bidder.LockoutEnd is { } lockoutEnd && lockoutEnd > DateTimeOffset.UtcNow)
+        if (!bidder.IsActive)
         {
-            _logger.LogWarning("Locked-out user {UserId} attempted to place a bid.", currentUserId);
-            return new Error(ErrorCodes.ForbiddenError, "Your account is not allowed to place bids right now.");
+            _logger.LogWarning("Inactive user with Id {UserId} attempted to place a bid.", currentUserId);
+            return new Error(ErrorCodes.ForbiddenError, "Your account is inactive. Please contact support.");
         }
 
         var auction = await _auctionRepository.GetBidContextAsync(request.AuctionId, cancellationToken);

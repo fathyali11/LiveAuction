@@ -9,13 +9,15 @@ using OneOf;
 using System.Transactions;
 using LiveAuction.Shared.DTOs;
 using LiveAuction.Application.Services;
+using RefreshTokenEntity = LiveAuction.Domain.Entities.RefreshToken;
 
 namespace LiveAuction.Application.ApplicationUsers.Commands.RegisterUser;
 
 internal class RegisterUserCommandHandler(UserManager<ApplicationUser>_userManager,
     ILogger<RegisterUserCommandHandler> _logger,
     IValidator<RegisterUserCommand> _validator,
-    IAuthService _authService) : IRequestHandler<RegisterUserCommand, OneOf<Error, AuthResponse>>
+    IAuthService _authService,
+    IRefreshTokenService _refreshTokenService) : IRequestHandler<RegisterUserCommand, OneOf<Error, AuthResponse>>
 {
     public async Task<OneOf<Error, AuthResponse>> Handle(RegisterUserCommand request, CancellationToken cancellationToken)
     {
@@ -34,7 +36,8 @@ internal class RegisterUserCommandHandler(UserManager<ApplicationUser>_userManag
             return new Error(ErrorCodes.Duplicate, "هذا البريد الإلكتروني مستخدم بالفعل.");
         }
         var user=request.Adapt<ApplicationUser>();
-        using (var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+        await using var transaction = await _authService.BeginTransactionAsync(cancellationToken);
+        try
         {
             var createResult = await _userManager.CreateAsync(user, request.Password);
             if (!createResult.Succeeded)
@@ -51,21 +54,33 @@ internal class RegisterUserCommandHandler(UserManager<ApplicationUser>_userManag
                 _logger.LogError("Failed to assign role to user: {Error}", firstError.Description);
                 return new Error(ErrorCodes.InternalServerError, "حدث خطأ.");
             }
-            transaction.Complete();
+            var roles = await _userManager.GetRolesAsync(user);
+            var tokenDto = await _authService.GenerateJwtTokenAsync(user, roles, cancellationToken);
+            await _refreshTokenService.AddAsync(new RefreshTokenEntity
+            {
+                Token = tokenDto.RefreshToken,
+                ExpiresAt = tokenDto.RefreshTokenExpiration,
+                ApplicationUserId = user.Id
+            }, cancellationToken);
+            
+
+                await transaction.CommitAsync(cancellationToken);
+                _logger.LogInformation("User {Email} logged in successfully.", request.Email);
+            return new AuthResponse
+            {
+                Token = tokenDto.Token,
+                ExpiresAt = tokenDto.Expiration,
+                RefreshToken = tokenDto.RefreshToken,
+                RefreshTokenExpiresAt = tokenDto.RefreshTokenExpiration,
+                Email = user.Email!,
+                Roles = roles.ToList()
+            };
         }
-        
-        _logger.LogInformation("Role 'Customer' assigned to user with email {Email}", request.Email);
-        var roles = await _userManager.GetRolesAsync(user);
-        var tokenDto = await _authService.GenerateJwtTokenAsync(user, roles, cancellationToken);
-        _logger.LogInformation("User {Email} logged in successfully.", request.Email);
-        return new AuthResponse
+        catch (Exception ex)
         {
-            Token = tokenDto.Token,
-            ExpiresAt = tokenDto.Expiration,
-            RefreshToken = tokenDto.RefreshToken,
-            RefreshTokenExpiresAt = tokenDto.RefreshTokenExpiration,
-            Email = user.Email!,
-            Roles = roles.ToList()
-        };
+            await transaction.RollbackAsync(cancellationToken);
+            _logger.LogError(ex, "An error occurred while registering user with email {Email}", request.Email);
+            return new Error(ErrorCodes.InternalServerError, "حدث خطأ.");
+        }
     }
 }

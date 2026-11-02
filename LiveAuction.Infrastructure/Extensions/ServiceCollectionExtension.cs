@@ -21,8 +21,9 @@ public static class ServiceCollectionExtension
         services.AddScoped<IWatchListRepository,WatchListRepository>();
         services.AddScoped<IWalletRepository,WalletRepository>();
         services.AddScoped<INotificationRepository,NotificationRepository>();
+        
+        
         services.AddScoped<IFileService,LocalFileService>();
-
         services.AddScoped<IBackgroundJobService, BackgroundJobService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IAuctionService, AuctionService>();
@@ -30,14 +31,19 @@ public static class ServiceCollectionExtension
         services.AddScoped<IWatchlistService, WatchlistService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IBidService, BidService>();
-
+        services.AddScoped<IRefreshTokenService, RefreshTokenService>();
         var connectionString = configuration.GetConnectionString("LiveAuctionDbConnection");
         services.AddDbContext<ApplicationDbContext>(options =>
         {
             options.UseSqlServer(connectionString);
         });
 
-        services.AddIdentity<ApplicationUser, IdentityRole>()
+        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+        {
+            options.User.RequireUniqueEmail = true;
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(10);
+        })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
